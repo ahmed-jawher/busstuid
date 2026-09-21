@@ -115,3 +115,45 @@ jobs:
       - name: Stop
         if: always()
         run: docker compose -f infra/docker-compose.prod.yml --env-file .env.production down -v
+
+  # Android shell (phase 6): proves the Capacitor project compiles and produces a debug APK.
+  # Runs on GitHub's runner, which ships the Android SDK; no signing keys or Firebase file.
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build shared packages
+        run: pnpm exec turbo run build --filter=./packages/*
+
+      - name: Build the web app into the Android project
+        env:
+          VITE_API_URL: https://api.example.invalid/v1
+        run: pnpm --filter @wusool/web native:sync
+
+      - name: Build debug APK
+        working-directory: apps/web/android
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wusool-safe-debug-apk
+          path: apps/web/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14

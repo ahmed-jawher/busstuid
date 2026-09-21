@@ -430,6 +430,11 @@
     "totp_invalid": "Wrong authenticator code.",
     "totp_already_enabled": "Two-step verification is already on.",
     "totp_not_enabled": "Two-step verification is not on.",
-    "totp_not_set_up": "Start the setup first."
+    "totp_not_set_up": "Start the setup first.",
+    "push_provider_unavailable": "Notifications for this kind of device are not set up on the server yet. Use the website for now.",
+    "push_token_format": "The device token is not valid. Restart the app and try again.",
+    "wrong_provider": "The notification could not be sent to this device.",
+    "apns_not_configured": "iPhone notifications are not set up on the server yet.",
+    "fcm_not_configured": "Android notifications are not set up on the server yet."
   }
 }

@@ -222,3 +222,30 @@ Format: the decision, then why.
   ≥ 80 % branches (currently 95 / 95 / 93 / 85), enforced on every API test run.
 - **TOTP replay within the same 30-second window is not blocked** (no per-user "last step"
   record); acceptable for an optional second factor, noted for later.
+
+## Phase 6 (partial, PLAN §20)
+
+- **Native push without SDKs on the server:** FCM HTTP v1 (service-account JWT, RS256) and APNs
+  (provider token, ES256, HTTP/2) are implemented with `node:crypto` and `node:http2` only. Both
+  sit behind the same `PushProvider` interface; a routing provider picks one per subscription.
+  An HTTP seam lets tests check exactly what would be sent, with real signatures.
+- **Native push is optional per platform.** Without keys the server refuses to register those
+  devices (`push_provider_unavailable`) rather than accepting a device it cannot reach — a driver
+  must never pass the notification test on a channel that does not work.
+- **Android channels:** critical alerts use a max-importance channel, everything else a
+  high-importance one; lock-screen visibility is private (children's names hidden).
+- **iOS alerts are time-sensitive, not critical,** until Apple grants the Critical Alerts
+  entitlement (docs/RELEASE.md).
+- **Driver reminders on native** are a series of 12 one-shot OS notifications (one hour at the
+  usual 5-minute interval) instead of a platform-specific repeat rule, so they behave the same on
+  Android and iOS and are fully cancelled together. The server watchdog remains the main
+  protection after that.
+- **No `USE_EXACT_ALARM`:** Google Play reserves it for alarm and calendar apps. The app asks for
+  the user-granted `SCHEDULE_EXACT_ALARM`; without it reminders may be a few minutes late.
+- **Reused web implementations inside the app:** the offline queue (IndexedDB, persisted in the
+  app's storage), preferences (must stay synchronous) and the in-app siren (Web Audio).
+- **No cloud backup on Android** (`allowBackup=false`, extraction rules): children's data never
+  leaves the phone that way, and Keystore-encrypted secrets could not be restored anyway.
+- **Notification taps only open this app's own paths** (`/alert/…`), never another site.
+- **The Android build runs in CI**, not locally: installing the Android SDK here would require
+  accepting Google's licence on the owner's behalf. GitHub's runner already has it.

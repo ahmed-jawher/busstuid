@@ -6,6 +6,7 @@ import type {
   PushResult,
   PushTarget,
 } from './push.provider';
+import { targetAddress } from './push.provider';
 
 /**
  * Records pushes in the log instead of sending them. For end-to-end tests, where the headless
@@ -16,7 +17,7 @@ export class LogPushProvider implements PushProvider {
 
   async send(target: PushTarget, message: PushMessage, options: PushOptions): Promise<PushResult> {
     this.logger.log(
-      `push → ${target.endpoint.slice(-12)} [${options.urgency}] ${message.title}: ${message.body}`,
+      `push → ${target.provider}:${targetAddress(target).slice(-12)} [${options.urgency}] ${message.title}: ${message.body}`,
     );
     return { ok: true };
   }

@@ -1,6 +1,7 @@
 // Automated field simulation (PLAN §17 phase 5, replaced per §20): one school day with a school
 // bus and an independent driver, including the failures that happen in real life. The clock is
 // injected into the jobs, so the whole day runs in seconds and always the same way.
+import { targetAddress } from '../src/push/push.provider';
 import type { Actor } from './helpers/actors';
 import { createTestApp, type TestApp } from './helpers/app';
 import { buildFleet, enablePush, tap, type Fleet } from './helpers/fleet';
@@ -22,7 +23,7 @@ describe('field simulation: one school day', () => {
         (s) => s.endpoint,
       ),
     );
-    return t.push.sent.filter((p) => endpoints.has(p.target.endpoint)).map((p) => p.message);
+    return t.push.sent.filter((p) => endpoints.has(targetAddress(p.target))).map((p) => p.message);
   };
 
   beforeAll(async () => {

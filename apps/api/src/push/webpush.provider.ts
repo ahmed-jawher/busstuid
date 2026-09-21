@@ -13,6 +13,7 @@ export class WebPushProvider implements PushProvider {
   constructor(private readonly config: AppConfig) {}
 
   async send(target: PushTarget, message: PushMessage, options: PushOptions): Promise<PushResult> {
+    if (target.provider !== 'webpush') return { ok: false, gone: false, error: 'wrong_provider' };
     try {
       await webpush.sendNotification(
         { endpoint: target.endpoint, keys: { p256dh: target.p256dh, auth: target.auth } },

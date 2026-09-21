@@ -1,5 +1,6 @@
 // PLAN §7 alerts and escalation, §6.4 watchdog, §8 notifications.
 // §16 tests 2, 3, 4, 7, 8 and the alert part of 9.
+import { targetAddress } from '../src/push/push.provider';
 import type { Actor } from './helpers/actors';
 import { createTestApp, type TestApp } from './helpers/app';
 import { buildFleet, enablePush, tap, type Fleet } from './helpers/fleet';
@@ -20,7 +21,7 @@ describe('alerts, escalation and the watchdog', () => {
         (s) => s.endpoint,
       ),
     );
-    return t.push.sent.filter((p) => endpoints.has(p.target.endpoint)).map((p) => p.message);
+    return t.push.sent.filter((p) => endpoints.has(targetAddress(p.target))).map((p) => p.message);
   };
 
   /** A fleet whose admin and guardian also have working notifications, with the trip started. */

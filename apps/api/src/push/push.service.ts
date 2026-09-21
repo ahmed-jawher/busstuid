@@ -1,9 +1,9 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
-import type { Locale } from '@wusool/shared';
+import type { Locale, PushSubscriptionInput } from '@wusool/shared';
 import { ApiError, Errors } from '../common/api-error';
 import { APP_CONFIG, type AppConfig } from '../config/env';
 import { PrismaService } from '../database/prisma.service';
-import { PUSH_PROVIDER, type PushProvider } from './push.provider';
+import { PUSH_PROVIDER, toPushTarget, type PushProvider } from './push.provider';
 
 const TEST_MESSAGE: Record<Locale, { title: string; body: string }> = {
   ar: { title: 'وصول آمن', body: '✅ الإشعارات تعمل على هذا الجهاز.' },
@@ -22,15 +22,42 @@ export class PushService {
     return this.config.vapid.publicKey;
   }
 
+  /** Whether this server can deliver to a device of that kind (native keys are optional). */
+  canDeliver(provider: PushSubscriptionInput['provider']): boolean {
+    if (provider === 'webpush' || this.config.pushProvider === 'log') return true;
+    return provider === 'fcm' ? this.config.fcm !== null : this.config.apns !== null;
+  }
+
   /**
-   * Upserts by endpoint. A browser endpoint identifies one device; if it was registered to
+   * Upserts by endpoint or device token. Either identifies one device; if it was registered to
    * another account (shared phone, new sign-in) it moves to the current user. Runs on the
    * system role because the previous owner's row is invisible under RLS.
    */
-  async subscribe(
-    userId: string,
-    input: { endpoint: string; keys: { p256dh: string; auth: string }; userAgent?: string },
-  ) {
+  async subscribe(userId: string, input: PushSubscriptionInput) {
+    if (!this.canDeliver(input.provider)) {
+      throw new ApiError(HttpStatus.SERVICE_UNAVAILABLE, 'push_provider_unavailable');
+    }
+    const select = { id: true, provider: true, platform: true, createdAt: true } as const;
+    if (input.provider !== 'webpush') {
+      return this.prisma.system.pushSubscription.upsert({
+        where: { nativeToken: input.token },
+        create: {
+          userId,
+          provider: input.provider,
+          platform: input.platform,
+          nativeToken: input.token,
+          userAgent: input.userAgent ?? null,
+        },
+        update: {
+          userId,
+          userAgent: input.userAgent ?? null,
+          revokedAt: null,
+          failedCount: 0,
+          lastTestOkAt: null,
+        },
+        select,
+      });
+    }
     return this.prisma.system.pushSubscription.upsert({
       where: { endpoint: input.endpoint },
       create: {
@@ -51,7 +78,7 @@ export class PushService {
         failedCount: 0,
         lastTestOkAt: null,
       },
-      select: { id: true, provider: true, platform: true, createdAt: true },
+      select,
     });
   }
 
@@ -95,10 +122,11 @@ export class PushService {
         include: { user: { select: { preferredLocale: true } } },
       }),
     );
-    if (!sub || !sub.endpoint || !sub.p256dh || !sub.authSecret) throw Errors.notFound();
+    const target = sub && toPushTarget(sub);
+    if (!sub || !target) throw Errors.notFound();
 
     const result = await this.provider.send(
-      { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.authSecret },
+      target,
       { ...TEST_MESSAGE[sub.user.preferredLocale], tag: 'wusool-test', url: '/' },
       { urgency: 'high', ttlSeconds: 120 },
     );

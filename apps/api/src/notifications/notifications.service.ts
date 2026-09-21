@@ -8,7 +8,7 @@ import {
   type TemplateData,
 } from '@wusool/shared';
 import { PrismaService, type Tx } from '../database/prisma.service';
-import { PUSH_PROVIDER, type PushProvider } from '../push/push.provider';
+import { PUSH_PROVIDER, toPushTarget, type PushProvider } from '../push/push.provider';
 
 export type Priority = 'normal' | 'high' | 'critical';
 
@@ -158,7 +158,15 @@ export class NotificationsService {
           },
         },
         pushSubscription: {
-          select: { id: true, endpoint: true, p256dh: true, authSecret: true, revokedAt: true },
+          select: {
+            id: true,
+            provider: true,
+            endpoint: true,
+            p256dh: true,
+            authSecret: true,
+            nativeToken: true,
+            revokedAt: true,
+          },
         },
       },
     });
@@ -172,7 +180,8 @@ export class NotificationsService {
       return;
     }
     const sub = d.pushSubscription;
-    if (!sub || sub.revokedAt || !sub.endpoint || !sub.p256dh || !sub.authSecret) {
+    const target = sub && !sub.revokedAt ? toPushTarget(sub) : null;
+    if (!sub || !target) {
       await this.prisma.system.notificationDelivery.update({
         where: { id: deliveryId },
         data: { status: 'failed', attempts: MAX_ATTEMPTS, lastError: 'subscription_revoked' },
@@ -188,7 +197,7 @@ export class NotificationsService {
     );
     const priority = n.priority as Priority;
     const result = await this.provider.send(
-      { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.authSecret },
+      target,
       { title, body, url: payload.url, tag: payload.tag, critical: priority === 'critical' },
       { urgency: priority === 'normal' ? 'normal' : 'high', ttlSeconds: TTL_SECONDS[priority] },
     );

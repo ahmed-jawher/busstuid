@@ -6,3 +6,5 @@ docs/PLAN.md
 **/migrations/**/*.sql
 apps/web/dist-e2e
 apps/e2e/test-results
+apps/web/android
+apps/web/ios

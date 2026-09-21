@@ -2,7 +2,8 @@ import type { AlarmPort } from '../types';
 
 // A two-tone siren synthesised with Web Audio: nothing to download, works offline (PLAN §3.5).
 // Browsers only allow audio after a user gesture; the driver has always tapped by the time this
-// can trigger. Native builds (phase 6) use a bundled sound on a high-priority channel instead.
+// can trigger. Native builds reuse it in the foreground; in the background the high-importance
+// notification channels take over (src/platform/native).
 
 export function createWebAlarm(): AlarmPort {
   let ctx: AudioContext | null = null;
