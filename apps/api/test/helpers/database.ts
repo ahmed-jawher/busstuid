@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
 import { Client } from 'pg';
 import { inject } from 'vitest';
-import { roleUrl } from '../../src/database/roles';
+import { grantJobQueueSchemaRights, roleUrl } from '../../src/database/roles';
 import { TEMPLATE_DB, TEST_ROLE_PASSWORDS } from '../global-setup';
 
 export interface TestDatabase {
@@ -28,6 +28,8 @@ export async function createTestDatabase(): Promise<TestDatabase> {
   const maintenance = new Client({ connectionString: withDatabase(templateUrl, 'postgres') });
   await maintenance.connect();
   await maintenance.query(`CREATE DATABASE "${name}" TEMPLATE "${TEMPLATE_DB}"`);
+  // Database-level grants are not copied from the template.
+  await grantJobQueueSchemaRights(maintenance, name);
   await maintenance.end();
 
   const adminUrl = withDatabase(templateUrl, name);

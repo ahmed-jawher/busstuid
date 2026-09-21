@@ -234,3 +234,26 @@ export const endTripSchema = z.union([
 ]);
 
 export const addTripStudentSchema = z.object({ studentId: z.uuid() });
+
+// ─── Phase 3: alerts ─────────────────────────────────────────────────────────
+
+/** Why an alert was closed (PLAN §7). "other" needs a note. */
+export const RESOLUTION_REASONS = [
+  'found_on_vehicle_and_alighted',
+  'alighted_earlier_unrecorded',
+  'picked_up_by_guardian',
+  'never_boarded',
+  'trip_ended_safely',
+  'false_alarm',
+  'other',
+] as const;
+
+export const resolveAlertSchema = z
+  .object({
+    reason: z.enum(RESOLUTION_REASONS),
+    note: z.string().trim().max(1000).optional(),
+  })
+  .refine((v) => v.reason !== 'other' || (v.note && v.note.length >= 5), {
+    path: ['note'],
+    message: 'note_required',
+  });

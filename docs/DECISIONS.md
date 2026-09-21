@@ -112,3 +112,32 @@ Format: the decision, then why.
   documented but not needed.
 - **Guardian "today"** uses the local date of every supported country (both are UTC+3 today, but
   the code does not assume it).
+
+## Phase 3
+
+- **Escalation state lives in the database** (`alerts.next_escalation_at`). pg-boss only runs a
+  minute job that processes whatever is due, so a restart loses nothing; on boot any open
+  high/critical alert without a schedule is made due immediately (PLAN §12, test 7). Rows are
+  claimed with `FOR UPDATE SKIP LOCKED`, so several API instances can run safely.
+- **New alerts are sent right after commit** (not at the next minute tick) through a small
+  `SideEffects` runner; the minute jobs are the safety net.
+- **Escalation plan (PLAN §7)**: minute 0 — driver, primary guardians and all org admins; every
+  2 minutes — repeat to the same people; minute 5 — every guardian of the child; minute 10 —
+  the country's emergency number is appended to every message. Acknowledging records who is
+  handling it but does **not** stop the reminders; only resolving does.
+- **Low-severity alerts** (`unexpected_student`) notify admins once and never repeat.
+- **Overdue alerts name each child still recorded on board**, to the driver, every admin and that
+  child's guardians — an admin needs to know who, not just which bus.
+- **An overdue or device-silent alert cannot be resolved while a child is still recorded on
+  board** (409 `students_still_onboard`).
+- **Resolving a "left on board" alert appends a corrective `alight` event** (reasons that mean the
+  child got off) and marks the child `resolved`; guardians receive "تم التأكد من سلامة …".
+- **Deliveries are claimed atomically** before sending, so concurrent dispatchers never send the
+  same push twice; failures retry every minute up to 5 attempts; 404/410 revokes the device.
+- **Names are stored in both languages** in notification payloads and rendered in each
+  recipient's language at send time.
+- **pg-boss needs `CREATE` on the database** for its unconditional `CREATE SCHEMA IF NOT EXISTS`;
+  it is granted to `wusool_system` only. The `pgboss` schema itself is created by a migration.
+- **Watchdog settings** (`overdueMarginMinutes`, `deviceSilentMinutes`) are read from
+  `organizations.settings` with the plan's defaults (15 and 10 minutes).
+- **Repeated alert pushes set `renotify`** in the service worker so each repeat makes a sound.

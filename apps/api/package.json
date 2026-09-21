@@ -28,6 +28,7 @@
     "nestjs-pino": "5.2.0",
     "nodemailer": "7.0.13",
     "pg": "8.23.0",
+    "pg-boss": "^10.4.2",
     "pino": "10.3.1",
     "pino-http": "^11.0.0",
     "prisma": "6.19.3",
