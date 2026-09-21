@@ -94,3 +94,24 @@ passes too. ✅
 - Migration 2: `pgboss` schema and indexes for due alerts/pending deliveries.
 - Note: existing development databases need `pnpm run setup` again (applies migration 2 and the
   new role grant).
+
+## Phase 4 — Interfaces
+
+**Acceptance:** the four PLAN §16 E2E scenarios pass through the real UI on a 375 px screen. ✅
+
+- Auth screens: sign in, sign up, email code, forgot/reset password.
+- Notification setup with the iPhone home-screen instructions and a test notification;
+  drivers are sent here when a trip cannot start.
+- Driver: today's trips; trip screen with large photo cards, one or two buttons per card, 60 s
+  undo toast, live counter, sync indicator, offline queue, keep-awake, heartbeat, background
+  reminder, add an unexpected child, end flow with red screen + local alarm, empty-vehicle
+  confirmation, and a double-confirmed forced end with reason.
+- Guardian: children with live status ("on the bus since 6:42"), add-child flow (school list or
+  driver phone with name confirmation, photo, consent), child page with today and history,
+  full-screen alert with call buttons, inbox, settings (mute routine, delete account).
+- Admin: organisation switcher, live trips, pinned alert bar with sound, alerts with
+  acknowledge/resolve, enrollment requests, students, vehicles, routes with stops and student
+  assignment, members, unreachable guardians; organisation registration; platform approvals.
+- API additions: driver candidate search, guardian alert detail, live counts on org trips,
+  log-only push provider for E2E.
+- Playwright E2E package (`pnpm e2e`) with an isolated stack; runs in CI with screenshots.

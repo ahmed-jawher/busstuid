@@ -41,6 +41,11 @@ export class AlertsController {
     return this.alerts.listMine(auth.userId);
   }
 
+  @Get('me/alerts/:id')
+  mineOne(@Auth() auth: AuthContext, @Param('id', ParseUUIDPipe) id: string) {
+    return this.alerts.getForGuardian(auth.userId, id);
+  }
+
   @Get('alerts/:id')
   get(@Auth() auth: AuthContext, @Param('id', ParseUUIDPipe) id: string) {
     return this.alerts.get(auth.userId, id);

@@ -30,11 +30,12 @@ import { ApiZodBody, ApiZodQuery, zod } from '../common/zod';
 import { PrismaService } from '../database/prisma.service';
 import { GuardianTripsService } from './guardian-trips.service';
 import { TripGenerationService } from './trip-generation.service';
-import { TripsService } from './trips.service';
+import { countStatuses, TripsService } from './trips.service';
 
 // Retried writes are safe without the header too: start/end are state-checked under a row lock
 // and events are de-duplicated by clientEventId. The header is accepted for clients that send it.
 const IDEMPOTENCY_HEADER = { name: 'Idempotency-Key', required: false };
+const candidatesQuery = z.object({ q: z.string().trim().max(60).default('') });
 
 @ApiTags('driver')
 @ApiBearerAuth()
@@ -95,6 +96,16 @@ export class TripsController {
     return this.trips.end(auth.userId, id, body);
   }
 
+  @Get('trips/:id/candidates')
+  @ApiZodQuery(candidatesQuery)
+  candidates(
+    @Auth() auth: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query(zod(candidatesQuery)) q: z.output<typeof candidatesQuery>,
+  ) {
+    return this.trips.searchCandidates(auth.userId, id, q.q);
+  }
+
   @Post('trips/:id/students')
   @ApiZodBody(addTripStudentSchema)
   addStudent(
@@ -127,7 +138,7 @@ export class OrgTripsController {
     @Query(zod(dateQuery)) q: z.output<typeof dateQuery>,
   ) {
     const date = q.date ?? (await this.generation.today(org.id));
-    return this.prisma.withContext({ userId: auth.userId, orgId: org.id }, (tx) =>
+    const rows = await this.prisma.withContext({ userId: auth.userId, orgId: org.id }, (tx) =>
       tx.trip.findMany({
         where: { serviceDate: new Date(`${date}T00:00:00Z`) },
         orderBy: { plannedStartAt: 'asc' },
@@ -144,10 +155,11 @@ export class OrgTripsController {
           driverId: true,
           route: { select: { name: true } },
           vehicle: { select: { plateNumber: true } },
-          _count: { select: { students: true } },
+          students: { select: { status: true } },
         },
       }),
     );
+    return rows.map(({ students, ...trip }) => ({ ...trip, counts: countStatuses(students) }));
   }
 
   @Post('generate')

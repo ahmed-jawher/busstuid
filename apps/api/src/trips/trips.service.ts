@@ -446,6 +446,41 @@ export class TripsService {
       this.effects.run('alert dispatch', () => this.escalation.processAlerts(ids));
   }
 
+  /** Enrolled children not on this trip, for "add a student from the organisation" (PLAN §6.2). */
+  async searchCandidates(userId: string, tripId: string, q: string) {
+    const ref = await loadTripFor(this.prisma, userId, tripId, 'operate');
+    return this.prisma.withContext({ userId, orgId: ref.organizationId }, async (tx) => {
+      const rows = await tx.student.findMany({
+        where: {
+          deletedAt: null,
+          orgStudents: { some: { organizationId: ref.organizationId, status: 'active' } },
+          tripStudents: { none: { tripId } },
+          ...(q
+            ? {
+                OR: [
+                  { fullNameAr: { contains: q, mode: 'insensitive' } },
+                  { fullNameEn: { contains: q, mode: 'insensitive' } },
+                ],
+              }
+            : {}),
+        },
+        select: {
+          id: true,
+          fullNameAr: true,
+          fullNameEn: true,
+          schoolName: true,
+          photoVersion: true,
+        },
+        orderBy: { fullNameAr: 'asc' },
+        take: 20,
+      });
+      return rows.map(({ photoVersion, ...s }) => ({
+        ...s,
+        photoUrl: this.students.photoUrl(s.id, photoVersion),
+      }));
+    });
+  }
+
   /** "Add a student from the organisation" for a child not on today's list (PLAN §6.2). */
   async addUnexpectedStudent(userId: string, tripId: string, studentId: string) {
     const ref = await loadTripFor(this.prisma, userId, tripId, 'operate');
@@ -572,7 +607,7 @@ async function rebuildProjection(
   };
 }
 
-function countStatuses(students: { status: TripStudentStatus }[]) {
+export function countStatuses(students: { status: TripStudentStatus }[]) {
   const c = { onboard: 0, alighted: 0, waiting: 0, absent: 0, missing: 0 };
   for (const s of students) {
     if (s.status === 'boarded') c.onboard++;

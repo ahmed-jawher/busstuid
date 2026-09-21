@@ -141,3 +141,38 @@ Format: the decision, then why.
 - **Watchdog settings** (`overdueMarginMinutes`, `deviceSilentMinutes`) are read from
   `organizations.settings` with the plan's defaults (15 and 10 minutes).
 - **Repeated alert pushes set `renotify`** in the service worker so each repeat makes a sound.
+
+## Phase 4
+
+- **One Vite app, three interfaces by route** (`/driver`, `/guardian`, `/admin`); the home screen
+  sends a user with a single role straight to it.
+- **Absolute asset base (`/`)**, not `./` as in phase 0: with relative paths, deep links like
+  `/notifications/setup` loaded `/notifications/assets/…` and rendered a blank page (caught by
+  the E2E suite). Capacitor also serves from the root, so this is correct for the wrapped app.
+- **Driver taps are optimistic and offline-first**: the card changes instantly, the tap goes to
+  the durable device queue with a one-shot location (≤ 1.5 s, never blocking the screen), and a
+  sync loop sends batches every 5 s and on reconnect. A child's local override is dropped only
+  when the server shows the same status, so a slow response can never flash an old status (the
+  first, timing-based version flickered on CI).
+- **Ending needs every queued tap delivered first** — the server decides with the full picture.
+- **The local alarm is synthesised with Web Audio** (no file, works offline) and sounds while the
+  red "children on board" screen is open, and on the admin dashboard for open critical alerts
+  until silenced; it restarts for a new critical alert.
+- **Dialogs report only user dismissal** (Escape), not programmatic closing — otherwise moving
+  from the red screen to the force-end form reset the flow (caught by the E2E suite).
+- **Admin live view polls every 10 s** instead of SSE/WebSockets: simpler, works through any
+  proxy, and fast enough next to the minute-based watchdog.
+- **Guardian alert screen** comes from `GET /me/alerts/:id` (RLS as the guardian, then the
+  driver's phone) with `tel:` links to the driver and the country's emergency number.
+- **Drivers search enrolled children** to add an unexpected child (`GET /trips/:id/candidates`).
+- **Photo "crop"** relies on the server's attention-based square crop; the form shows a preview.
+- **Translations are guarded by a test**: both languages must have identical keys, every key
+  used in code must exist, and every error code the API can return must have a message.
+- **E2E runs on an isolated stack**: throwaway PostgreSQL with seed, real API process with
+  `PUSH_PROVIDER=log` (refused in production), a production web build, and a stubbed browser
+  push service (headless Chromium has none). A real-device push test belongs to phase 6.
+- **The E2E suite fills login forms with local seed fixtures itself**; I (the assistant) did not
+  type credentials into a browser by hand.
+- **Stale alarms are dropped**: a delivery for an alert that was resolved before the push went out
+  is not sent (`alert_resolved_before_send`), so a guardian never ends up with "🚨 urgent" as the
+  latest message after "confirmed safe". Found through a flaky test; now covered by a test.
