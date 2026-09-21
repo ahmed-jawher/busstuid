@@ -55,9 +55,21 @@ const pgPort = get('PG_PORT') || '54329';
 const pgDb = get('PG_DATABASE') || 'wusool';
 const pgPassword = get('PG_PASSWORD');
 fill('DATABASE_ADMIN_URL', `postgres://postgres:${pgPassword}@127.0.0.1:${pgPort}/${pgDb}`);
-// Until the RLS role exists (phase 1) the app connects with the admin URL.
-fill('DATABASE_URL', get('DATABASE_ADMIN_URL'));
+fill('APP_DB_PASSWORD', secret(24));
+fill('SYSTEM_DB_PASSWORD', secret(24));
+// Phase 0 pointed DATABASE_URL at the superuser; the API must now use the RLS-bound role.
+if (get('DATABASE_URL') === get('DATABASE_ADMIN_URL')) {
+  text = text.replace(/^DATABASE_URL=.*$/m, 'DATABASE_URL=');
+}
+fill('DATABASE_URL', `postgres://wusool_app:${get('APP_DB_PASSWORD')}@127.0.0.1:${pgPort}/${pgDb}`);
+fill(
+  'DATABASE_SYSTEM_URL',
+  `postgres://wusool_system:${get('SYSTEM_DB_PASSWORD')}@127.0.0.1:${pgPort}/${pgDb}`,
+);
+fill('PUBLIC_API_URL', 'http://localhost:3000/v1');
 writeFileSync(envPath, text);
+// Child processes (Prisma, seed) read the same values.
+process.loadEnvFile(envPath);
 
 step('Starting PostgreSQL 16 (embedded)');
 const db = await startDevPostgres({
@@ -79,6 +91,8 @@ try {
   pnpm(['exec', 'turbo', 'run', 'build', '--filter=./packages/*']);
   step('Applying database migrations');
   pnpm(['--filter', '@wusool/api', 'run', '--if-present', 'db:migrate']);
+  step('Enabling database login roles');
+  pnpm(['--filter', '@wusool/api', 'run', '--if-present', 'db:roles']);
   step('Loading seed data');
   pnpm(['--filter', '@wusool/api', 'run', '--if-present', 'db:seed']);
 } finally {

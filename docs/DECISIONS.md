@@ -36,3 +36,47 @@ Format: the decision, then why.
 - **Swagger UI telemetry (`@scarf/scarf`) is blocked** from running its install script.
 - **Request logs** contain only id, method, URL and status; headers (tokens) are never logged, and
   health checks are not logged.
+
+## Phase 1
+
+- **Two database login roles.** `wusool_app` serves user requests and is bound by Row Level
+  Security (FORCE RLS on every table). `wusool_system` has BYPASSRLS and is used only for sign-in
+  flows, background jobs, and a few narrow cross-tenant reads that are checked in code (the
+  enrollment queue, the school directory, driver lookup by phone). The RLS context is set per
+  transaction with `set_config(..., true)`, so it cannot leak between pooled connections.
+- **Guardians are covered by RLS too**, not only organisations: they can read their own children's
+  trips, events, stops and alerts through SECURITY DEFINER helper functions, and nothing else.
+- **Before approval an organisation sees only the child's name and school.** The photo and birth
+  date become visible only once it approves the enrollment request (RLS on `students` and
+  `student_photos`).
+- **Schools and transport companies start as `pending_review`** and are hidden from the directory
+  until a platform admin approves them, so nobody can impersonate a real school. Independent
+  drivers are active immediately because guardians reach them only by phone number and must
+  confirm the name shown.
+- **One independent driver per phone number** (advisory-locked check), because phone numbers are
+  not verified.
+- **Platform admin is a user flag (`is_platform_admin`)** rather than a membership, since it is not
+  tied to any organisation.
+- **Emails are stored lower-case with a CHECK constraint** instead of the `citext` extension, which
+  would need a Prisma preview feature.
+- **Reversible migrations**: Prisma migrations are forward-only, so every migration folder carries a
+  hand-written `down.sql`; `pnpm --filter @wusool/api db:rollback` runs the newest one. A test
+  rolls everything back and re-applies it, and another fails if `schema.prisma` and the SQL drift.
+- **Access tokens are HS256 JWTs signed with `node:crypto`** (15 minutes, header pinned so `alg`
+  cannot be switched). Refresh tokens are opaque, stored as SHA-256, rotated on every use; reusing
+  a rotated token revokes its whole family.
+- **Email codes are hashed with a keyed HMAC** (a leaked table can't be brute-forced over the 10⁶
+  code space), and wrong-attempt counters are committed in their own transaction before the error
+  is returned — otherwise the rollback would silently disable the 5-attempt limit. Same for the
+  login lockout counter.
+- **No account discovery**: register, resend and forgot-password answer identically whether or not
+  the email exists; unknown emails still pay the argon2 cost at login.
+- **Photos**: EXIF-rotated, cropped to 400×400 with attention-based positioning, all metadata
+  (including GPS) stripped, WebP ≤ 100 KB, stored in PostgreSQL. Served only through HMAC-signed
+  URLs valid 5 minutes and bound to the photo version, so replacing a photo kills old links.
+- **Account deletion** anonymises the user, revokes sessions and devices, and — for children with
+  no other guardian — deletes the photo, withdraws consent, cancels requests and unlinks the child.
+  Trip events and alerts are kept (PLAN §14).
+- **Push subscriptions are keyed by endpoint** and move to whoever signs in on that device.
+- **TOTP for admins is deferred to phase 5** (it is optional in PLAN §5.1); the column exists.
+- **Seed data** uses fictional names, reserved `example.com` emails and `+973 3999 xxxx` numbers.

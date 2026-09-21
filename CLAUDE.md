@@ -59,6 +59,7 @@ pnpm test           # all tests; integration tests start a throwaway PostgreSQL
 pnpm lint           # ESLint + secret scan
 pnpm typecheck
 pnpm format
+pnpm --filter @wusool/api db:rollback   # revert the newest migration (runs its down.sql)
 ```
 
 ## Rules
@@ -67,7 +68,12 @@ pnpm format
 - Every UI string lives in `apps/web/src/i18n/{ar,en}.json`.
 - Every migration is reversible; never edit a migration that has been merged.
 - Never commit `.env`, keys or tokens; the pre-commit secret scan must stay green.
-- Integration tests use real PostgreSQL via `startTestPostgres()` from `@wusool/dev-stack`.
+- Integration tests use real PostgreSQL: `test/helpers/app.ts` gives each test file its own
+  database cloned from a migrated template.
+- User requests go through `prisma.withContext()` (role `wusool_app`, RLS on). Use `prisma.system`
+  (bypasses RLS) only for sign-in flows, jobs, and narrow reads that are checked in code.
+- Schema changes: edit `schema.prisma`, generate SQL with `prisma migrate diff`, add hand-written
+  RLS/triggers, and write `down.sql`. The drift test fails if schema and SQL disagree.
 - One branch per phase (`phase-N-name`), PR to `main`, squash-merge only when build, lint,
   typecheck and tests pass. Append to `docs/CHANGELOG.md` at the end of each phase.
 - When something is ambiguous: pick the option that is safest for children, then simplest, and
