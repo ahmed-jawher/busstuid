@@ -43,7 +43,8 @@ The operator approves schools and transport companies before guardians can see t
 
 ## 3. Backups
 
-- The `backup` service writes an encrypted dump every 24 h to `infra/backups/` and keeps 14.
+- The `backup` service writes an encrypted dump every 24 h to the `backups` volume and keeps 14.
+  Copy them out with `docker compose -f infra/docker-compose.prod.yml cp backup:/backups ./backups`.
 - **Copy these files off the server** regularly (e.g. `rclone` to cloud storage). They are
   useless without `BACKUP_KEY` — keep `.env.production` safe and separate from the backups.
 - Test a restore into a scratch database from time to time:

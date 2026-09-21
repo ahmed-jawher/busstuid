@@ -72,10 +72,12 @@ services:
     healthcheck:
       disable: true
     volumes:
-      # Copy these files off the server regularly; they are encrypted with BACKUP_KEY.
-      - ./backups:/backups
+      # Named volume: it inherits the image's /backups ownership (the service runs as `node`).
+      # Copy the files off the server regularly (docs/DEPLOY.md); they are encrypted with BACKUP_KEY.
+      - backups:/backups
 
 volumes:
+  backups:
   pgdata:
   caddy_data:
   caddy_config:
