@@ -70,7 +70,11 @@ services:
       BACKUP_DIR: /backups
     command: ['node', 'dist/ops/cli.js', 'backup', '--daily']
     healthcheck:
-      disable: true
+      # Healthy while a backup newer than 25 hours exists (one is taken at start-up).
+      test: ['CMD-SHELL', 'find /backups -name "*.dump.enc" -mmin -1500 | grep -q .']
+      interval: 1h
+      start_period: 2m
+      start_interval: 5s
     volumes:
       # Named volume: it inherits the image's /backups ownership (the service runs as `node`).
       # Copy the files off the server regularly (docs/DEPLOY.md); they are encrypted with BACKUP_KEY.
