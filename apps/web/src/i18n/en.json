@@ -1,0 +1,26 @@
+{
+  "app": {
+    "name": "Wusool Safe",
+    "tagline": "Student safety on school transport",
+    "betaBanner": "Pilot version — do not rely on it alone for children's safety"
+  },
+  "home": {
+    "chooseRole": "Choose an interface",
+    "driver": "Driver",
+    "guardian": "Guardian",
+    "admin": "Organisation admin"
+  },
+  "settings": {
+    "language": "العربية",
+    "theme": "Theme",
+    "themeBh": "Bahrain",
+    "themeSa": "Saudi Arabia",
+    "scheme": "Mode",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "common": {
+    "comingSoon": "This interface is under construction.",
+    "back": "Back"
+  }
+}

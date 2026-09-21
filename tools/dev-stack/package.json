@@ -1,0 +1,28 @@
+{
+  "name": "@wusool/dev-stack",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    }
+  },
+  "scripts": {
+    "start": "node src/cli.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "embedded-postgres": "16.14.0-beta.17",
+    "mailparser": "3.9.28",
+    "pg": "8.23.0",
+    "smtp-server": "3.19.13"
+  },
+  "devDependencies": {
+    "nodemailer": "^7.0.0",
+    "vitest": "3.2.7"
+  }
+}

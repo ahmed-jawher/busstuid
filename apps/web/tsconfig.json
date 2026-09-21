@@ -1,0 +1,11 @@
+{
+  "extends": "@wusool/config/tsconfig/react.json",
+  "compilerOptions": {
+    "types": ["vite/client", "vite-plugin-pwa/client", "vitest/globals"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src", "vite.config.ts"]
+}

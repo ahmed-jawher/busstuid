@@ -1,0 +1,36 @@
+{
+  "name": "wusool-safe",
+  "private": true,
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "node scripts/dev.mjs",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "eslint . && node scripts/check-secrets.mjs --all",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check-secrets": "node scripts/check-secrets.mjs --all",
+    "prepare": "simple-git-hooks"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "node scripts/check-secrets.mjs --staged"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "eslint": "9.39.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^16.4.0",
+    "prettier": "3.9.8",
+    "simple-git-hooks": "2.14.0",
+    "turbo": "2.11.2",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.70.0",
+    "web-push": "3.6.7",
+    "@wusool/dev-stack": "workspace:*"
+  }
+}
