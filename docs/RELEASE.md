@@ -95,5 +95,5 @@ For each platform, with the phone locked and the app closed:
 4. Leave a trip running past its planned end: the overdue alert arrives (server watchdog).
 5. Turn on airplane mode, tap children, turn it off: the taps sync and guardians are notified.
 
-Only after this works on both platforms should the "trial version" banner in the admin screens
+Only after this works on both platforms should the "trial version" banner at the top of every screen
 be removed (PLAN §20.4).
