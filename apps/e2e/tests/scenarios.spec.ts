@@ -12,7 +12,8 @@ test.describe.configure({ mode: 'serial' });
 async function openTrip(page: Page, routeName: RegExp) {
   await page.goto(`${state().webUrl}/driver`);
   await page.getByRole('link', { name: routeName }).first().click();
-  await expect(page.getByText(/على المركبة: \d+/)).toBeVisible();
+  await expect(page).toHaveURL(/\/trip\//);
+  await expect(page.getByRole('button', { name: /ابدأ الرحلة|إنهاء الرحلة/ })).toBeVisible();
 }
 
 async function startTrip(page: Page) {
