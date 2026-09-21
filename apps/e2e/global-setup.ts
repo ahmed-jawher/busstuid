@@ -38,6 +38,8 @@ async function waitFor(url: string, proc: ChildProcess, name: string) {
 }
 
 export default async function globalSetup() {
+  // Builds the API (and generates the Prisma client the seed needs on a fresh machine).
+  execSync('pnpm run build', { cwd: apiDir, stdio: 'pipe' });
   const pgServer = await startTestPostgres({ database: 'wusool_e2e' });
   const env = { ...process.env, DATABASE_URL: pgServer.url, DATABASE_ADMIN_URL: pgServer.url };
   execSync(`"${path.join(apiDir, 'node_modules/.bin/prisma')}" migrate deploy`, {
@@ -74,7 +76,6 @@ export default async function globalSetup() {
   const apiUrl = `http://127.0.0.1:${apiPort}/v1`;
   const webUrl = `http://127.0.0.1:${webPort}`;
 
-  execSync('pnpm run build', { cwd: apiDir, stdio: 'pipe' });
   // cwd outside the repo, so the API never picks up the development .env.
   const api = spawn(process.execPath, [path.join(apiDir, 'dist/main.js')], {
     cwd: tmpdir(),
