@@ -10,9 +10,11 @@ import { DatabaseModule } from './database/database.module';
 import { EmailModule } from './email/email.module';
 import { HealthController } from './health/health.controller';
 import { MeModule } from './me/me.module';
+import { OrgSetupModule } from './org-setup/org-setup.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { PushModule } from './push/push.module';
 import { StudentsModule } from './students/students.module';
+import { TripsModule } from './trips/trips.module';
 
 @Module({})
 export class AppModule {
@@ -49,6 +51,8 @@ export class AppModule {
         MeModule,
         OrganizationsModule,
         StudentsModule,
+        OrgSetupModule,
+        TripsModule,
       ],
       controllers: [HealthController],
       providers: [

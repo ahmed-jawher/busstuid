@@ -143,3 +143,94 @@ export const pushSubscriptionSchema = z.object({
 });
 
 export const emailCodePurposeSchema = z.enum(EMAIL_CODE_PURPOSES);
+
+// ─── Phase 2: organisation setup and trips ──────────────────────────────────
+
+const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'time_format');
+const coordinate = (min: number, max: number) => z.number().min(min).max(max);
+
+export const vehicleSchema = z.object({
+  plateNumber: z.string().trim().min(2).max(20),
+  type: z.enum(['bus', 'van', 'car']),
+  capacity: z.number().int().min(1).max(100),
+});
+export const updateVehicleSchema = vehicleSchema
+  .extend({ status: z.enum(['active', 'inactive']) })
+  .partial();
+
+export const stopSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  lat: coordinate(-90, 90).optional(),
+  lng: coordinate(-180, 180).optional(),
+});
+
+export const routeSchema = z
+  .object({
+    name: z.string().trim().min(2).max(120),
+    direction: z.enum(['to_school', 'to_home']),
+    defaultVehicleId: z.uuid(),
+    defaultDriverId: z.uuid(),
+    plannedStart: hhmm,
+    plannedEnd: hhmm,
+    daysOfWeek: z.array(z.number().int().min(1).max(7)).min(1).max(7),
+    stops: z.array(stopSchema).min(1).max(60),
+  })
+  .refine((r) => r.plannedStart < r.plannedEnd, {
+    path: ['plannedEnd'],
+    message: 'end_before_start',
+  });
+
+export const updateRouteSchema = z.object({
+  name: z.string().trim().min(2).max(120).optional(),
+  defaultVehicleId: z.uuid().optional(),
+  defaultDriverId: z.uuid().optional(),
+  plannedStart: hhmm.optional(),
+  plannedEnd: hhmm.optional(),
+  daysOfWeek: z.array(z.number().int().min(1).max(7)).min(1).max(7).optional(),
+  status: z.enum(['active', 'inactive']).optional(),
+});
+
+export const routeStudentsSchema = z.object({
+  assignments: z.array(z.object({ studentId: z.uuid(), stopId: z.uuid() })).max(200),
+});
+
+export const addMemberSchema = z.object({
+  email: emailSchema,
+  role: z.enum(['org_admin', 'driver', 'attendant']),
+});
+
+export const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'date_format');
+
+/** One tap recorded on the driver's device, possibly while offline (PLAN §6.2, §11). */
+export const tripEventInputSchema = z
+  .object({
+    clientEventId: z.string().min(8).max(64),
+    studentId: z.uuid(),
+    type: z.enum(['board', 'alight', 'absent', 'undo']),
+    /** For `undo`: the clientEventId of the tap being undone. */
+    undoesClientEventId: z.string().min(8).max(64).optional(),
+    clientRecordedAt: z.iso.datetime({ offset: true }),
+    lat: coordinate(-90, 90).optional(),
+    lng: coordinate(-180, 180).optional(),
+    accuracyM: z.number().min(0).max(100_000).optional(),
+  })
+  .refine((e) => (e.type === 'undo') === (e.undoesClientEventId !== undefined), {
+    path: ['undoesClientEventId'],
+    message: 'undo_target_required',
+  });
+export type TripEventInput = z.infer<typeof tripEventInputSchema>;
+
+export const tripEventsBatchSchema = z.object({
+  events: z.array(tripEventInputSchema).min(1).max(500),
+});
+
+export const heartbeatSchema = z.object({
+  state: z.enum(['foreground', 'app_backgrounded']).default('foreground'),
+});
+
+export const endTripSchema = z.union([
+  z.object({ confirmEmpty: z.literal(true) }),
+  z.object({ force: z.literal(true), reason: z.string().trim().min(5).max(500) }),
+]);
+
+export const addTripStudentSchema = z.object({ studentId: z.uuid() });
