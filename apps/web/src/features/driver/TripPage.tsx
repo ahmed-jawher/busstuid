@@ -57,7 +57,6 @@ export function TripPage() {
   const [pending, setPending] = useState(0);
   const [online, setOnline] = useState(() => navigator.onLine);
   const [, forceTick] = useState(0);
-  const sentAt = useRef(0);
 
   const manifest = useQuery({
     queryKey: ['manifest', tripId],
@@ -77,7 +76,6 @@ export function TripPage() {
         setOverrides({});
       }
       if (out.sent > 0) {
-        sentAt.current = Date.now();
         await qc.invalidateQueries({ queryKey: ['manifest', tripId] });
       }
     } finally {
@@ -104,11 +102,24 @@ export function TripPage() {
     };
   }, [tripId, sync]);
 
-  // Once fresh server state (fetched after the last send) includes every tap, drop overrides.
+  // Drop a child's local override only once the server shows that same status. A response to a
+  // request that started before the latest send can arrive after it; clearing on timing alone
+  // would briefly flash the old status (caught by the E2E suite).
   useEffect(() => {
-    if (pending === 0 && sentAt.current > 0 && manifest.dataUpdatedAt > sentAt.current)
-      setOverrides({});
-  }, [manifest.dataUpdatedAt, pending]);
+    const server = trip?.students;
+    if (!server) return;
+    setOverrides((current) => {
+      const next = { ...current };
+      let changed = false;
+      for (const s of server) {
+        if (next[s.studentId]?.status === s.status) {
+          delete next[s.studentId];
+          changed = true;
+        }
+      }
+      return changed ? next : current;
+    });
+  }, [trip]);
 
   const students = useMemo(() => {
     const list = (trip?.students ?? []).map((s) => ({

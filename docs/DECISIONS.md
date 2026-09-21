@@ -151,8 +151,9 @@ Format: the decision, then why.
   the E2E suite). Capacitor also serves from the root, so this is correct for the wrapped app.
 - **Driver taps are optimistic and offline-first**: the card changes instantly, the tap goes to
   the durable device queue with a one-shot location (≤ 1.5 s, never blocking the screen), and a
-  sync loop sends batches every 5 s and on reconnect. Local overrides are only dropped once a
-  manifest fetched _after_ the send arrives, so the screen never flashes an old status.
+  sync loop sends batches every 5 s and on reconnect. A child's local override is dropped only
+  when the server shows the same status, so a slow response can never flash an old status (the
+  first, timing-based version flickered on CI).
 - **Ending needs every queued tap delivered first** — the server decides with the full picture.
 - **The local alarm is synthesised with Web Audio** (no file, works offline) and sounds while the
   red "children on board" screen is open, and on the admin dashboard for open critical alerts
