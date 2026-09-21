@@ -136,13 +136,30 @@ export const enrollSchema = z.object({ organizationId: z.uuid() });
 
 export const decisionSchema = z.object({ note: z.string().trim().max(500).optional() });
 
-export const pushSubscriptionSchema = z.object({
-  provider: z.literal('webpush'),
-  platform: z.literal('web'),
-  endpoint: z.url().max(1000),
-  keys: z.object({ p256dh: z.string().min(10).max(200), auth: z.string().min(8).max(100) }),
-  userAgent: z.string().max(300).optional(),
-});
+const pushUserAgent = z.string().max(300).optional();
+/** A browser subscription, or the native device token of the Android/iOS app (phase 6). */
+export const pushSubscriptionSchema = z.discriminatedUnion('provider', [
+  z.object({
+    provider: z.literal('webpush'),
+    platform: z.literal('web'),
+    endpoint: z.url().max(1000),
+    keys: z.object({ p256dh: z.string().min(10).max(200), auth: z.string().min(8).max(100) }),
+    userAgent: pushUserAgent,
+  }),
+  z.object({
+    provider: z.literal('fcm'),
+    platform: z.literal('android'),
+    token: z.string().regex(/^[\w:.-]{20,4096}$/, 'push_token_format'),
+    userAgent: pushUserAgent,
+  }),
+  z.object({
+    provider: z.literal('apns'),
+    platform: z.literal('ios'),
+    token: z.string().regex(/^[0-9a-fA-F]{64,200}$/, 'push_token_format'),
+    userAgent: pushUserAgent,
+  }),
+]);
+export type PushSubscriptionInput = z.infer<typeof pushSubscriptionSchema>;
 
 export const emailCodePurposeSchema = z.enum(EMAIL_CODE_PURPOSES);
 

@@ -6,6 +6,7 @@ import type {
   PushResult,
   PushTarget,
 } from '../../src/push/push.provider';
+import { targetAddress } from '../../src/push/push.provider';
 
 /** Records emails instead of sending them. */
 export class CapturingEmailProvider implements EmailProvider {
@@ -34,7 +35,7 @@ export class FakePushProvider implements PushProvider {
   readonly goneEndpoints = new Set<string>();
 
   async send(target: PushTarget, message: PushMessage, options: PushOptions): Promise<PushResult> {
-    if (this.goneEndpoints.has(target.endpoint))
+    if (this.goneEndpoints.has(targetAddress(target)))
       return { ok: false, gone: true, error: '410: gone' };
     this.sent.push({ target, message, options });
     return { ok: true };

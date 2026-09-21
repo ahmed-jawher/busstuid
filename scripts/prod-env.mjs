@@ -65,6 +65,14 @@ MAIL_FROM=${JSON.stringify(arg('mail-from', `Wusool Safe <no-reply@${plainHttp ?
 
 # Optional error monitoring (off unless set).
 SENTRY_DSN=
+
+# Optional native app push (docs/RELEASE.md): Android via Firebase, iOS via APNs.
+FCM_SERVICE_ACCOUNT_BASE64=
+APNS_KEY_BASE64=
+APNS_KEY_ID=
+APNS_TEAM_ID=
+APNS_BUNDLE_ID=com.wusoolsafe.app
+APNS_ENV=production
 `;
 writeFileSync(out, env, { mode: 0o600 });
 console.log(`✓ ${out} written. Fill in SMTP_* before going live.`);

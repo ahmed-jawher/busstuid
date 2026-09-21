@@ -47,23 +47,27 @@ export function NotificationSetupPage() {
     mutationFn: async () => {
       const { publicKey } = await api<{ publicKey: string }>('/push/vapid-public-key');
       const reg = await platform.push.subscribe(publicKey);
-      if (reg.provider !== 'webpush') throw new Error('unsupported');
+      const userAgent = navigator.userAgent.slice(0, 300);
       const sub = await api<{ id: string }>('/push/subscriptions', {
         method: 'POST',
-        body: {
-          provider: 'webpush',
-          platform: 'web',
-          endpoint: reg.endpoint,
-          keys: { p256dh: reg.p256dh, auth: reg.auth },
-          userAgent: navigator.userAgent.slice(0, 300),
-        },
+        body:
+          reg.provider === 'webpush'
+            ? {
+                provider: 'webpush',
+                platform: 'web',
+                endpoint: reg.endpoint,
+                keys: { p256dh: reg.p256dh, auth: reg.auth },
+                userAgent,
+              }
+            : { provider: reg.provider, platform: reg.platform, token: reg.nativeToken, userAgent },
       });
       await api(`/push/subscriptions/${sub.id}/test`, { method: 'POST' });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['push-subscriptions'] }),
   });
 
-  const needsInstall = isIos() && !isStandalone();
+  // Inside the Android/iOS app there is nothing to install.
+  const needsInstall = platform.kind === 'web' && isIos() && !isStandalone();
   const unsupported = !platform.push.isSupported();
   const denied = enable.error instanceof Error && enable.error.message === 'push-permission-denied';
 

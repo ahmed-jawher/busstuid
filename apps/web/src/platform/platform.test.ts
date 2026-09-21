@@ -8,9 +8,4 @@ describe('selectPlatform', () => {
     expect(platform.kind).toBe('web');
     expect(platform.localNotifications.worksInBackground).toBe(false);
   });
-
-  it('refuses to run a native build before phase 6 instead of silently losing safety features', async () => {
-    const { selectPlatform } = await import('./index');
-    expect(() => selectPlatform(true)).toThrow(/phase 6/);
-  });
 });

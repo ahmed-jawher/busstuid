@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import type { ApnsCredentials } from '../push/apns.provider';
+import type { FcmCredentials } from '../push/fcm.provider';
 
 // Capacitor serves the wrapped app from these origins (PLAN §9.1).
 const CAPACITOR_ORIGINS = ['capacitor://localhost', 'https://localhost', 'http://localhost'];
@@ -41,7 +43,44 @@ const envSchema = z.object({
   /** Number of reverse proxies in front of the API (Caddy in production), for client IPs. */
   TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
   SENTRY_DSN: z.string().url().optional().or(z.literal('')),
+  /** Native push (phase 6), each optional: Android via FCM, iOS via APNs. */
+  FCM_SERVICE_ACCOUNT_BASE64: z.string().optional(),
+  APNS_KEY_BASE64: z.string().optional(),
+  APNS_KEY_ID: z.string().optional(),
+  APNS_TEAM_ID: z.string().optional(),
+  APNS_BUNDLE_ID: z
+    .string()
+    .optional()
+    .transform((v) => v || 'com.wusoolsafe.app'),
+  /** Development builds from Xcode get sandbox tokens; TestFlight and the App Store production. */
+  APNS_ENV: z.enum(['production', 'sandbox']).optional().or(z.literal('')),
 });
+
+function parseFcm(base64: string | undefined): FcmCredentials | null {
+  if (!base64) return null;
+  let json: Record<string, unknown>;
+  try {
+    json = JSON.parse(Buffer.from(base64, 'base64').toString('utf8')) as Record<string, unknown>;
+  } catch {
+    throw new Error('Invalid environment:\n  FCM_SERVICE_ACCOUNT_BASE64: not base64-encoded JSON');
+  }
+  const { project_id, client_email, private_key, token_uri } = json;
+  if (
+    typeof project_id !== 'string' ||
+    typeof client_email !== 'string' ||
+    typeof private_key !== 'string'
+  ) {
+    throw new Error(
+      'Invalid environment:\n  FCM_SERVICE_ACCOUNT_BASE64: not a Firebase service-account file',
+    );
+  }
+  return {
+    projectId: project_id,
+    clientEmail: client_email,
+    privateKey: private_key,
+    tokenUri: typeof token_uri === 'string' ? token_uri : 'https://oauth2.googleapis.com/token',
+  };
+}
 
 export interface AppConfig {
   nodeEnv: 'development' | 'test' | 'production';
@@ -62,6 +101,8 @@ export interface AppConfig {
   rateLimitEnabled: boolean;
   trustProxyHops: number;
   sentryDsn: string | null;
+  fcm: FcmCredentials | null;
+  apns: ApnsCredentials | null;
 }
 
 export const APP_CONFIG = Symbol('APP_CONFIG');
@@ -75,6 +116,11 @@ export function parseConfig(env: NodeJS.ProcessEnv): AppConfig {
   const e = result.data;
   if (e.NODE_ENV === 'production' && e.PUSH_PROVIDER !== 'webpush') {
     throw new Error('Invalid environment:\n  PUSH_PROVIDER: only webpush is allowed in production');
+  }
+  if (e.APNS_KEY_BASE64 && (!e.APNS_KEY_ID || !e.APNS_TEAM_ID)) {
+    throw new Error(
+      'Invalid environment:\n  APNS_KEY_ID and APNS_TEAM_ID are required with APNS_KEY_BASE64',
+    );
   }
   const webOrigins = e.WEB_ORIGINS.split(',')
     .map((o) => o.trim())
@@ -110,5 +156,18 @@ export function parseConfig(env: NodeJS.ProcessEnv): AppConfig {
       : e.NODE_ENV !== 'test',
     trustProxyHops: e.TRUST_PROXY_HOPS,
     sentryDsn: e.SENTRY_DSN || null,
+    fcm: parseFcm(e.FCM_SERVICE_ACCOUNT_BASE64),
+    apns:
+      e.APNS_KEY_BASE64 && e.APNS_KEY_ID && e.APNS_TEAM_ID
+        ? {
+            keyId: e.APNS_KEY_ID,
+            teamId: e.APNS_TEAM_ID,
+            privateKey: Buffer.from(e.APNS_KEY_BASE64, 'base64').toString('utf8'),
+            bundleId: e.APNS_BUNDLE_ID,
+            production:
+              (e.APNS_ENV || (e.NODE_ENV === 'production' ? 'production' : 'sandbox')) ===
+              'production',
+          }
+        : null,
   };
 }

@@ -134,3 +134,15 @@ passes too. ✅
 - Guardians now get one message per tap, so late offline batches report both boarding and
   getting off.
 - Coverage gate ≥ 90 % for the critical-path modules.
+
+## Phase 6 — Native apps (partial, PLAN §20)
+
+- Capacitor Android and iOS projects (`apps/web/android`, `apps/web/ios`), app id
+  `com.wusoolsafe.app`, Arabic first, permissions with explanations, no cloud backup.
+- Native device ports: push (FCM/APNs tokens), OS-scheduled reminders, Keychain/Keystore,
+  one-shot location, camera, haptics, keep-awake, lifecycle, notification deep links.
+- Server push via FCM HTTP v1 and APNs HTTP/2, optional and configured from the environment;
+  subscriptions accept native device tokens.
+- `native:sync` build that refuses a missing or local API address.
+- CI builds a debug APK on every pull request.
+- docs/RELEASE.md: the owner's steps for Firebase, Apple, signing, stores and on-device checks.

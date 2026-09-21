@@ -63,6 +63,7 @@ pnpm --filter @wusool/api db:rollback   # revert the newest migration (runs its 
 pnpm e2e                                 # Playwright scenarios on an isolated stack
 pnpm --filter @wusool/api loadtest       # 200 concurrent trips (docs/LOAD_TEST.md)
 pnpm --filter @wusool/api db:backup      # encrypted backup (needs pg_dump)
+VITE_API_URL=https://…/v1 pnpm --filter @wusool/web native:sync   # web build into android/ios
 ```
 
 ## Rules
@@ -81,6 +82,6 @@ pnpm --filter @wusool/api db:backup      # encrypted backup (needs pg_dump)
   typecheck and tests pass. Append to `docs/CHANGELOG.md` at the end of each phase.
 - Sensitive endpoints get `@Audit(...)`; new error codes need messages in both i18n files
   (a test enforces it).
-- Production: `infra/docker-compose.prod.yml` + docs/DEPLOY.md.
+- Production: `infra/docker-compose.prod.yml` + docs/DEPLOY.md. Store apps: docs/RELEASE.md.
 - When something is ambiguous: pick the option that is safest for children, then simplest, and
   record it in `docs/DECISIONS.md`.
