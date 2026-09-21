@@ -53,3 +53,21 @@ pass. ✅
   40 enrolled students with placeholder photos, 31 guardians, 1 pending request.
 - Tests: 57 API tests (integration tests on real PostgreSQL), including migration rollback and a
   schema-drift check.
+
+## Phase 2 — Trips
+
+**Acceptance:** tests 1 (boarded but not alighted blocks the normal end), 5 (duplicate events
+stored once) and 6 (late, out-of-order offline events end in the right state) pass. ✅
+Test 11 (no trip start without working notifications) and the trip part of test 12 also pass.
+
+- Pure, shared trip rules: trip status machine, per-child event fold, undo window, end-of-trip
+  check, and timezone helpers — 12 unit tests.
+- Organisation setup API: vehicles, routes with stops, rider assignments per stop, members.
+- Daily trip generation from routes (idempotent; also lazily on the driver's "today").
+- Driver API: today's trips, start, manifest (photos, stops, counts, PLAN §6.2 ordering), batched
+  taps with offline sync, heartbeat with foreground/background state, end (normal with empty
+  confirmation, or forced with reason), add an unexpected child.
+- Forced end with children on board or unaccounted for opens alerts (delivery in phase 3).
+- Guardian API: child's trips today and history.
+- Org API: trips by date, manual generation.
+- Tests: 81 API tests.

@@ -80,3 +80,35 @@ Format: the decision, then why.
 - **Push subscriptions are keyed by endpoint** and move to whoever signs in on that device.
 - **TOTP for admins is deferred to phase 5** (it is optional in PLAN §5.1); the column exists.
 - **Seed data** uses fictional names, reserved `example.com` emails and `+973 3999 xxxx` numbers.
+
+## Phase 2
+
+- **A child's status is always rebuilt from the full event history** (`foldStudentEvents` in
+  `packages/shared`), ordered by the device's `clientRecordedAt` with the server's receive time
+  as tie-breaker. Late, out-of-order and resent taps therefore converge on the same answer, and
+  the driver app can run the same function offline.
+- **Conservative fold rules**: a child can board from any state (including after alighting);
+  "absent" never overrides "boarded"; an "alight" for a child who never boarded has no effect. All
+  taps are still stored — nothing on the critical path is dropped.
+- **Undo**: 60 s by device time plus a 10 s clock-jitter allowance; an undo outside the window is
+  rejected and not stored. The original tap stays; the undo is a new event.
+- **Duplicate taps** are detected by `clientEventId` across all organisations, and re-checked under
+  the trip row lock so two simultaneous resends cannot both insert.
+- **A forced end is always possible** (the driver must never be trapped with an ended shift), but
+  children recorded on board raise a _critical_ `student_left_onboard` alert and children never
+  accounted for become `missing` with a _high_ alert of the same type — unknown is treated as
+  danger. Alerts are created now; delivery and escalation arrive in phase 3.
+- **Late offline taps** recorded on the device up to 5 minutes after the end are accepted and
+  update the child's state (a later human resolution still wins over them).
+- **Trips are generated lazily** whenever a driver opens "today", in addition to the nightly job
+  (phase 3), so a missed job never leaves a driver without a trip.
+- **Who may do what on a trip**: start — the assigned driver only; end — the driver or an org admin
+  (the driver may have forgotten); record taps/heartbeat/manifest — driver, attendants, admins.
+  Everyone else gets 404, so trip ids cannot be probed.
+- **Starting a trip requires a device that passed the test notification**, implementing PLAN §7
+  (test 11) already in this phase.
+- **Idempotency without storing `Idempotency-Key`s**: start/end are checked under a row lock and
+  events are keyed by `clientEventId`, so retries are harmless; the header is accepted and
+  documented but not needed.
+- **Guardian "today"** uses the local date of every supported country (both are UTC+3 today, but
+  the code does not assume it).
