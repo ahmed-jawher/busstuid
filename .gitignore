@@ -12,3 +12,10 @@ coverage/
 playwright-report/
 test-results/
 apps/web/dev-dist/
+
+# End-to-end artefacts
+apps/e2e/.state.json
+apps/e2e/fixtures/
+apps/e2e/test-results/
+apps/web/dist-e2e/
+apps/e2e/screenshots/

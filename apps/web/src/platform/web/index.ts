@@ -1,4 +1,5 @@
 import type { Platform } from '../types';
+import { createWebAlarm } from './alarm';
 import {
   createWebAppLifecycle,
   createWebCamera,
@@ -25,5 +26,6 @@ export function createWebPlatform(): Platform {
     haptics: createWebHaptics(),
     keepAwake: createWebKeepAwake(),
     appLifecycle: createWebAppLifecycle(),
+    alarm: createWebAlarm(),
   };
 }

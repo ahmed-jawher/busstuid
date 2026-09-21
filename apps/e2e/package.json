@@ -1,0 +1,21 @@
+{
+  "name": "@wusool/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "e2e": "playwright test",
+    "e2e:install": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@types/node": "24.13.6",
+    "@types/pg": "8.23.1",
+    "@wusool/api": "workspace:*",
+    "@wusool/config": "workspace:*",
+    "@wusool/dev-stack": "workspace:*",
+    "pg": "8.23.0",
+    "sharp": "0.35.4",
+    "typescript": "5.9.3"
+  }
+}

@@ -40,3 +40,38 @@ jobs:
       # Integration tests start real PostgreSQL 16 via embedded-postgres (no Docker needed).
       - name: Test
         run: pnpm test
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build shared packages
+        run: pnpm exec turbo run build --filter=./packages/*
+
+      - name: Install Chromium
+        run: pnpm --filter @wusool/e2e exec playwright install --with-deps chromium
+
+      # PLAN §16: the four end-to-end scenarios through the real UI on a 375 px screen.
+      - name: End-to-end tests
+        run: pnpm e2e
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-screenshots
+          path: |
+            apps/e2e/screenshots
+            apps/e2e/test-results
+          if-no-files-found: ignore

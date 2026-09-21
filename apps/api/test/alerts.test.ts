@@ -345,3 +345,97 @@ describe('pg-boss wiring', () => {
     }
   });
 });
+
+describe('guardian alert screen and driver candidates', () => {
+  let t: TestApp;
+  beforeAll(async () => {
+    t = await createTestApp();
+  });
+  afterAll(() => t?.close());
+
+  it('gives a guardian the full-screen alert details with driver phone and emergency number', async () => {
+    const f = await buildFleet(t, 1);
+    await t.http.post(`/v1/trips/${f.tripId}/start`).set(f.driver.auth).expect(200);
+    await t.http
+      .post(`/v1/trips/${f.tripId}/events`)
+      .set(f.driver.auth)
+      .send({ events: [tap(f.children[0]!.id, 'board', new Date(Date.now() - MIN))] })
+      .expect(200);
+    await t.http
+      .post(`/v1/trips/${f.tripId}/end`)
+      .set(f.driver.auth)
+      .send({ force: true, reason: 'اختبار الشاشة' })
+      .expect(200);
+    const alert = await t.db.admin.alert.findFirstOrThrow({ where: { tripId: f.tripId } });
+    const res = await t.http.get(`/v1/me/alerts/${alert.id}`).set(f.guardian.auth).expect(200);
+    expect(res.body).toMatchObject({
+      severity: 'critical',
+      student: { fullNameAr: 'طفل 1' },
+      emergencyNumber: '999',
+      driver: { fullNameAr: 'سائق الاختبار', phoneVerified: false },
+    });
+    const other = await buildFleet(t, 1);
+    await t.http.get(`/v1/me/alerts/${alert.id}`).set(other.guardian.auth).expect(404);
+  });
+
+  it('lets the driver find enrolled children who are not on the trip', async () => {
+    const f = await buildFleet(t, 2);
+    await t.db.admin.tripStudent.deleteMany({
+      where: { tripId: f.tripId, studentId: f.children[1]!.id },
+    });
+    const res = await t.http
+      .get(`/v1/trips/${f.tripId}/candidates`)
+      .query({ q: 'طفل' })
+      .set(f.driver.auth)
+      .expect(200);
+    expect(res.body.map((s: { id: string }) => s.id)).toEqual([f.children[1]!.id]);
+    await t.http.get(`/v1/trips/${f.tripId}/candidates`).set(f.guardian.auth).expect(404);
+  });
+});
+
+describe('stale alarms after resolution', () => {
+  let t: TestApp;
+  beforeAll(async () => {
+    t = await createTestApp();
+  });
+  afterAll(() => t?.close());
+
+  it('never delivers a queued alarm once the alert is resolved', async () => {
+    const f = await buildFleet(t, 1);
+    await enablePush(t, f.guardian);
+    await t.http.post(`/v1/trips/${f.tripId}/start`).set(f.driver.auth).expect(200);
+    await t.http
+      .post(`/v1/trips/${f.tripId}/events`)
+      .set(f.driver.auth)
+      .send({ events: [tap(f.children[0]!.id, 'board', new Date(Date.now() - MIN))] })
+      .expect(200);
+    await t.http
+      .post(`/v1/trips/${f.tripId}/end`)
+      .set(f.driver.auth)
+      .send({ force: true, reason: 'اختبار الترتيب' })
+      .expect(200);
+    await t.drain();
+    const alert = await t.db.admin.alert.findFirstOrThrow({ where: { tripId: f.tripId } });
+    // Queue another escalation round, then resolve before it is sent.
+    const queued = await t.db.admin.notificationDelivery.findMany({
+      where: { notification: { alertId: alert.id } },
+    });
+    await t.db.admin.notificationDelivery.updateMany({
+      where: { id: { in: queued.map((d) => d.id) } },
+      data: { status: 'queued' },
+    });
+    await t.http
+      .post(`/v1/alerts/${alert.id}/resolve`)
+      .set(f.admin.auth)
+      .send({ reason: 'false_alarm' })
+      .expect(200);
+    const sentBefore = t.push.sent.length;
+    await t.jobs.run('notification-dispatch', new Date(Date.now() + 2 * MIN));
+    await t.drain();
+    expect(t.push.sent.slice(sentBefore).some((p) => p.message.critical)).toBe(false);
+    const stale = await t.db.admin.notificationDelivery.findMany({
+      where: { id: { in: queued.map((d) => d.id) } },
+    });
+    expect(stale.every((d) => d.lastError === 'alert_resolved_before_send')).toBe(true);
+  });
+});

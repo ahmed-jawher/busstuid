@@ -8,8 +8,9 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig({
   // Reads VITE_* from the monorepo root .env (PLAN §9.1: VITE_API_URL).
   envDir: path.resolve(__dirname, '../..'),
-  // Relative asset paths so the same dist/ works on the web and inside Capacitor.
-  base: './',
+  // Absolute asset paths: deep links such as /trip/:id must load /assets/…, not /trip/assets/….
+  // Capacitor serves the app from the root too (capacitor://localhost/), so this works there.
+  base: '/',
   resolve: {
     alias: { '@': path.resolve(__dirname, 'src') },
   },
@@ -28,7 +29,7 @@ export default defineConfig({
         description: 'سلامة الطلاب في النقل المدرسي',
         lang: 'ar',
         dir: 'rtl',
-        start_url: './',
+        start_url: '/',
         display: 'standalone',
         background_color: '#f8f7f7',
         theme_color: '#ce1126',

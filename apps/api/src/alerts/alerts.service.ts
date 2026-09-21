@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import type { RESOLUTION_REASONS } from '@wusool/shared';
+import { COUNTRY_DEFAULTS, type RESOLUTION_REASONS } from '@wusool/shared';
 import { ApiError, Errors } from '../common/api-error';
 import { SideEffects } from '../common/side-effects';
 import { PrismaService } from '../database/prisma.service';
@@ -85,6 +85,57 @@ export class AlertsService {
       select: ALERT_SELECT,
     });
     return { asGuardian, asDriver };
+  }
+
+  /**
+   * Full-screen alert for a guardian (PLAN §13): their child, the vehicle, the driver's phone
+   * for a free `tel:` call, and the emergency number. Visibility is decided by RLS as the
+   * guardian; only then is the driver's phone read.
+   */
+  async getForGuardian(userId: string, alertId: string) {
+    const alert = await this.prisma.withContext({ userId }, (tx) =>
+      tx.alert.findFirst({
+        where: { id: alertId },
+        select: {
+          id: true,
+          type: true,
+          severity: true,
+          status: true,
+          openedAt: true,
+          resolvedAt: true,
+          escalationLevel: true,
+          studentId: true,
+          tripId: true,
+        },
+      }),
+    );
+    if (!alert || !alert.studentId) throw Errors.notFound();
+    const info = await this.prisma.system.trip.findUniqueOrThrow({
+      where: { id: alert.tripId },
+      select: {
+        vehicle: { select: { plateNumber: true } },
+        organization: { select: { nameAr: true, nameEn: true, country: true } },
+        driverId: true,
+      },
+    });
+    const [driver, student] = await Promise.all([
+      this.prisma.system.user.findUnique({
+        where: { id: info.driverId },
+        select: { fullNameAr: true, fullNameEn: true, phoneE164: true },
+      }),
+      this.prisma.system.student.findUniqueOrThrow({
+        where: { id: alert.studentId },
+        select: { fullNameAr: true, fullNameEn: true },
+      }),
+    ]);
+    return {
+      ...alert,
+      student,
+      vehicle: info.vehicle,
+      organization: { nameAr: info.organization.nameAr, nameEn: info.organization.nameEn },
+      driver: driver ? { ...driver, phoneVerified: false } : null,
+      emergencyNumber: COUNTRY_DEFAULTS[info.organization.country].emergencyNumber,
+    };
   }
 
   async get(userId: string, alertId: string) {

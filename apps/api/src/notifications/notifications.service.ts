@@ -154,6 +154,7 @@ export class NotificationsService {
             payload: true,
             priority: true,
             user: { select: { preferredLocale: true } },
+            alert: { select: { status: true } },
           },
         },
         pushSubscription: {
@@ -161,6 +162,15 @@ export class NotificationsService {
         },
       },
     });
+    // An alarm that was queued before the alert was resolved must not arrive after the
+    // "confirmed safe" message and leave the guardian with a stale alarm on screen.
+    if (d.notification.templateKey !== 'resolved' && d.notification.alert?.status === 'resolved') {
+      await this.prisma.system.notificationDelivery.update({
+        where: { id: deliveryId },
+        data: { status: 'failed', attempts: MAX_ATTEMPTS, lastError: 'alert_resolved_before_send' },
+      });
+      return;
+    }
     const sub = d.pushSubscription;
     if (!sub || sub.revokedAt || !sub.endpoint || !sub.p256dh || !sub.authSecret) {
       await this.prisma.system.notificationDelivery.update({

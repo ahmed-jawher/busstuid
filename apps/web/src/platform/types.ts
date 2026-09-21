@@ -90,6 +90,15 @@ export interface KeepAwakePort {
   disable(): Promise<void>;
 }
 
+/**
+ * Local alarm sound (PLAN §3.5): generated on the device, needs no network or downloaded file.
+ */
+export interface AlarmPort {
+  start(): void;
+  stop(): void;
+  readonly active: boolean;
+}
+
 export interface AppLifecyclePort {
   onPause(listener: () => void): () => void;
   onResume(listener: () => void): () => void;
@@ -107,4 +116,5 @@ export interface Platform {
   haptics: HapticsPort;
   keepAwake: KeepAwakePort;
   appLifecycle: AppLifecyclePort;
+  alarm: AlarmPort;
 }

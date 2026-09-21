@@ -32,3 +32,12 @@ describe('parseConfig', () => {
     expect(() => parseConfig({ ...base, JWT_ACCESS_SECRET: 'short' })).toThrow(/JWT_ACCESS_SECRET/);
   });
 });
+
+describe('push provider setting', () => {
+  it('never allows the log-only provider in production', () => {
+    expect(() => parseConfig({ ...base, NODE_ENV: 'production', PUSH_PROVIDER: 'log' })).toThrow(
+      /PUSH_PROVIDER/,
+    );
+    expect(parseConfig({ ...base, PUSH_PROVIDER: 'log' }).pushProvider).toBe('log');
+  });
+});

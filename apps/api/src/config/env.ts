@@ -34,6 +34,8 @@ const envSchema = z.object({
   MAIL_FROM: z.string().default('Wusool Safe <no-reply@wusool.local>'),
   /** Background jobs (pg-boss). Off by default in tests, which call the services directly. */
   JOBS_ENABLED: z.enum(['true', 'false']).optional(),
+  /** 'log' records pushes instead of sending them (end-to-end tests); refused in production. */
+  PUSH_PROVIDER: z.enum(['webpush', 'log']).default('webpush'),
 });
 
 export interface AppConfig {
@@ -51,6 +53,7 @@ export interface AppConfig {
   smtp: { host: string; port: number; secure: boolean; user?: string; password?: string };
   mailFrom: string;
   jobsEnabled: boolean;
+  pushProvider: 'webpush' | 'log';
 }
 
 export const APP_CONFIG = Symbol('APP_CONFIG');
@@ -62,6 +65,9 @@ export function parseConfig(env: NodeJS.ProcessEnv): AppConfig {
     throw new Error(`Invalid environment:\n${issues.join('\n')}`);
   }
   const e = result.data;
+  if (e.NODE_ENV === 'production' && e.PUSH_PROVIDER !== 'webpush') {
+    throw new Error('Invalid environment:\n  PUSH_PROVIDER: only webpush is allowed in production');
+  }
   const webOrigins = e.WEB_ORIGINS.split(',')
     .map((o) => o.trim())
     .filter(Boolean);
@@ -90,5 +96,6 @@ export function parseConfig(env: NodeJS.ProcessEnv): AppConfig {
     },
     mailFrom: e.MAIL_FROM,
     jobsEnabled: e.JOBS_ENABLED ? e.JOBS_ENABLED === 'true' : e.NODE_ENV !== 'test',
+    pushProvider: e.PUSH_PROVIDER,
   };
 }
