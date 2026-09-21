@@ -3,9 +3,11 @@ import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 import { AuthModule } from './auth/auth.module';
 import { AlertsModule } from './alerts/alerts.module';
+import { AuditModule } from './audit/audit';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
 import { SideEffectsModule } from './common/side-effects';
 import { AccessGuard } from './common/guards';
+import { RateLimitGuard, RateLimitModule } from './common/rate-limit';
 import { ConfigModule } from './config/config.module';
 import type { AppConfig } from './config/env';
 import { DatabaseModule } from './database/database.module';
@@ -48,8 +50,10 @@ export class AppModule {
             },
           },
         }),
+        RateLimitModule,
         DatabaseModule,
         SideEffectsModule,
+        AuditModule,
         NotificationsModule,
         EmailModule,
         PushModule,
@@ -64,6 +68,8 @@ export class AppModule {
       ],
       controllers: [HealthController],
       providers: [
+        // Rate limits run first, before any database work.
+        { provide: APP_GUARD, useClass: RateLimitGuard },
         { provide: APP_GUARD, useClass: AccessGuard },
         { provide: APP_FILTER, useClass: AllExceptionsFilter },
       ],

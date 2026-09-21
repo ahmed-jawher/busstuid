@@ -11,6 +11,7 @@ import {
 } from '@wusool/shared';
 import type { z } from 'zod';
 import { ClientIp, Public } from '../common/auth-context';
+import { StrictLimit } from '../common/rate-limit';
 import { ApiZodBody, zod } from '../common/zod';
 import { AuthService } from './auth.service';
 import { TokensService } from './tokens.service';
@@ -25,6 +26,7 @@ export class AuthController {
   ) {}
 
   @Post('register')
+  @StrictLimit.email()
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiZodBody(registerSchema)
   async register(
@@ -36,6 +38,7 @@ export class AuthController {
   }
 
   @Post('verify-email')
+  @StrictLimit.code()
   @HttpCode(HttpStatus.OK)
   @ApiZodBody(verifyEmailSchema)
   verifyEmail(@Body(zod(verifyEmailSchema)) body: z.output<typeof verifyEmailSchema>) {
@@ -43,6 +46,7 @@ export class AuthController {
   }
 
   @Post('resend-code')
+  @StrictLimit.email()
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiZodBody(resendCodeSchema)
   async resendCode(
@@ -54,10 +58,11 @@ export class AuthController {
   }
 
   @Post('login')
+  @StrictLimit.login()
   @HttpCode(HttpStatus.OK)
   @ApiZodBody(loginSchema)
   login(@Body(zod(loginSchema)) body: z.output<typeof loginSchema>) {
-    return this.auth.login(body.email, body.password, body.deviceInfo);
+    return this.auth.login(body.email, body.password, body.deviceInfo, body.totp);
   }
 
   @Post('refresh')
@@ -75,6 +80,7 @@ export class AuthController {
   }
 
   @Post('forgot-password')
+  @StrictLimit.email()
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiZodBody(forgotPasswordSchema)
   async forgotPassword(
@@ -86,6 +92,7 @@ export class AuthController {
   }
 
   @Post('reset-password')
+  @StrictLimit.code()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiZodBody(resetPasswordSchema)
   async resetPassword(@Body(zod(resetPasswordSchema)) body: z.output<typeof resetPasswordSchema>) {

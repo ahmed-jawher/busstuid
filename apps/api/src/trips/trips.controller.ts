@@ -18,6 +18,7 @@ import {
   tripEventsBatchSchema,
 } from '@wusool/shared';
 import { z } from 'zod';
+import { Audit } from '../audit/audit';
 import {
   Auth,
   Org,
@@ -50,6 +51,7 @@ export class TripsController {
   }
 
   @Post('trips/:id/start')
+  @Audit('trip.start', 'trip', { idParam: 'id' })
   @HttpCode(HttpStatus.OK)
   @ApiHeaders([IDEMPOTENCY_HEADER])
   start(@Auth() auth: AuthContext, @Param('id', ParseUUIDPipe) id: string) {
@@ -85,6 +87,7 @@ export class TripsController {
   }
 
   @Post('trips/:id/end')
+  @Audit('trip.end', 'trip', { idParam: 'id', bodyFields: ['confirmEmpty', 'force', 'reason'] })
   @HttpCode(HttpStatus.OK)
   @ApiHeaders([IDEMPOTENCY_HEADER])
   @ApiZodBody(endTripSchema)
@@ -107,6 +110,7 @@ export class TripsController {
   }
 
   @Post('trips/:id/students')
+  @Audit('trip.add_unexpected_student', 'trip', { idParam: 'id', bodyFields: ['studentId'] })
   @ApiZodBody(addTripStudentSchema)
   addStudent(
     @Auth() auth: AuthContext,

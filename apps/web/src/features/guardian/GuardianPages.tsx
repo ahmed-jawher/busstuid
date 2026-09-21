@@ -1,9 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
-import { Link, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
+import { Dialog } from '@/components/ui/dialog';
+import { TextField } from '@/components/ui/form';
 import { Card, EmptyState, Notice, PageHeader, Spinner } from '@/components/ui/layout';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/errors';
@@ -197,6 +200,81 @@ export function ChildPage() {
         <h2 className="text-lg font-bold">{t('guardian.history')}</h2>
         {history.data && <TripList rows={history.data} />}
       </section>
+      <ChildDataRights childId={c.id} />
     </div>
+  );
+}
+
+/** Right of access and erasure for the child's data (PLAN §14). */
+function ChildDataRights({ childId }: { childId: string }) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [password, setPassword] = useState('');
+  const exportData = useMutation({
+    mutationFn: () => api<object>(`/children/${childId}/export`),
+    onSuccess: (data) => {
+      const url = URL.createObjectURL(
+        new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }),
+      );
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `wusool-child-${childId}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+  });
+  const remove = useMutation({
+    mutationFn: () => api(`/children/${childId}`, { method: 'DELETE', body: { password } }),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ['children'] });
+      navigate('/guardian');
+    },
+  });
+  return (
+    <section className="space-y-2 border-t border-border pt-4">
+      <h2 className="text-lg font-bold">{t('guardian.dataRights')}</h2>
+      <p className="text-sm text-muted">{t('guardian.dataRightsIntro')}</p>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant="outline"
+          disabled={exportData.isPending}
+          onClick={() => exportData.mutate()}
+        >
+          {t('guardian.exportData')}
+        </Button>
+        <Button variant="danger" onClick={() => setOpen(true)}>
+          {t('guardian.deleteData')}
+        </Button>
+      </div>
+      {exportData.error && <Notice tone="danger">{errorMessage(exportData.error)}</Notice>}
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title={t('guardian.deleteData')}
+        tone="danger"
+      >
+        <p>{t('guardian.deleteDataWarning')}</p>
+        <TextField
+          label={t('auth.password')}
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        {remove.error && <Notice tone="danger">{errorMessage(remove.error)}</Notice>}
+        <Button
+          variant="danger"
+          className="w-full"
+          disabled={!password || remove.isPending}
+          onClick={() => remove.mutate()}
+        >
+          {t('guardian.deleteDataConfirm')}
+        </Button>
+        <Button variant="ghost" className="w-full" onClick={() => setOpen(false)}>
+          {t('common.cancel')}
+        </Button>
+      </Dialog>
+    </section>
   );
 }

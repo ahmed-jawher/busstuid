@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type { Response } from 'express';
+import { reportError } from './monitoring';
 
 const STATUS_CODES: Record<number, string> = {
   400: 'bad_request',
@@ -62,6 +63,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     this.logger.error(exception instanceof Error ? exception.stack : String(exception));
+    reportError(exception);
     this.send(res, HttpStatus.INTERNAL_SERVER_ERROR, {
       error: { code: 'internal_error', message: 'internal_error' },
     });

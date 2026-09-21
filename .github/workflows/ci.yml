@@ -75,3 +75,43 @@ jobs:
             apps/e2e/screenshots
             apps/e2e/test-results
           if-no-files-found: ignore
+
+  # Production images and a smoke test of the whole stack through Caddy (docs/DEPLOY.md).
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Generate a throwaway production env
+        run: node scripts/prod-env.mjs --domain :80
+
+      - name: Build and start the stack
+        run: docker compose -f infra/docker-compose.prod.yml --env-file .env.production up -d --build --wait --wait-timeout 300
+
+      - name: Smoke test through Caddy
+        run: |
+          curl -fsS http://localhost/v1/health | tee /dev/stderr | grep '"database":"up"'
+          curl -fsS http://localhost/ | grep -q 'وصول آمن'
+          curl -fsS http://localhost/trip/some-deep-link | grep -q '<div id="root">'
+          curl -fsSI http://localhost/ | grep -qi 'content-security-policy'
+          docker compose -f infra/docker-compose.prod.yml --env-file .env.production exec -T backup node dist/ops/cli.js backup
+          docker compose -f infra/docker-compose.prod.yml --env-file .env.production exec -T backup sh -c 'ls -l /backups && ls /backups | grep -q ".dump.enc$"'
+
+      - name: Logs on failure
+        if: failure()
+        run: docker compose -f infra/docker-compose.prod.yml --env-file .env.production logs --tail 200
+
+      - name: Stop
+        if: always()
+        run: docker compose -f infra/docker-compose.prod.yml --env-file .env.production down -v

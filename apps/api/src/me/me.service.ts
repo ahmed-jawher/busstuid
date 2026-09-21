@@ -1,11 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import type { Locale } from '@wusool/shared';
 import { EmailCodesService } from '../auth/email-codes.service';
 import { verifyPassword } from '../auth/passwords';
+import {
+  decryptField,
+  encryptField,
+  generateTotpSecret,
+  otpauthUri,
+  verifyTotp,
+} from '../auth/totp';
+import { APP_CONFIG, type AppConfig } from '../config/env';
 import { TokensService } from '../auth/tokens.service';
 import { Errors } from '../common/api-error';
 import { PrismaService } from '../database/prisma.service';
 import { assertDriverPhoneAvailable, isIndependentDriver } from '../organizations/driver-phone';
+import { removeChildForGuardian } from '../students/child-data';
 
 @Injectable()
 export class MeService {
@@ -13,6 +22,7 @@ export class MeService {
     private readonly prisma: PrismaService,
     private readonly codes: EmailCodesService,
     private readonly tokens: TokensService,
+    @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
   async profile(userId: string) {
@@ -30,6 +40,7 @@ export class MeService {
           preferredLocale: true,
           muteRoutineNotifications: true,
           isPlatformAdmin: true,
+          totpEnabledAt: true,
           status: true,
         },
       }),
@@ -45,8 +56,13 @@ export class MeService {
         },
       },
     });
-    const { status: _status, emailVerifiedAt, ...rest } = user;
-    return { ...rest, emailVerified: emailVerifiedAt !== null, memberships };
+    const { status: _status, emailVerifiedAt, totpEnabledAt, ...rest } = user;
+    return {
+      ...rest,
+      emailVerified: emailVerifiedAt !== null,
+      totpEnabled: totpEnabledAt !== null,
+      memberships,
+    };
   }
 
   async updateProfile(
@@ -127,38 +143,9 @@ export class MeService {
     await this.prisma.systemTx(async (tx) => {
       const links = await tx.studentGuardian.findMany({
         where: { guardianUserId: userId },
-        select: {
-          studentId: true,
-          student: { select: { _count: { select: { guardians: true } } } },
-        },
+        select: { studentId: true },
       });
-      for (const link of links) {
-        if (link.student._count.guardians > 1) {
-          await tx.studentGuardian.delete({
-            where: {
-              studentId_guardianUserId: { studentId: link.studentId, guardianUserId: userId },
-            },
-          });
-          continue;
-        }
-        await tx.studentPhoto.deleteMany({ where: { studentId: link.studentId } });
-        await tx.consent.updateMany({
-          where: { studentId: link.studentId, withdrawnAt: null },
-          data: { withdrawnAt: now },
-        });
-        await tx.enrollmentRequest.updateMany({
-          where: { studentId: link.studentId, status: 'pending' },
-          data: { status: 'cancelled', decidedAt: now },
-        });
-        await tx.orgStudent.updateMany({
-          where: { studentId: link.studentId, status: 'active' },
-          data: { status: 'removed', removedAt: now },
-        });
-        await tx.student.update({
-          where: { id: link.studentId },
-          data: { deletedAt: now, notes: null, fullNameEn: null },
-        });
-      }
+      for (const link of links) await removeChildForGuardian(tx, link.studentId, userId, now);
       await tx.membership.updateMany({ where: { userId }, data: { status: 'revoked' } });
       await tx.pushSubscription.updateMany({
         where: { userId, revokedAt: null },
@@ -179,6 +166,44 @@ export class MeService {
         },
       });
     });
+  }
+
+  /** Starts TOTP enrolment: a new secret, not active until a code from it is confirmed. */
+  async setupTotp(userId: string, password: string) {
+    const user = await this.requirePassword(userId, password);
+    if (user.totpEnabledAt) throw Errors.conflict('totp_already_enabled');
+    const secret = generateTotpSecret();
+    await this.prisma.system.user.update({
+      where: { id: userId },
+      data: { totpSecretEncrypted: encryptField(secret, this.config.fieldEncryptionKey) },
+    });
+    return { secret, otpauthUri: otpauthUri(secret, user.email) };
+  }
+
+  async enableTotp(userId: string, code: string) {
+    const user = await this.prisma.system.user.findUniqueOrThrow({ where: { id: userId } });
+    if (user.totpEnabledAt) throw Errors.conflict('totp_already_enabled');
+    if (!user.totpSecretEncrypted) throw Errors.badRequest('totp_not_set_up');
+    const secret = decryptField(user.totpSecretEncrypted, this.config.fieldEncryptionKey);
+    if (!verifyTotp(secret, code)) throw Errors.badRequest('totp_invalid');
+    await this.prisma.system.user.update({
+      where: { id: userId },
+      data: { totpEnabledAt: new Date() },
+    });
+    return { totpEnabled: true };
+  }
+
+  async disableTotp(userId: string, password: string, code: string) {
+    const user = await this.requirePassword(userId, password);
+    if (!user.totpEnabledAt || !user.totpSecretEncrypted)
+      throw Errors.badRequest('totp_not_enabled');
+    const secret = decryptField(user.totpSecretEncrypted, this.config.fieldEncryptionKey);
+    if (!verifyTotp(secret, code)) throw Errors.badRequest('totp_invalid');
+    await this.prisma.system.user.update({
+      where: { id: userId },
+      data: { totpEnabledAt: null, totpSecretEncrypted: null },
+    });
+    return { totpEnabled: false };
   }
 
   private async requirePassword(userId: string, password: string) {

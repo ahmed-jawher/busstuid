@@ -36,6 +36,11 @@ const envSchema = z.object({
   JOBS_ENABLED: z.enum(['true', 'false']).optional(),
   /** 'log' records pushes instead of sending them (end-to-end tests); refused in production. */
   PUSH_PROVIDER: z.enum(['webpush', 'log']).default('webpush'),
+  /** Per-IP rate limits (PLAN §17 phase 5). Off by default in tests. */
+  RATE_LIMIT_ENABLED: z.enum(['true', 'false']).optional(),
+  /** Number of reverse proxies in front of the API (Caddy in production), for client IPs. */
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
+  SENTRY_DSN: z.string().url().optional().or(z.literal('')),
 });
 
 export interface AppConfig {
@@ -54,6 +59,9 @@ export interface AppConfig {
   mailFrom: string;
   jobsEnabled: boolean;
   pushProvider: 'webpush' | 'log';
+  rateLimitEnabled: boolean;
+  trustProxyHops: number;
+  sentryDsn: string | null;
 }
 
 export const APP_CONFIG = Symbol('APP_CONFIG');
@@ -97,5 +105,10 @@ export function parseConfig(env: NodeJS.ProcessEnv): AppConfig {
     mailFrom: e.MAIL_FROM,
     jobsEnabled: e.JOBS_ENABLED ? e.JOBS_ENABLED === 'true' : e.NODE_ENV !== 'test',
     pushProvider: e.PUSH_PROVIDER,
+    rateLimitEnabled: e.RATE_LIMIT_ENABLED
+      ? e.RATE_LIMIT_ENABLED === 'true'
+      : e.NODE_ENV !== 'test',
+    trustProxyHops: e.TRUST_PROXY_HOPS,
+    sentryDsn: e.SENTRY_DSN || null,
   };
 }

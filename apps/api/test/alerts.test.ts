@@ -338,6 +338,7 @@ describe('pg-boss wiring', () => {
         'alert-escalation',
         'daily-trip-generation',
         'notification-dispatch',
+        'retention-cleanup',
         'trip-watchdog',
       ]);
     } finally {

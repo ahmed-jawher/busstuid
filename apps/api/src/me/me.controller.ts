@@ -5,9 +5,13 @@ import {
   confirmEmailChangeSchema,
   deleteAccountSchema,
   notificationSettingsSchema,
+  totpDisableSchema,
+  totpEnableSchema,
+  totpSetupSchema,
   updateProfileSchema,
 } from '@wusool/shared';
 import type { z } from 'zod';
+import { Audit } from '../audit/audit';
 import { Auth, ClientIp, type AuthContext } from '../common/auth-context';
 import { ApiZodBody, zod } from '../common/zod';
 import { MeService } from './me.service';
@@ -63,7 +67,40 @@ export class MeController {
     return this.me.confirmEmailChange(auth.userId, body.code);
   }
 
+  @Post('totp/setup')
+  @HttpCode(HttpStatus.OK)
+  @ApiZodBody(totpSetupSchema)
+  setupTotp(
+    @Auth() auth: AuthContext,
+    @Body(zod(totpSetupSchema)) body: z.output<typeof totpSetupSchema>,
+  ) {
+    return this.me.setupTotp(auth.userId, body.password);
+  }
+
+  @Post('totp/enable')
+  @HttpCode(HttpStatus.OK)
+  @Audit('totp.enable', 'user')
+  @ApiZodBody(totpEnableSchema)
+  enableTotp(
+    @Auth() auth: AuthContext,
+    @Body(zod(totpEnableSchema)) body: z.output<typeof totpEnableSchema>,
+  ) {
+    return this.me.enableTotp(auth.userId, body.code);
+  }
+
+  @Post('totp/disable')
+  @HttpCode(HttpStatus.OK)
+  @Audit('totp.disable', 'user')
+  @ApiZodBody(totpDisableSchema)
+  disableTotp(
+    @Auth() auth: AuthContext,
+    @Body(zod(totpDisableSchema)) body: z.output<typeof totpDisableSchema>,
+  ) {
+    return this.me.disableTotp(auth.userId, body.password, body.code);
+  }
+
   @Delete()
+  @Audit('account.delete', 'user')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiZodBody(deleteAccountSchema)
   async deleteAccount(

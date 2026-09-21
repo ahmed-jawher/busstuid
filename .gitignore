@@ -19,3 +19,6 @@ apps/e2e/fixtures/
 apps/e2e/test-results/
 apps/web/dist-e2e/
 apps/e2e/screenshots/
+backups/
+apps/api/backups/
+infra/backups/

@@ -1,0 +1,87 @@
+# Production on one small VPS (PLAN §9): PostgreSQL + API + Caddy (web + HTTPS) + daily backups.
+#   node scripts/prod-env.mjs --domain app.example.com --mail-from "Wusool Safe <no-reply@example.com>"
+#   docker compose -f infra/docker-compose.prod.yml --env-file .env.production up -d --build
+# See docs/DEPLOY.md.
+name: wusool
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: wusool
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${PG_PASSWORD:?run scripts/prod-env.mjs first}
+      POSTGRES_INITDB_ARGS: --encoding=UTF8 --locale=C
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d wusool']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ..
+      dockerfile: infra/api.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: ../.env.production
+    environment:
+      NODE_ENV: production
+      API_PORT: '3000'
+      TRUST_PROXY_HOPS: '1'
+      DATABASE_ADMIN_URL: postgres://postgres:${PG_PASSWORD}@postgres:5432/wusool
+      DATABASE_URL: postgres://wusool_app:${APP_DB_PASSWORD}@postgres:5432/wusool?connection_limit=20
+      DATABASE_SYSTEM_URL: postgres://wusool_system:${SYSTEM_DB_PASSWORD}@postgres:5432/wusool?connection_limit=10
+
+  web:
+    build:
+      context: ..
+      dockerfile: infra/web.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env.production}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+
+  backup:
+    build:
+      context: ..
+      dockerfile: infra/api.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    env_file: ../.env.production
+    environment:
+      SKIP_MIGRATIONS: '1'
+      DATABASE_ADMIN_URL: postgres://postgres:${PG_PASSWORD}@postgres:5432/wusool
+      BACKUP_DIR: /backups
+    command: ['node', 'dist/ops/cli.js', 'backup', '--daily']
+    healthcheck:
+      # Healthy while a backup newer than 25 hours exists (one is taken at start-up).
+      test: ['CMD-SHELL', 'find /backups -name "*.dump.enc" -mmin -1500 | grep -q .']
+      interval: 1h
+      start_period: 2m
+      start_interval: 5s
+    volumes:
+      # Named volume: it inherits the image's /backups ownership (the service runs as `node`).
+      # Copy the files off the server regularly (docs/DEPLOY.md); they are encrypted with BACKUP_KEY.
+      - backups:/backups
+
+volumes:
+  backups:
+  pgdata:
+  caddy_data:
+  caddy_config:

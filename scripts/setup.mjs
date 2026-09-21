@@ -43,6 +43,7 @@ fill('JWT_ACCESS_SECRET', secret());
 fill('JWT_REFRESH_SECRET', secret());
 fill('FIELD_ENCRYPTION_KEY', randomBytes(32).toString('base64'));
 fill('PHOTO_URL_SECRET', secret());
+fill('BACKUP_KEY', randomBytes(32).toString('base64'));
 if (!get('VAPID_PUBLIC_KEY') || !get('VAPID_PRIVATE_KEY')) {
   const keys = webpush.generateVAPIDKeys();
   text = text.replace(/^VAPID_PUBLIC_KEY=.*$/m, 'VAPID_PUBLIC_KEY=');

@@ -50,7 +50,9 @@
     "code": "Code",
     "verify": "Verify",
     "resendCode": "Resend code",
-    "codeResent": "A new code was sent to your email"
+    "codeResent": "A new code was sent to your email",
+    "totpCode": "Authenticator code",
+    "totpHint": "The 6-digit code in your authenticator app"
   },
   "push": {
     "title": "Turn on notifications",
@@ -175,7 +177,13 @@
     "privacyNotice": "We use your child's name, photo and date of birth only to record boarding and getting off and to inform you. Location is recorded only at the moment the driver taps; there is no continuous tracking. You can request deletion in Settings.",
     "policyVersion": "Privacy notice version: {{version}}",
     "consent": "I agree to my child's data being processed for this purpose",
-    "submitChild": "Add child and send the request"
+    "submitChild": "Add child and send the request",
+    "dataRights": "Your child's data",
+    "dataRightsIntro": "You can download everything we store about your child, or delete it.",
+    "exportData": "Download my child's data",
+    "deleteData": "Delete my child's data",
+    "deleteDataWarning": "The photo and name are deleted and the child is unlinked from every provider. Trip and alert records remain, without name or photo, for safety. If the child has another guardian, only your link is removed.",
+    "deleteDataConfirm": "Delete my child's data"
   },
   "enrollment": {
     "pending": "Waiting for approval",
@@ -245,7 +253,8 @@
       "routes": "Routes",
       "vehicles": "Vehicles",
       "members": "Members",
-      "unreachable": "Unreachable guardians"
+      "unreachable": "Unreachable guardians",
+      "audit": "Audit log"
     },
     "noTripsToday": "No trips today.",
     "lastSignal": "Last signal",
@@ -279,7 +288,9 @@
     "stopCount": "{{count}} stop(s)",
     "assignIntro": "Choose each student's stop on this route.",
     "stop": "Stop",
-    "notOnRoute": "Not on this route"
+    "notOnRoute": "Not on this route",
+    "auditIntro": "An unchangeable record of every sensitive action, including who viewed students' data and photos.",
+    "noAudit": "No entries yet."
   },
   "orgType": {
     "school": "School",
@@ -328,7 +339,15 @@
     "deleteAccount": "Delete account",
     "deleteWarning": "Your account and personal data will be deleted, and photos of children with no other guardian. Trip and alert records are kept for safety.",
     "deleteConfirm": "Delete my account permanently",
-    "deleted": "Account deleted."
+    "deleted": "Account deleted.",
+    "totpTitle": "Two-step verification",
+    "totpIntro": "Optional, recommended for admins: a code from a free authenticator app at every sign-in.",
+    "totpOn": "On: a code from the app is required at sign-in.",
+    "totpStart": "Start setup",
+    "totpScan": "Add this key to your authenticator app, then type the code it shows.",
+    "totpOpenApp": "Open in authenticator app",
+    "totpEnable": "Turn on",
+    "totpDisable": "Turn off two-step verification"
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -406,6 +425,11 @@
     "internal_error": "Server error.",
     "refresh_invalid": "Your session ended. Please sign in again.",
     "refresh_reused": "For your security all sessions were ended. Please sign in again.",
-    "organization_header_required": "Choose the organisation first."
+    "organization_header_required": "Choose the organisation first.",
+    "totp_required": "Enter the code from your authenticator app.",
+    "totp_invalid": "Wrong authenticator code.",
+    "totp_already_enabled": "Two-step verification is already on.",
+    "totp_not_enabled": "Two-step verification is not on.",
+    "totp_not_set_up": "Start the setup first."
   }
 }

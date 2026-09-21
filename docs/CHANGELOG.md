@@ -115,3 +115,22 @@ passes too. ✅
 - API additions: driver candidate search, guardian alert detail, live counts on org trips,
   log-only push provider for E2E.
 - Playwright E2E package (`pnpm e2e`) with an isolated stack; runs in CI with screenshots.
+
+## Phase 5 — Hardening
+
+- Rate limiting (strict on sign-in, codes and driver lookup), helmet headers, trust-proxy.
+- Audit log for sensitive actions, including viewing students with photos; admin audit page.
+- Retention job with a narrow, role- and flag-guarded exception to append-only (migration 3).
+- Guardians can export or delete their child's data.
+- Optional TOTP two-step sign-in (RFC 6238), with settings UI and sign-in code field.
+- Optional Sentry error reporting.
+- Encrypted, rotated backups and tag-checked restore; operations CLI in the API image.
+- Production: API and web Dockerfiles, Caddy with automatic HTTPS and strict headers,
+  `infra/docker-compose.prod.yml` with a daily backup service, `scripts/prod-env.mjs`,
+  docs/DEPLOY.md; CI builds the images and smoke-tests the stack through Caddy.
+- Load test: 200 concurrent trips, 0 errors (docs/LOAD_TEST.md); fixed a trip-generation race.
+- Automated field simulation of a full school day (offline batches, backgrounded app, forgotten
+  child, watchdog, escalation, resolution) replacing the human field trial (PLAN §20).
+- Guardians now get one message per tap, so late offline batches report both boarding and
+  getting off.
+- Coverage gate ≥ 90 % for the critical-path modules.

@@ -5,5 +5,5 @@
     "baseUrl": ".",
     "types": ["node", "multer", "vitest/globals"]
   },
-  "include": ["src", "test", "vitest.config.ts"]
+  "include": ["src", "test", "load", "vitest.config.ts", "vitest.load.config.ts"]
 }

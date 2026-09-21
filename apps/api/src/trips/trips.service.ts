@@ -63,7 +63,7 @@ export class TripsService {
     const trips = [];
     for (const orgId of new Set(memberships.map((m) => m.organizationId))) {
       const date = await this.generation.today(orgId);
-      await this.generation.generateForOrg(orgId, date);
+      await this.generation.ensureGenerated(orgId, date);
       const isAttendant = memberships.some(
         (m) => m.organizationId === orgId && m.role === 'attendant',
       );
@@ -227,6 +227,7 @@ export class TripsService {
 
         const results: EventResult[] = [];
         const touched = new Set<string>();
+        const newEventIds = new Set<string>();
         const batchIds = new Set<string>();
         // Oldest first, so an undo in the same batch finds its target.
         const ordered = [...events].sort((a, b) =>
@@ -271,7 +272,7 @@ export class TripsService {
             undoesEventId = target.id;
           }
 
-          await tx.tripEvent.create({
+          const created = await tx.tripEvent.create({
             data: {
               organizationId: ref.organizationId,
               tripId,
@@ -285,15 +286,16 @@ export class TripsService {
               lng: e.lng,
               accuracyM: e.accuracyM,
             },
+            select: { id: true },
           });
+          newEventIds.add(created.id);
           batchIds.add(e.clientEventId);
           touched.add(e.studentId);
           results.push({ clientEventId: e.clientEventId, status: 'accepted' });
         }
 
         for (const studentId of touched) {
-          const change = await rebuildProjection(tx, tripId, studentId);
-          if (change) changes.push(change);
+          changes.push(...(await rebuildProjection(tx, tripId, studentId, newEventIds)));
         }
         // Any accepted tap proves the device is alive.
         if (touched.size > 0) {
@@ -309,7 +311,10 @@ export class TripsService {
     // After commit: tell guardians (PLAN §5). Failures are retried by the dispatch job.
     if (changes.length > 0) {
       this.effects.run('routine notifications', () =>
-        this.routine.notifyGuardians(tripId, changes),
+        this.routine.notifyGuardians(
+          tripId,
+          [...changes].sort((a, b) => a.at.getTime() - b.at.getTime()),
+        ),
       );
     }
     return response;
@@ -555,18 +560,25 @@ async function lockTrip(tx: Tx, tripId: string) {
   return trip;
 }
 
-/** Rebuilds one child's projection; returns the new status if it changed. */
+const TAP_STATUS = { board: 'boarded', alight: 'alighted', absent: 'absent' } as const;
+
+/**
+ * Rebuilds one child's projection. Returns one guardian notification per tap from `newEventIds`
+ * that actually took effect, in device-time order — so a late offline batch still tells the
+ * guardian both "boarded 6:45" and "got off 7:05", not just the final state.
+ */
 async function rebuildProjection(
   tx: Tx,
   tripId: string,
   studentId: string,
-): Promise<StatusChange | null> {
+  newEventIds: ReadonlySet<string>,
+): Promise<StatusChange[]> {
   const current = await tx.tripStudent.findUniqueOrThrow({
     where: { tripId_studentId: { tripId, studentId } },
     select: { status: true },
   });
   // A child whose alert was resolved by a human stays resolved (PLAN §7).
-  if (current.status === 'resolved') return null;
+  if (current.status === 'resolved') return [];
   const events = await tx.tripEvent.findMany({
     where: { tripId, studentId },
     select: {
@@ -593,18 +605,12 @@ async function rebuildProjection(
     where: { tripId_studentId: { tripId, studentId } },
     data: { status, boardedAt: folded.boardedAt, alightedAt: folded.alightedAt },
   });
-  if (status === current.status || status === 'expected' || status === 'missing') return null;
-  const lastApplied = events.find((e) => e.id === folded.applied.at(-1));
-  return {
-    studentId,
-    status,
-    at:
-      status === 'boarded'
-        ? folded.boardedAt!
-        : status === 'alighted'
-          ? folded.alightedAt!
-          : (lastApplied?.clientRecordedAt ?? new Date()),
-  };
+  const byId = new Map(events.map((e) => [e.id, e]));
+  return folded.applied
+    .filter((id) => newEventIds.has(id))
+    .map((id) => byId.get(id)!)
+    .filter((e): e is typeof e & { eventType: keyof typeof TAP_STATUS } => e.eventType !== 'undo')
+    .map((e) => ({ studentId, status: TAP_STATUS[e.eventType], at: e.clientRecordedAt }));
 }
 
 export function countStatuses(students: { status: TripStudentStatus }[]) {
