@@ -1,0 +1,687 @@
+// Wusool Safe data model (PLAN §10).
+//
+// Things Prisma cannot express live in the SQL of each migration, next to the generated DDL:
+// Row Level Security policies, append-only triggers, partial unique indexes, CHECK constraints
+// and database roles. Every migration folder also has a `down.sql` (PLAN §19: reversible).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_ADMIN_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────────────
+
+enum Role {
+  platform_admin
+  org_admin
+  driver
+  attendant
+  guardian
+}
+
+enum OrganizationType {
+  school
+  transport_company
+  independent_driver
+}
+
+enum OrganizationStatus {
+  pending_review
+  active
+  suspended
+}
+
+enum Country {
+  BH
+  SA
+}
+
+enum Locale {
+  ar
+  en
+}
+
+enum UserStatus {
+  active
+  deleted
+}
+
+enum MembershipStatus {
+  active
+  revoked
+}
+
+enum EmailCodePurpose {
+  verify_email
+  reset_password
+  change_email
+}
+
+enum PushProvider {
+  webpush
+  fcm
+  apns
+}
+
+enum DevicePlatform {
+  web
+  android
+  ios
+}
+
+enum EnrollmentStatus {
+  pending
+  approved
+  rejected
+  cancelled
+}
+
+enum OrgStudentStatus {
+  active
+  removed
+}
+
+enum VehicleType {
+  bus
+  van
+  car
+}
+
+enum RecordStatus {
+  active
+  inactive
+}
+
+enum TripDirection {
+  to_school
+  to_home
+}
+
+enum TripStatus {
+  scheduled
+  in_progress
+  overdue
+  completed
+  completed_with_alert
+  cancelled
+}
+
+enum TripEndType {
+  normal
+  forced
+}
+
+enum TripStudentStatus {
+  expected
+  boarded
+  alighted
+  absent
+  missing
+  resolved
+}
+
+enum TripEventType {
+  board
+  alight
+  absent
+  undo
+}
+
+enum AlertType {
+  student_left_onboard
+  trip_overdue
+  driver_device_silent
+  unexpected_student
+}
+
+enum AlertSeverity {
+  low
+  high
+  critical
+}
+
+enum AlertStatus {
+  open
+  acknowledged
+  resolved
+}
+
+enum AlertAction {
+  opened
+  escalated
+  acknowledged
+  resolved
+  notified
+}
+
+enum NotificationPriority {
+  normal
+  high
+  critical
+}
+
+enum DeliveryChannel {
+  push
+}
+
+enum DeliveryStatus {
+  queued
+  sent
+  failed
+}
+
+// ─── Identity & organisation ────────────────────────────────────────────────
+
+model Organization {
+  id        String             @id @default(uuid(7)) @db.Uuid
+  type      OrganizationType
+  nameAr    String             @map("name_ar")
+  nameEn    String?            @map("name_en")
+  country   Country
+  timezone  String
+  settings  Json               @default("{}")
+  status    OrganizationStatus @default(pending_review)
+  createdAt DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime?          @map("deleted_at") @db.Timestamptz(3)
+
+  memberships        Membership[]
+  enrollmentRequests EnrollmentRequest[]
+  orgStudents        OrgStudent[]
+  vehicles           Vehicle[]
+  routes             Route[]
+  trips              Trip[]
+  alerts             Alert[]
+
+  @@map("organizations")
+}
+
+model User {
+  id                       String     @id @default(uuid(7)) @db.Uuid
+  /// Always stored lower-case (CHECK constraint in SQL).
+  email                    String     @unique
+  emailVerifiedAt          DateTime?  @map("email_verified_at") @db.Timestamptz(3)
+  phoneE164                String     @map("phone_e164")
+  /// Phone numbers are never verified (PLAN §5.1); always false for now.
+  phoneVerified            Boolean    @default(false) @map("phone_verified")
+  fullNameAr               String     @map("full_name_ar")
+  fullNameEn               String?    @map("full_name_en")
+  passwordHash             String     @map("password_hash")
+  failedLoginCount         Int        @default(0) @map("failed_login_count")
+  lockedUntil              DateTime?  @map("locked_until") @db.Timestamptz(3)
+  totpSecretEncrypted      String?    @map("totp_secret_encrypted")
+  preferredLocale          Locale     @default(ar) @map("preferred_locale")
+  /// Guardian preference: mute routine board/alight pushes. Critical alerts can never be muted.
+  muteRoutineNotifications Boolean    @default(false) @map("mute_routine_notifications")
+  /// Operators of the platform itself; they approve schools and companies before listing.
+  isPlatformAdmin          Boolean    @default(false) @map("is_platform_admin")
+  status                   UserStatus @default(active)
+  createdAt                DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt                DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt                DateTime?  @map("deleted_at") @db.Timestamptz(3)
+
+  memberships       Membership[]
+  emailCodes        EmailCode[]
+  pushSubscriptions PushSubscription[]
+  refreshTokens     RefreshToken[]
+  guardianOf        StudentGuardian[]
+  consents          Consent[]
+  notifications     Notification[]
+
+  @@index([phoneE164])
+  @@map("users")
+}
+
+model EmailCode {
+  id          String           @id @default(uuid(7)) @db.Uuid
+  userId      String           @map("user_id") @db.Uuid
+  purpose     EmailCodePurpose
+  targetEmail String           @map("target_email")
+  codeHash    String           @map("code_hash")
+  expiresAt   DateTime         @map("expires_at") @db.Timestamptz(3)
+  attempts    Int              @default(0)
+  consumedAt  DateTime?        @map("consumed_at") @db.Timestamptz(3)
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  requestIp   String?          @map("request_ip")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose, createdAt])
+  @@index([targetEmail, createdAt])
+  @@map("email_codes")
+}
+
+model Membership {
+  userId         String           @map("user_id") @db.Uuid
+  organizationId String           @map("organization_id") @db.Uuid
+  role           Role
+  status         MembershipStatus @default(active)
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, organizationId, role])
+  @@index([organizationId, role])
+  @@map("memberships")
+}
+
+model PushSubscription {
+  id            String         @id @default(uuid(7)) @db.Uuid
+  userId        String         @map("user_id") @db.Uuid
+  provider      PushProvider
+  platform      DevicePlatform
+  endpoint      String?        @unique
+  p256dh        String?
+  authSecret    String?        @map("auth_secret")
+  nativeToken   String?        @unique @map("native_token")
+  userAgent     String?        @map("user_agent")
+  lastTestOkAt  DateTime?      @map("last_test_ok_at") @db.Timestamptz(3)
+  lastSuccessAt DateTime?      @map("last_success_at") @db.Timestamptz(3)
+  failedCount   Int            @default(0) @map("failed_count")
+  revokedAt     DateTime?      @map("revoked_at") @db.Timestamptz(3)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user       User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries NotificationDelivery[]
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+model RefreshToken {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash")
+  /// Tokens issued by rotation share a family; reuse of a rotated token revokes the family.
+  familyId   String    @map("family_id") @db.Uuid
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(3)
+  replacedAt DateTime? @map("replaced_at") @db.Timestamptz(3)
+  deviceInfo String?   @map("device_info")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@map("refresh_tokens")
+}
+
+// ─── Students & guardians ───────────────────────────────────────────────────
+
+model Student {
+  id                  String    @id @default(uuid(7)) @db.Uuid
+  createdByGuardianId String    @map("created_by_guardian_id") @db.Uuid
+  fullNameAr          String    @map("full_name_ar")
+  fullNameEn          String?   @map("full_name_en")
+  dateOfBirth         DateTime  @map("date_of_birth") @db.Date
+  photoVersion        Int       @default(0) @map("photo_version")
+  schoolName          String    @map("school_name")
+  notes               String?
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  photo              StudentPhoto?
+  guardians          StudentGuardian[]
+  enrollmentRequests EnrollmentRequest[]
+  orgStudents        OrgStudent[]
+  consents           Consent[]
+  routeStudents      RouteStudent[]
+  tripStudents       TripStudent[]
+
+  @@map("students")
+}
+
+/// Kept apart from `students` so photos are never loaded with ordinary queries.
+model StudentPhoto {
+  studentId String   @id @map("student_id") @db.Uuid
+  content   Bytes
+  mimeType  String   @map("mime_type")
+  bytes     Int
+  sha256    String
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("student_photos")
+}
+
+model StudentGuardian {
+  studentId      String   @map("student_id") @db.Uuid
+  guardianUserId String   @map("guardian_user_id") @db.Uuid
+  relationship   String
+  isPrimary      Boolean  @default(false) @map("is_primary")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  student  Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  guardian User    @relation(fields: [guardianUserId], references: [id], onDelete: Cascade)
+
+  @@id([studentId, guardianUserId])
+  @@index([guardianUserId])
+  @@map("student_guardians")
+}
+
+model EnrollmentRequest {
+  id             String           @id @default(uuid(7)) @db.Uuid
+  studentId      String           @map("student_id") @db.Uuid
+  organizationId String           @map("organization_id") @db.Uuid
+  requestedBy    String           @map("requested_by") @db.Uuid
+  status         EnrollmentStatus @default(pending)
+  decidedBy      String?          @map("decided_by") @db.Uuid
+  decidedAt      DateTime?        @map("decided_at") @db.Timestamptz(3)
+  decisionNote   String?          @map("decision_note")
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  student      Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status])
+  @@index([studentId])
+  @@map("enrollment_requests")
+}
+
+model OrgStudent {
+  organizationId String           @map("organization_id") @db.Uuid
+  studentId      String           @map("student_id") @db.Uuid
+  status         OrgStudentStatus @default(active)
+  joinedAt       DateTime         @default(now()) @map("joined_at") @db.Timestamptz(3)
+  removedAt      DateTime?        @map("removed_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  student      Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, studentId])
+  @@index([studentId])
+  @@map("org_students")
+}
+
+model Consent {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  guardianUserId String    @map("guardian_user_id") @db.Uuid
+  studentId      String    @map("student_id") @db.Uuid
+  purpose        String
+  policyVersion  String    @map("policy_version")
+  grantedAt      DateTime  @default(now()) @map("granted_at") @db.Timestamptz(3)
+  withdrawnAt    DateTime? @map("withdrawn_at") @db.Timestamptz(3)
+
+  guardian User    @relation(fields: [guardianUserId], references: [id], onDelete: Cascade)
+  student  Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@map("consents")
+}
+
+// ─── Vehicles & routes ──────────────────────────────────────────────────────
+
+model Vehicle {
+  id             String       @id @default(uuid(7)) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  plateNumber    String       @map("plate_number")
+  type           VehicleType
+  capacity       Int
+  status         RecordStatus @default(active)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt      DateTime?    @map("deleted_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  routes       Route[]
+  trips        Trip[]
+
+  @@index([organizationId])
+  @@map("vehicles")
+}
+
+model Route {
+  id               String        @id @default(uuid(7)) @db.Uuid
+  organizationId   String        @map("organization_id") @db.Uuid
+  name             String
+  direction        TripDirection
+  defaultVehicleId String?       @map("default_vehicle_id") @db.Uuid
+  defaultDriverId  String?       @map("default_driver_id") @db.Uuid
+  /// Local wall-clock times in the organisation's timezone, "HH:MM".
+  plannedStart     String        @map("planned_start")
+  plannedEnd       String        @map("planned_end")
+  /// ISO weekdays, 1 = Monday … 7 = Sunday.
+  daysOfWeek       Int[]         @map("days_of_week")
+  status           RecordStatus  @default(active)
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt        DateTime?     @map("deleted_at") @db.Timestamptz(3)
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  defaultVehicle Vehicle?       @relation(fields: [defaultVehicleId], references: [id], onDelete: SetNull)
+  stops          RouteStop[]
+  students       RouteStudent[]
+  trips          Trip[]
+
+  @@index([organizationId])
+  @@map("routes")
+}
+
+model RouteStop {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  routeId        String    @map("route_id") @db.Uuid
+  sequence       Int
+  name           String
+  /// Plain numeric coordinates; PostGIS is not available in embedded PostgreSQL (PLAN §20.3).
+  lat            Decimal?  @db.Decimal(9, 6)
+  lng            Decimal?  @db.Decimal(9, 6)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  route         Route          @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  routeStudents RouteStudent[]
+  tripStudents  TripStudent[]
+
+  @@index([routeId, sequence])
+  @@map("route_stops")
+}
+
+model RouteStudent {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  routeId        String    @map("route_id") @db.Uuid
+  studentId      String    @map("student_id") @db.Uuid
+  stopId         String    @map("stop_id") @db.Uuid
+  activeFrom     DateTime  @map("active_from") @db.Date
+  activeTo       DateTime? @map("active_to") @db.Date
+
+  route   Route     @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  student Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  stop    RouteStop @relation(fields: [stopId], references: [id], onDelete: Cascade)
+
+  @@index([routeId])
+  @@index([studentId])
+  @@map("route_students")
+}
+
+// ─── Trips & events (critical path) ─────────────────────────────────────────
+
+model Trip {
+  id               String        @id @default(uuid(7)) @db.Uuid
+  organizationId   String        @map("organization_id") @db.Uuid
+  routeId          String?       @map("route_id") @db.Uuid
+  vehicleId        String        @map("vehicle_id") @db.Uuid
+  driverId         String        @map("driver_id") @db.Uuid
+  direction        TripDirection
+  status           TripStatus    @default(scheduled)
+  serviceDate      DateTime      @map("service_date") @db.Date
+  plannedStartAt   DateTime      @map("planned_start_at") @db.Timestamptz(3)
+  plannedEndAt     DateTime      @map("planned_end_at") @db.Timestamptz(3)
+  startedAt        DateTime?     @map("started_at") @db.Timestamptz(3)
+  endedAt          DateTime?     @map("ended_at") @db.Timestamptz(3)
+  endType          TripEndType?  @map("end_type")
+  forceReason      String?       @map("force_reason")
+  emptyConfirmedAt DateTime?     @map("empty_confirmed_at") @db.Timestamptz(3)
+  lastHeartbeatAt  DateTime?     @map("last_heartbeat_at") @db.Timestamptz(3)
+  /// Last lifecycle signal from the driver's device: "foreground" or "app_backgrounded" (PLAN §9.1).
+  lastDeviceState  String?       @map("last_device_state")
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  route        Route?        @relation(fields: [routeId], references: [id], onDelete: SetNull)
+  vehicle      Vehicle       @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  students     TripStudent[]
+  events       TripEvent[]
+  alerts       Alert[]
+
+  @@unique([routeId, serviceDate])
+  @@index([organizationId, serviceDate])
+  @@index([driverId, serviceDate])
+  @@index([status])
+  @@map("trips")
+}
+
+/// Projection of trip_events, updated in the same transaction as each event.
+model TripStudent {
+  organizationId String            @map("organization_id") @db.Uuid
+  tripId         String            @map("trip_id") @db.Uuid
+  studentId      String            @map("student_id") @db.Uuid
+  stopId         String?           @map("stop_id") @db.Uuid
+  stopSequence   Int?              @map("stop_sequence")
+  status         TripStudentStatus @default(expected)
+  isUnexpected   Boolean           @default(false) @map("is_unexpected")
+  boardedAt      DateTime?         @map("boarded_at") @db.Timestamptz(3)
+  alightedAt     DateTime?         @map("alighted_at") @db.Timestamptz(3)
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  trip    Trip       @relation(fields: [tripId], references: [id], onDelete: Restrict)
+  student Student    @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  stop    RouteStop? @relation(fields: [stopId], references: [id], onDelete: SetNull)
+
+  @@id([tripId, studentId])
+  @@index([studentId])
+  @@map("trip_students")
+}
+
+/// Append-only (UPDATE/DELETE blocked by trigger).
+model TripEvent {
+  id               String        @id @default(uuid(7)) @db.Uuid
+  organizationId   String        @map("organization_id") @db.Uuid
+  tripId           String        @map("trip_id") @db.Uuid
+  studentId        String        @map("student_id") @db.Uuid
+  eventType        TripEventType @map("event_type")
+  undoesEventId    String?       @map("undoes_event_id") @db.Uuid
+  recordedBy       String        @map("recorded_by") @db.Uuid
+  clientEventId    String        @unique @map("client_event_id")
+  clientRecordedAt DateTime      @map("client_recorded_at") @db.Timestamptz(3)
+  serverReceivedAt DateTime      @default(now()) @map("server_received_at") @db.Timestamptz(3)
+  lat              Decimal?      @db.Decimal(9, 6)
+  lng              Decimal?      @db.Decimal(9, 6)
+  accuracyM        Decimal?      @map("accuracy_m") @db.Decimal(8, 2)
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Restrict)
+
+  @@index([tripId, clientRecordedAt])
+  @@map("trip_events")
+}
+
+// ─── Alerts & notifications ─────────────────────────────────────────────────
+
+model Alert {
+  id               String        @id @default(uuid(7)) @db.Uuid
+  organizationId   String        @map("organization_id") @db.Uuid
+  tripId           String        @map("trip_id") @db.Uuid
+  studentId        String?       @map("student_id") @db.Uuid
+  type             AlertType
+  severity         AlertSeverity
+  status           AlertStatus   @default(open)
+  escalationLevel  Int           @default(0) @map("escalation_level")
+  openedAt         DateTime      @default(now()) @map("opened_at") @db.Timestamptz(3)
+  nextEscalationAt DateTime?     @map("next_escalation_at") @db.Timestamptz(3)
+  acknowledgedAt   DateTime?     @map("acknowledged_at") @db.Timestamptz(3)
+  acknowledgedBy   String?       @map("acknowledged_by") @db.Uuid
+  resolvedAt       DateTime?     @map("resolved_at") @db.Timestamptz(3)
+  resolvedBy       String?       @map("resolved_by") @db.Uuid
+  resolutionReason String?       @map("resolution_reason")
+  resolutionNote   String?       @map("resolution_note")
+
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  trip          Trip           @relation(fields: [tripId], references: [id], onDelete: Restrict)
+  events        AlertEvent[]
+  notifications Notification[]
+
+  @@index([organizationId, status])
+  @@index([status, nextEscalationAt])
+  @@index([tripId])
+  @@map("alerts")
+}
+
+/// Append-only (UPDATE/DELETE blocked by trigger).
+model AlertEvent {
+  id             String      @id @default(uuid(7)) @db.Uuid
+  organizationId String      @map("organization_id") @db.Uuid
+  alertId        String      @map("alert_id") @db.Uuid
+  action         AlertAction
+  actorUserId    String?     @map("actor_user_id") @db.Uuid
+  payload        Json        @default("{}")
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  alert Alert @relation(fields: [alertId], references: [id], onDelete: Restrict)
+
+  @@index([alertId, createdAt])
+  @@map("alert_events")
+}
+
+model Notification {
+  id          String               @id @default(uuid(7)) @db.Uuid
+  userId      String               @map("user_id") @db.Uuid
+  alertId     String?              @map("alert_id") @db.Uuid
+  templateKey String               @map("template_key")
+  payload     Json                 @default("{}")
+  priority    NotificationPriority @default(normal)
+  createdAt   DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  readAt      DateTime?            @map("read_at") @db.Timestamptz(3)
+
+  user       User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  alert      Alert?                 @relation(fields: [alertId], references: [id], onDelete: Restrict)
+  deliveries NotificationDelivery[]
+
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+model NotificationDelivery {
+  id                 String          @id @default(uuid(7)) @db.Uuid
+  notificationId     String          @map("notification_id") @db.Uuid
+  pushSubscriptionId String?         @map("push_subscription_id") @db.Uuid
+  channel            DeliveryChannel @default(push)
+  status             DeliveryStatus  @default(queued)
+  attempts           Int             @default(0)
+  lastError          String?         @map("last_error")
+  updatedAt          DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  notification     Notification      @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  pushSubscription PushSubscription? @relation(fields: [pushSubscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([notificationId])
+  @@index([status])
+  @@map("notification_deliveries")
+}
+
+// ─── Audit ──────────────────────────────────────────────────────────────────
+
+/// Append-only (UPDATE/DELETE blocked by trigger).
+model AuditLog {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  actorUserId    String?  @map("actor_user_id") @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid
+  action         String
+  entityType     String   @map("entity_type")
+  entityId       String?  @map("entity_id")
+  ip             String?
+  userAgent      String?  @map("user_agent")
+  diff           Json?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([organizationId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}

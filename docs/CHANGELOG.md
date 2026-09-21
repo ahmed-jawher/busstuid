@@ -25,3 +25,31 @@
   format, typecheck and tests (with real PostgreSQL).
 - Deferred to phase 1: `packages/api-client` (generated from OpenAPI once real endpoints exist).
 - Tests: 16 passing (shared 2, ui-tokens 2, dev-stack 2, api 5, web 5).
+
+## Phase 1 — Data and identity
+
+**Acceptance:** tests 9 (guardian sees only own children — data part; alert part in phase 3),
+10 (RLS between organisations) and 12 (unverified accounts, code expiry/attempts, resend limits)
+pass. ✅
+
+- Full schema from PLAN §10 in one migration (24 tables), with CHECK constraints, the
+  one-active-trip-per-vehicle index, append-only triggers on `trip_events`, `alert_events` and
+  `audit_logs`, and Row Level Security forced on every table.
+- Two DB roles (`wusool_app` under RLS, `wusool_system` for sign-in and jobs); `pnpm run setup` now
+  migrates, provisions the roles and seeds.
+- Accounts: register, verify email (6-digit code, 10 min, 5 attempts, 60 s resend, 5/hour),
+  login with lockout after 10 failures, refresh-token rotation with reuse detection, logout,
+  forgot/reset password, change email, delete account.
+- Organisations: create (independent drivers active at once; schools pending platform approval),
+  directory, driver lookup by phone, platform approve/suspend.
+- Guardians: add a child with photo + consent + enrollment request, list/view children, replace
+  photo, request enrollment in another organisation.
+- Organisation admins: enrollment queue (name and school only), approve/reject, student list with
+  photos.
+- Photos: processed to 400×400 WebP ≤ 100 KB, stored in PostgreSQL, served via 5-minute signed URLs.
+- Web Push: VAPID key endpoint, device subscriptions, test notification, automatic revocation of
+  expired subscriptions.
+- Seed: a school with 2 buses and 2 drivers, an independent driver with a van, 6 routes with stops,
+  40 enrolled students with placeholder photos, 31 guardians, 1 pending request.
+- Tests: 57 API tests (integration tests on real PostgreSQL), including migration rollback and a
+  schema-drift check.

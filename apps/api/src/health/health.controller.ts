@@ -6,7 +6,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { Response } from 'express';
-import { DatabaseService } from '../database/database.service';
+import { Public } from '../common/auth-context';
+import { PrismaService } from '../database/prisma.service';
 
 class HealthDto {
   @ApiProperty({ enum: ['ok', 'degraded'] })
@@ -20,9 +21,10 @@ class HealthDto {
 }
 
 @ApiTags('health')
+@Public()
 @Controller('health')
 export class HealthController {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: PrismaService) {}
 
   @Get()
   @HttpCode(HttpStatus.OK)
