@@ -1,0 +1,24 @@
+packages:
+  - apps/*
+  - packages/*
+  - tools/*
+
+onlyBuiltDependencies:
+  - '@embedded-postgres/darwin-arm64'
+  - '@embedded-postgres/darwin-x64'
+  - '@embedded-postgres/linux-arm64'
+  - '@embedded-postgres/linux-x64'
+  - '@embedded-postgres/windows-x64'
+  - '@nestjs/core'
+  - '@prisma/client'
+  - '@prisma/engines'
+  - '@swc/core'
+  - argon2
+  - esbuild
+  - prisma
+  - sharp
+  - simple-git-hooks
+
+# swagger-ui telemetry: never run it.
+ignoredBuiltDependencies:
+  - '@scarf/scarf'

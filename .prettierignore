@@ -1,0 +1,6 @@
+pnpm-lock.yaml
+dist
+coverage
+.data
+docs/PLAN.md
+**/migrations/**/*.sql

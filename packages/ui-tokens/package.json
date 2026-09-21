@@ -1,0 +1,33 @@
+{
+  "name": "@wusool/ui-tokens",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": [
+    "*.css"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./tokens.css": "./dist/tokens.css"
+  },
+  "scripts": {
+    "build": "tsup && tsx scripts/emit-css.ts",
+    "dev": "tsup --watch --onSuccess \"tsx scripts/emit-css.ts\"",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@wusool/config": "workspace:*",
+    "tsup": "8.5.1",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}

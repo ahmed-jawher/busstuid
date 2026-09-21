@@ -1,0 +1,4 @@
+{
+  "extends": "@wusool/config/tsconfig/library.json",
+  "include": ["src", "scripts"]
+}

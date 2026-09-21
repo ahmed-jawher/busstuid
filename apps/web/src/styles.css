@@ -1,0 +1,48 @@
+@import 'tailwindcss';
+@import '@wusool/ui-tokens/tokens.css';
+/* Fonts are bundled locally, never from a CDN, so the app works offline (PLAN §9.1). */
+@import '@fontsource/ibm-plex-sans-arabic/400.css';
+@import '@fontsource/ibm-plex-sans-arabic/500.css';
+@import '@fontsource/ibm-plex-sans-arabic/600.css';
+@import '@fontsource/ibm-plex-sans-arabic/700.css';
+
+@theme inline {
+  --font-sans: var(--ws-font-sans);
+  --color-primary: var(--ws-primary);
+  --color-primary-foreground: var(--ws-primary-foreground);
+  --color-background: var(--ws-background);
+  --color-surface: var(--ws-surface);
+  --color-foreground: var(--ws-foreground);
+  --color-muted: var(--ws-muted);
+  --color-border: var(--ws-border);
+  --color-status-expected: var(--ws-status-expected);
+  --color-status-boarded: var(--ws-status-boarded);
+  --color-status-alighted: var(--ws-status-alighted);
+  --color-status-absent: var(--ws-status-absent);
+  --color-alert: var(--ws-status-alert);
+  --color-alert-foreground: var(--ws-status-alert-foreground);
+  --color-warning: var(--ws-status-warning);
+  --radius-sm: var(--ws-radius-sm);
+  --radius-md: var(--ws-radius-md);
+  --radius-lg: var(--ws-radius-lg);
+  --spacing-touch: var(--ws-touch-target);
+}
+
+@custom-variant dark (&:where([data-scheme='dark'], [data-scheme='dark'] *));
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ws-background);
+  color: var(--ws-foreground);
+  font-family: var(--ws-font-sans);
+  -webkit-tap-highlight-color: transparent;
+  /* Notch and status bar in the wrapped app (PLAN §9.1). */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
