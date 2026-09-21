@@ -3,6 +3,10 @@
 #   docker build -f infra/api.Dockerfile -t wusool-api .
 FROM node:24-bookworm-slim AS build
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=true
+# OpenSSL must be present at install time so Prisma fetches the engines matching the runtime
+# (debian-openssl-3.0.x); otherwise it falls back to 1.1 and tries to download at start-up.
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
 RUN corepack enable
 WORKDIR /repo
 COPY . .
