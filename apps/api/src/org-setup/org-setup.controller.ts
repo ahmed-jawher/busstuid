@@ -22,6 +22,7 @@ import {
   vehicleSchema,
 } from '@wusool/shared';
 import { z } from 'zod';
+import { Audit } from '../audit/audit';
 import { Auth, Org, OrgRoles, type AuthContext, type OrgContext } from '../common/auth-context';
 import { ApiZodBody, zod } from '../common/zod';
 import { OrgSetupService } from './org-setup.service';
@@ -42,6 +43,7 @@ export class OrgSetupController {
   }
 
   @Post('vehicles')
+  @Audit('vehicle.create', 'vehicle', { bodyFields: ['plateNumber', 'type', 'capacity'] })
   @ApiZodBody(vehicleSchema)
   createVehicle(
     @Auth() auth: AuthContext,
@@ -52,6 +54,10 @@ export class OrgSetupController {
   }
 
   @Patch('vehicles/:id')
+  @Audit('vehicle.update', 'vehicle', {
+    idParam: 'id',
+    bodyFields: ['plateNumber', 'type', 'capacity', 'status'],
+  })
   @ApiZodBody(updateVehicleSchema)
   updateVehicle(
     @Auth() auth: AuthContext,
@@ -73,6 +79,9 @@ export class OrgSetupController {
   }
 
   @Post('routes')
+  @Audit('route.create', 'route', {
+    bodyFields: ['name', 'direction', 'defaultVehicleId', 'defaultDriverId'],
+  })
   @ApiZodBody(routeSchema)
   createRoute(
     @Auth() auth: AuthContext,
@@ -83,6 +92,7 @@ export class OrgSetupController {
   }
 
   @Patch('routes/:id')
+  @Audit('route.update', 'route', { idParam: 'id' })
   @ApiZodBody(updateRouteSchema)
   updateRoute(
     @Auth() auth: AuthContext,
@@ -94,6 +104,7 @@ export class OrgSetupController {
   }
 
   @Put('routes/:id/students')
+  @Audit('route.assign_students', 'route', { idParam: 'id' })
   @ApiZodBody(routeStudentsSchema)
   setRouteStudents(
     @Auth() auth: AuthContext,
@@ -110,6 +121,7 @@ export class OrgSetupController {
   }
 
   @Post('members')
+  @Audit('member.add', 'membership', { bodyFields: ['email', 'role'] })
   @ApiZodBody(addMemberSchema)
   addMember(
     @Auth() auth: AuthContext,
@@ -120,6 +132,7 @@ export class OrgSetupController {
   }
 
   @Delete('members/:userId/:role')
+  @Audit('member.remove', 'membership', { idParam: 'userId' })
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeMember(
     @Auth() auth: AuthContext,

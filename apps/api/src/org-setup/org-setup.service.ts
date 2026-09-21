@@ -9,6 +9,7 @@ import type {
 } from '@wusool/shared';
 import { Errors } from '../common/api-error';
 import { PrismaService, type Tx } from '../database/prisma.service';
+import { TripGenerationService } from '../trips/trip-generation.service';
 
 type Ctx = { userId: string; orgId: string };
 
@@ -32,7 +33,10 @@ const ROUTE_SELECT = {
 /** Organisation admin setup: fleet, routes, stops, rider assignments and members (PLAN §11). */
 @Injectable()
 export class OrgSetupService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly generation: TripGenerationService,
+  ) {}
 
   private tx<T>(ctx: Ctx, fn: (tx: Tx) => Promise<T>) {
     return this.prisma.withContext(ctx, fn);
@@ -93,8 +97,8 @@ export class OrgSetupService {
     });
   }
 
-  createRoute(ctx: Ctx, input: z.output<typeof routeSchema>) {
-    return this.tx(ctx, async (tx) => {
+  async createRoute(ctx: Ctx, input: z.output<typeof routeSchema>) {
+    const route = await this.tx(ctx, async (tx) => {
       await this.assertVehicleAndDriver(
         tx,
         ctx.orgId,
@@ -117,10 +121,12 @@ export class OrgSetupService {
       });
       return tx.route.findUniqueOrThrow({ where: { id: created.id }, select: ROUTE_SELECT });
     });
+    this.generation.invalidate(ctx.orgId);
+    return route;
   }
 
-  updateRoute(ctx: Ctx, id: string, input: z.output<typeof updateRouteSchema>) {
-    return this.tx(ctx, async (tx) => {
+  async updateRoute(ctx: Ctx, id: string, input: z.output<typeof updateRouteSchema>) {
+    const route = await this.tx(ctx, async (tx) => {
       const route = await tx.route.findFirst({ where: { id, deletedAt: null } });
       if (!route) throw Errors.notFound();
       const start = input.plannedStart ?? route.plannedStart;
@@ -141,6 +147,8 @@ export class OrgSetupService {
         select: ROUTE_SELECT,
       });
     });
+    this.generation.invalidate(ctx.orgId);
+    return route;
   }
 
   /**

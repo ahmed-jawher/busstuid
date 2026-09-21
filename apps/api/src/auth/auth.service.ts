@@ -1,7 +1,9 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import type { Locale } from '@wusool/shared';
 import { ApiError, Errors } from '../common/api-error';
+import { APP_CONFIG, type AppConfig } from '../config/env';
 import { PrismaService } from '../database/prisma.service';
+import { decryptField, verifyTotp } from './totp';
 import { EmailCodesService } from './email-codes.service';
 import { checkPasswordPolicy, hashPassword, verifyPassword } from './passwords';
 import { TokensService, type TokenPair } from './tokens.service';
@@ -24,6 +26,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly codes: EmailCodesService,
     private readonly tokens: TokensService,
+    @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
   /**
@@ -103,7 +106,12 @@ export class AuthService {
     });
   }
 
-  async login(email: string, password: string, deviceInfo?: string): Promise<TokenPair> {
+  async login(
+    email: string,
+    password: string,
+    deviceInfo?: string,
+    totp?: string,
+  ): Promise<TokenPair> {
     const user = await this.findActive(email);
     if (!user) {
       await verifyPassword(null, password);
@@ -116,17 +124,18 @@ export class AuthService {
     }
 
     if (!(await verifyPassword(user.passwordHash, password))) {
-      // Committed before throwing so the lockout actually counts (PLAN §5.1).
-      const failed = user.failedLoginCount + 1;
-      const lock = failed >= MAX_FAILED_LOGINS;
-      await this.prisma.system.user.update({
-        where: { id: user.id },
-        data: {
-          failedLoginCount: lock ? 0 : failed,
-          lockedUntil: lock ? new Date(Date.now() + LOCK_MS) : user.lockedUntil,
-        },
-      });
+      await this.countFailure(user);
       throw Errors.unauthorized('invalid_credentials');
+    }
+
+    // Second factor, only asked once the password was right (PLAN §5.1: optional TOTP).
+    if (user.totpEnabledAt && user.totpSecretEncrypted) {
+      if (!totp) throw Errors.unauthorized('totp_required');
+      const secret = decryptField(user.totpSecretEncrypted, this.config.fieldEncryptionKey);
+      if (!verifyTotp(secret, totp)) {
+        await this.countFailure(user);
+        throw Errors.unauthorized('totp_invalid');
+      }
     }
 
     return this.prisma.systemTx(async (tx) => {
@@ -135,6 +144,23 @@ export class AuthService {
         data: { failedLoginCount: 0, lockedUntil: null },
       });
       return this.tokens.issue(tx, user, deviceInfo);
+    });
+  }
+
+  /** Committed on its own so the lockout counts even though the request then fails. */
+  private async countFailure(user: {
+    id: string;
+    failedLoginCount: number;
+    lockedUntil: Date | null;
+  }): Promise<void> {
+    const failed = user.failedLoginCount + 1;
+    const lock = failed >= MAX_FAILED_LOGINS;
+    await this.prisma.system.user.update({
+      where: { id: user.id },
+      data: {
+        failedLoginCount: lock ? 0 : failed,
+        lockedUntil: lock ? new Date(Date.now() + LOCK_MS) : user.lockedUntil,
+      },
     });
   }
 

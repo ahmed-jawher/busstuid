@@ -9,6 +9,7 @@ import {
 import { AdminLayout } from '@/features/admin/admin-org';
 import {
   AdminAlertsPage,
+  AuditPage,
   EnrollmentsPage,
   LiveTripsPage,
   MembersPage,
@@ -73,6 +74,7 @@ export const routes = [
               { path: 'vehicles', element: <VehiclesPage /> },
               { path: 'members', element: <MembersPage /> },
               { path: 'unreachable', element: <UnreachablePage /> },
+              { path: 'audit', element: <AuditPage /> },
             ],
           },
         ],

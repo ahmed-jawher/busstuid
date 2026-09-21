@@ -176,3 +176,49 @@ Format: the decision, then why.
 - **Stale alarms are dropped**: a delivery for an alert that was resolved before the push went out
   is not sent (`alert_resolved_before_send`), so a guardian never ends up with "🚨 urgent" as the
   latest message after "confirmed safe". Found through a flaky test; now covered by a test.
+
+## Phase 5
+
+- **Rate limits per IP** (`@nestjs/throttler`): 600/min by default (a school's drivers may share
+  one address), 10/min for login and code checks, 5/min for anything that sends email, 20/min
+  for driver lookup by phone. They add to the per-account lockout and per-address code limits.
+  Off in tests unless a test enables them; photos and health checks are exempt.
+- **Security headers**: helmet on the API (CSP left to Caddy, since Swagger needs inline
+  scripts and photos are loaded cross-origin in development); Caddy sets HSTS, a strict CSP,
+  no framing and a narrow Permissions-Policy in production.
+- **Audit log via `@Audit()`** on controller methods, written after success through
+  `SideEffects` (never blocks or fails the action). Covers enrollment decisions, viewing the
+  student list with photos, fleet/route/member changes, trip start/end (with force reason),
+  alert acknowledge/resolve, organisation lifecycle, account deletion, TOTP changes, child data
+  export/deletion. Admins read their organisation's log under RLS.
+- **Retention** is the only way rows leave append-only tables: the daily job runs as
+  `wusool_system` with the transaction-local flag `app.retention_purge = on` (migration 3).
+  Updates and TRUNCATE stay forbidden; other roles (including the superuser) cannot delete.
+  Open or acknowledged alerts are never purged, nor any trip that still has an alert.
+  Organisations can extend retention but never below one year for safety records.
+- **Guardians' data rights**: export (everything visible to them under RLS, photo included) and
+  deletion (password-confirmed). Deletion anonymises the child and deletes the photo; if
+  another guardian exists only the caller's link is removed. Account deletion reuses the same
+  function.
+- **TOTP (RFC 6238) is optional for any account**, recommended for admins; secrets are encrypted
+  with AES-256-GCM (`FIELD_ENCRYPTION_KEY`). The code is asked only after a correct password;
+  a wrong code counts towards the lockout. No QR library: the `otpauth://` link opens the
+  authenticator directly on a phone, and the key is shown for manual entry.
+- **Sentry is opt-in** (`SENTRY_DSN`); request data and users are stripped before sending.
+- **Backups**: `pg_dump -Fc` streamed through AES-256-GCM (`BACKUP_KEY`), rotated (14 kept),
+  decrypted fully and tag-checked before `pg_restore`, so a tampered file never half-restores.
+  The embedded PostgreSQL has no `pg_dump`, so the round-trip test runs on CI and in the image.
+- **Operations CLI** (`dist/ops/cli.js roles | backup [--daily] | restore`) is compiled into the
+  API image; the entrypoint runs migrations and roles on every start (both idempotent).
+- **Production = one VPS with Docker Compose**: PostgreSQL 16, API, Caddy (serves the SPA,
+  proxies `/v1` on the same origin, automatic HTTPS), and a backup service. Built and
+  smoke-tested in CI because this development machine has no Docker.
+- **Load test found and fixed a trip-generation race** (see docs/LOAD_TEST.md). Lazy generation
+  is now shared per process, serialised by an advisory lock, and cached for 60 s — the cache is
+  cleared whenever routes change so a new route shows up immediately.
+- **Guardian notifications follow taps, not only the final state**: a late offline batch sends
+  both "boarded 6:45" and "got off 7:05", in device-time order (found by the field simulation).
+- **Coverage gate** for `trips`, `alerts` and `notifications`: ≥ 90 % lines/statements/functions,
+  ≥ 80 % branches (currently 95 / 95 / 93 / 85), enforced on every API test run.
+- **TOTP replay within the same 30-second window is not blocked** (no per-user "last step"
+  record); acceptable for an optional second factor, noted for later.

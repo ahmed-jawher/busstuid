@@ -1,0 +1,15 @@
+**/node_modules
+**/dist
+**/dist-e2e
+**/coverage
+**/.turbo
+.data
+.env
+.env.*
+!.env.example
+backups
+infra/backups
+apps/e2e
+**/test-results
+**/playwright-report
+.git

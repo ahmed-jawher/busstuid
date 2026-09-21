@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -12,10 +13,12 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { SkipThrottle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { createStudentSchema, enrollSchema } from '@wusool/shared';
+import { createStudentSchema, deleteAccountSchema, enrollSchema } from '@wusool/shared';
 import type { Response } from 'express';
 import { z } from 'zod';
+import { Audit } from '../audit/audit';
 import { Errors } from '../common/api-error';
 import { Auth, Public, RequireVerifiedEmail, type AuthContext } from '../common/auth-context';
 import { ApiZodBody, zod } from '../common/zod';
@@ -96,6 +99,23 @@ export class StudentsController {
     return this.students.listChildren(auth.userId);
   }
 
+  @Get('children/:id/export')
+  @Audit('child.export', 'student', { idParam: 'id' })
+  exportChild(@Auth() auth: AuthContext, @Param('id', ParseUUIDPipe) id: string) {
+    return this.students.exportChild(auth.userId, id);
+  }
+
+  @Delete('children/:id')
+  @Audit('child.delete', 'student', { idParam: 'id' })
+  @ApiZodBody(deleteAccountSchema)
+  deleteChild(
+    @Auth() auth: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(zod(deleteAccountSchema)) body: z.output<typeof deleteAccountSchema>,
+  ) {
+    return this.students.deleteChild(auth.userId, id, body.password);
+  }
+
   @Get('children/:id')
   child(@Auth() auth: AuthContext, @Param('id', ParseUUIDPipe) id: string) {
     return this.students.getChild(auth.userId, id);
@@ -104,6 +124,8 @@ export class StudentsController {
   /** Signed, short-lived photo link — usable directly in `<img src>` (PLAN §10, §14). */
   @Get('students/:id/photo')
   @Public()
+  // Admin lists load dozens of photos at once; the signature already limits abuse.
+  @SkipThrottle()
   async photo(
     @Param('id', ParseUUIDPipe) id: string,
     @Query(zod(photoQuerySchema)) q: z.output<typeof photoQuerySchema>,

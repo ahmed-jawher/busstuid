@@ -5,6 +5,7 @@ import {
   ApiServiceUnavailableResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { Public } from '../common/auth-context';
 import { PrismaService } from '../database/prisma.service';
@@ -22,6 +23,7 @@ class HealthDto {
 
 @ApiTags('health')
 @Public()
+@SkipThrottle()
 @Controller('health')
 export class HealthController {
   constructor(private readonly db: PrismaService) {}

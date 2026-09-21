@@ -61,6 +61,8 @@ export const resendCodeSchema = z.object({
 export const loginSchema = z.object({
   email: emailSchema,
   password: z.string().max(128),
+  /** Authenticator code, required once TOTP is enabled on the account. */
+  totp: codeSchema.optional(),
   deviceInfo,
 });
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -257,3 +259,9 @@ export const resolveAlertSchema = z
     path: ['note'],
     message: 'note_required',
   });
+
+// ─── Phase 5: optional TOTP (PLAN §5.1) ─────────────────────────────────────
+
+export const totpSetupSchema = z.object({ password: z.string().max(128) });
+export const totpEnableSchema = z.object({ code: codeSchema });
+export const totpDisableSchema = z.object({ password: z.string().max(128), code: codeSchema });

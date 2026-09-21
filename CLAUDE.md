@@ -60,6 +60,9 @@ pnpm lint           # ESLint + secret scan
 pnpm typecheck
 pnpm format
 pnpm --filter @wusool/api db:rollback   # revert the newest migration (runs its down.sql)
+pnpm e2e                                 # Playwright scenarios on an isolated stack
+pnpm --filter @wusool/api loadtest       # 200 concurrent trips (docs/LOAD_TEST.md)
+pnpm --filter @wusool/api db:backup      # encrypted backup (needs pg_dump)
 ```
 
 ## Rules
@@ -76,5 +79,8 @@ pnpm --filter @wusool/api db:rollback   # revert the newest migration (runs its 
   RLS/triggers, and write `down.sql`. The drift test fails if schema and SQL disagree.
 - One branch per phase (`phase-N-name`), PR to `main`, squash-merge only when build, lint,
   typecheck and tests pass. Append to `docs/CHANGELOG.md` at the end of each phase.
+- Sensitive endpoints get `@Audit(...)`; new error codes need messages in both i18n files
+  (a test enforces it).
+- Production: `infra/docker-compose.prod.yml` + docs/DEPLOY.md.
 - When something is ambiguous: pick the option that is safest for children, then simplest, and
   record it in `docs/DECISIONS.md`.

@@ -3,6 +3,8 @@ import { PRIVACY_POLICY_VERSION, type CreateStudentInput } from '@wusool/shared'
 import { Errors } from '../common/api-error';
 import { APP_CONFIG, type AppConfig } from '../config/env';
 import { PrismaService, type Tx } from '../database/prisma.service';
+import { verifyPassword } from '../auth/passwords';
+import { removeChildForGuardian } from './child-data';
 import { processStudentPhoto, signPhotoUrl, verifyPhotoSignature } from './photos';
 
 const CONSENT_PURPOSE = 'transport_safety';
@@ -144,6 +146,85 @@ export class StudentsService {
         select: { id: true, status: true, createdAt: true },
       });
     });
+  }
+
+  /**
+   * Everything stored about a child, for the guardian's right of access (PLAN §14). Read under
+   * RLS as the guardian, so it contains exactly what they are allowed to see.
+   */
+  async exportChild(guardianId: string, studentId: string) {
+    return this.prisma.withContext({ userId: guardianId }, async (tx) => {
+      const child = await this.findGuarded(tx, guardianId, studentId);
+      const [photo, consents, trips, events, alerts] = await Promise.all([
+        tx.studentPhoto.findUnique({
+          where: { studentId },
+          select: { content: true, mimeType: true },
+        }),
+        tx.consent.findMany({
+          where: { studentId },
+          select: { purpose: true, policyVersion: true, grantedAt: true, withdrawnAt: true },
+        }),
+        tx.tripStudent.findMany({
+          where: { studentId },
+          select: {
+            status: true,
+            boardedAt: true,
+            alightedAt: true,
+            stop: { select: { name: true } },
+            trip: { select: { id: true, direction: true, serviceDate: true, status: true } },
+          },
+        }),
+        tx.tripEvent.findMany({
+          where: { studentId },
+          orderBy: { clientRecordedAt: 'asc' },
+          select: { tripId: true, eventType: true, clientRecordedAt: true, lat: true, lng: true },
+        }),
+        tx.alert.findMany({
+          where: { studentId },
+          select: {
+            type: true,
+            severity: true,
+            status: true,
+            openedAt: true,
+            resolvedAt: true,
+            resolutionReason: true,
+          },
+        }),
+      ]);
+      const { photoVersion: _v, ...profile } = child;
+      return {
+        exportedAt: new Date(),
+        child: { ...profile, dateOfBirth: child.dateOfBirth.toISOString().slice(0, 10) },
+        photo: photo
+          ? `data:${photo.mimeType};base64,${Buffer.from(photo.content).toString('base64')}`
+          : null,
+        consents,
+        trips,
+        events,
+        alerts,
+      };
+    });
+  }
+
+  /**
+   * Guardian deletes a child's data (PLAN §14). With another guardian still linked, only the
+   * caller's link is removed. Safety records (trip events, alerts) remain, without name or photo.
+   */
+  async deleteChild(guardianId: string, studentId: string, password: string) {
+    const user = await this.prisma.system.user.findUnique({
+      where: { id: guardianId },
+      select: { passwordHash: true },
+    });
+    if (!user || !(await verifyPassword(user.passwordHash, password))) {
+      throw Errors.forbidden('password_incorrect');
+    }
+    await this.prisma.withContext({ userId: guardianId }, (tx) =>
+      this.findGuarded(tx, guardianId, studentId),
+    );
+    const outcome = await this.prisma.systemTx((tx) =>
+      removeChildForGuardian(tx, studentId, guardianId),
+    );
+    return { outcome };
   }
 
   /** Serves a photo for a valid signed URL (the URL itself is the authorisation). */

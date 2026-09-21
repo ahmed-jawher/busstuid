@@ -12,6 +12,7 @@ import {
 import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { decisionSchema } from '@wusool/shared';
 import { z } from 'zod';
+import { Audit } from '../audit/audit';
 import { Auth, Org, OrgRoles, type AuthContext, type OrgContext } from '../common/auth-context';
 import { ApiZodBody, ApiZodQuery, zod } from '../common/zod';
 import { EnrollmentService } from './enrollment.service';
@@ -35,6 +36,7 @@ export class EnrollmentController {
   }
 
   @Post('enrollment-requests/:id/approve')
+  @Audit('enrollment.approve', 'enrollment_request', { idParam: 'id' })
   @HttpCode(HttpStatus.OK)
   approve(
     @Org() org: OrgContext,
@@ -45,6 +47,7 @@ export class EnrollmentController {
   }
 
   @Post('enrollment-requests/:id/reject')
+  @Audit('enrollment.reject', 'enrollment_request', { idParam: 'id', bodyFields: ['note'] })
   @HttpCode(HttpStatus.OK)
   @ApiZodBody(decisionSchema)
   reject(
@@ -57,6 +60,7 @@ export class EnrollmentController {
   }
 
   @Get('students')
+  @Audit('students.view_list', 'student')
   students(@Org() org: OrgContext, @Auth() auth: AuthContext) {
     return this.enrollment.students(org.id, auth.userId);
   }

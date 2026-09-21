@@ -33,6 +33,7 @@ export interface Me {
   preferredLocale: Locale;
   muteRoutineNotifications: boolean;
   isPlatformAdmin: boolean;
+  totpEnabled: boolean;
   memberships: { role: Role; organization: OrgSummary }[];
 }
 

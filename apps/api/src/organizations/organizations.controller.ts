@@ -12,12 +12,14 @@ import {
 import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { createOrganizationSchema, directoryQuerySchema, driverLookupSchema } from '@wusool/shared';
 import type { z } from 'zod';
+import { Audit } from '../audit/audit';
 import {
   Auth,
   PlatformAdminOnly,
   RequireVerifiedEmail,
   type AuthContext,
 } from '../common/auth-context';
+import { StrictLimit } from '../common/rate-limit';
 import { ApiZodBody, ApiZodQuery, zod } from '../common/zod';
 import { OrganizationsService } from './organizations.service';
 
@@ -29,6 +31,7 @@ export class OrganizationsController {
   constructor(private readonly orgs: OrganizationsService) {}
 
   @Post()
+  @Audit('organization.create', 'organization', { bodyFields: ['type', 'nameAr', 'country'] })
   @ApiZodBody(createOrganizationSchema)
   create(
     @Auth() auth: AuthContext,
@@ -44,6 +47,7 @@ export class OrganizationsController {
   }
 
   @Get('driver-lookup')
+  @StrictLimit.lookup()
   @ApiZodQuery(directoryQuerySchema.pick({ country: true }))
   @ApiQuery({ name: 'phone', required: true, example: '36001234' })
   driverLookup(@Query(zod(driverLookupSchema)) q: z.output<typeof driverLookupSchema>) {
@@ -64,12 +68,14 @@ export class PlatformOrganizationsController {
   }
 
   @Post(':id/approve')
+  @Audit('organization.approve', 'organization', { idParam: 'id' })
   @HttpCode(HttpStatus.OK)
   approve(@Param('id', ParseUUIDPipe) id: string) {
     return this.orgs.setStatus(id, 'active');
   }
 
   @Post(':id/suspend')
+  @Audit('organization.suspend', 'organization', { idParam: 'id' })
   @HttpCode(HttpStatus.OK)
   suspend(@Param('id', ParseUUIDPipe) id: string) {
     return this.orgs.setStatus(id, 'suspended');

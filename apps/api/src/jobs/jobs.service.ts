@@ -12,6 +12,7 @@ import { APP_CONFIG, type AppConfig } from '../config/env';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TripGenerationService } from '../trips/trip-generation.service';
+import { RetentionService } from './retention.service';
 
 /** PLAN §12. Cron in UTC; 00:00 UTC is 03:00 in Bahrain and Riyadh. */
 const SCHEDULES = [
@@ -19,6 +20,7 @@ const SCHEDULES = [
   { name: 'alert-escalation', cron: '* * * * *' },
   { name: 'notification-dispatch', cron: '* * * * *' },
   { name: 'daily-trip-generation', cron: '0 0 * * *' },
+  { name: 'retention-cleanup', cron: '30 0 * * *' },
 ] as const;
 type JobName = (typeof SCHEDULES)[number]['name'];
 
@@ -39,6 +41,7 @@ export class JobsService implements OnApplicationBootstrap, OnApplicationShutdow
     private readonly escalation: EscalationService,
     private readonly notifications: NotificationsService,
     private readonly generation: TripGenerationService,
+    private readonly retention: RetentionService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -71,6 +74,8 @@ export class JobsService implements OnApplicationBootstrap, OnApplicationShutdow
         return this.escalation.runDue(now);
       case 'notification-dispatch':
         return this.notifications.retryPending(now);
+      case 'retention-cleanup':
+        return this.retention.run(now);
       case 'daily-trip-generation': {
         const orgs = await this.prisma.system.organization.findMany({
           where: { status: 'active', deletedAt: null },

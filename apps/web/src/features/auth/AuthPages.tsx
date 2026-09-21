@@ -26,14 +26,23 @@ export function LoginPage() {
   const [params] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [totp, setTotp] = useState('');
   const login = useMutation({
-    mutationFn: () => api<Tokens>('/auth/login', { method: 'POST', body: { email, password } }),
+    mutationFn: () =>
+      api<Tokens>('/auth/login', {
+        method: 'POST',
+        body: { email, password, ...(totp ? { totp } : {}) },
+      }),
     onSuccess: async (tokens) => {
       await session.store(tokens);
       await qc.invalidateQueries({ queryKey: ['me'] });
       navigate(params.get('next') ?? '/', { replace: true });
     },
   });
+  // Accounts with TOTP (optional for admins, PLAN §5.1) are asked for a code after the password.
+  const needsTotp =
+    login.error instanceof ApiError &&
+    (login.error.code === 'totp_required' || login.error.code === 'totp_invalid');
   return (
     <AuthCard title={t('auth.signIn')}>
       <form
@@ -59,7 +68,21 @@ export function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        {login.error && <Notice tone="danger">{errorMessage(login.error)}</Notice>}
+        {needsTotp && (
+          <TextField
+            label={t('auth.totpCode')}
+            hint={t('auth.totpHint')}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            dir="ltr"
+            value={totp}
+            onChange={(e) => setTotp(e.target.value.replace(/D/g, ''))}
+          />
+        )}
+        {login.error && !(needsTotp && !totp) && (
+          <Notice tone="danger">{errorMessage(login.error)}</Notice>
+        )}
         <Button type="submit" size="touch" className="w-full" disabled={login.isPending}>
           {t('auth.signIn')}
         </Button>

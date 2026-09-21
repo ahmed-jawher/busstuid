@@ -134,6 +134,7 @@ export function SettingsPage() {
           {t('settings.notificationSetup')}
         </Link>
       </Card>
+      <TotpCard enabled={me.totpEnabled} onChange={() => void refresh()} />
       <Button
         variant="outline"
         className="w-full"
@@ -284,5 +285,108 @@ export function PlatformPage() {
         ))}
       </ul>
     </div>
+  );
+}
+
+/** Optional authenticator-app code at sign-in (PLAN §5.1), recommended for admins. */
+function TotpCard({ enabled, onChange }: { enabled: boolean; onChange: () => void }) {
+  const { t } = useTranslation();
+  const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
+  const [setup, setSetup] = useState<{ secret: string; otpauthUri: string } | null>(null);
+  const start = useMutation({
+    mutationFn: () =>
+      api<{ secret: string; otpauthUri: string }>('/me/totp/setup', {
+        method: 'POST',
+        body: { password },
+      }),
+    onSuccess: (s) => {
+      setSetup(s);
+      setPassword('');
+    },
+  });
+  const enable = useMutation({
+    mutationFn: () => api('/me/totp/enable', { method: 'POST', body: { code } }),
+    onSuccess: () => {
+      setSetup(null);
+      setCode('');
+      onChange();
+    },
+  });
+  const disable = useMutation({
+    mutationFn: () => api('/me/totp/disable', { method: 'POST', body: { password, code } }),
+    onSuccess: () => {
+      setPassword('');
+      setCode('');
+      onChange();
+    },
+  });
+  const error = start.error ?? enable.error ?? disable.error;
+  const codeField = (
+    <TextField
+      label={t('auth.totpCode')}
+      inputMode="numeric"
+      maxLength={6}
+      dir="ltr"
+      value={code}
+      onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+    />
+  );
+  return (
+    <Card className="space-y-3">
+      <h2 className="font-bold">{t('settings.totpTitle')}</h2>
+      <p className="text-sm text-muted">
+        {enabled ? t('settings.totpOn') : t('settings.totpIntro')}
+      </p>
+      {enabled ? (
+        <>
+          <TextField
+            label={t('auth.password')}
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          {codeField}
+          <Button
+            variant="outline"
+            disabled={!password || code.length !== 6 || disable.isPending}
+            onClick={() => disable.mutate()}
+          >
+            {t('settings.totpDisable')}
+          </Button>
+        </>
+      ) : setup ? (
+        <>
+          <p className="text-sm">{t('settings.totpScan')}</p>
+          <a href={setup.otpauthUri} className="font-semibold text-primary underline">
+            {t('settings.totpOpenApp')}
+          </a>
+          <p className="break-all rounded-md border border-border p-2 font-mono text-sm" dir="ltr">
+            {setup.secret}
+          </p>
+          {codeField}
+          <Button disabled={code.length !== 6 || enable.isPending} onClick={() => enable.mutate()}>
+            {t('settings.totpEnable')}
+          </Button>
+        </>
+      ) : (
+        <>
+          <TextField
+            label={t('auth.password')}
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <Button
+            variant="outline"
+            disabled={!password || start.isPending}
+            onClick={() => start.mutate()}
+          >
+            {t('settings.totpStart')}
+          </Button>
+        </>
+      )}
+      {error && <Notice tone="danger">{errorMessage(error)}</Notice>}
+    </Card>
   );
 }

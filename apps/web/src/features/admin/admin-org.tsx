@@ -47,6 +47,7 @@ const NAV = [
   ['vehicles', 'admin.nav.vehicles'],
   ['members', 'admin.nav.members'],
   ['unreachable', 'admin.nav.unreachable'],
+  ['audit', 'admin.nav.audit'],
 ] as const;
 
 export function AdminLayout() {

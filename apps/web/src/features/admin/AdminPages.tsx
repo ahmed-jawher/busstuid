@@ -711,3 +711,42 @@ export function RouteDetailPage() {
     </AdminSection>
   );
 }
+
+// ─── Audit log ──────────────────────────────────────────────────────────────
+
+interface AuditEntry {
+  id: string;
+  action: string;
+  entityType: string;
+  entityId: string | null;
+  actorUserId: string | null;
+  diff: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export function AuditPage() {
+  const { t } = useTranslation();
+  const call = useOrgApi();
+  const log = useQuery({ queryKey: ['audit'], queryFn: () => call<AuditEntry[]>('/org/audit') });
+  return (
+    <AdminSection title={t('admin.nav.audit')}>
+      <Notice>{t('admin.auditIntro')}</Notice>
+      {log.data?.length === 0 && <EmptyState>{t('admin.noAudit')}</EmptyState>}
+      <ul className="space-y-1 text-sm">
+        {log.data?.map((e) => (
+          <li
+            key={e.id}
+            className="flex flex-wrap justify-between gap-2 border-b border-border py-2"
+          >
+            <span className="font-semibold" dir="ltr">
+              {e.action}
+            </span>
+            <span className="text-muted" dir="ltr">
+              {e.actorUserId?.slice(0, 8) ?? '—'} · {new Date(e.createdAt).toLocaleString('en-GB')}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </AdminSection>
+  );
+}

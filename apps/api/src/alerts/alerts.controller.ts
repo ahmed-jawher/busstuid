@@ -12,6 +12,7 @@ import {
 import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { resolveAlertSchema } from '@wusool/shared';
 import { z } from 'zod';
+import { Audit } from '../audit/audit';
 import { Auth, Org, OrgRoles, type AuthContext, type OrgContext } from '../common/auth-context';
 import { ApiZodBody, ApiZodQuery, zod } from '../common/zod';
 import { AlertsService } from './alerts.service';
@@ -52,12 +53,14 @@ export class AlertsController {
   }
 
   @Post('alerts/:id/acknowledge')
+  @Audit('alert.acknowledge', 'alert', { idParam: 'id' })
   @HttpCode(HttpStatus.OK)
   acknowledge(@Auth() auth: AuthContext, @Param('id', ParseUUIDPipe) id: string) {
     return this.alerts.acknowledge(auth.userId, id);
   }
 
   @Post('alerts/:id/resolve')
+  @Audit('alert.resolve', 'alert', { idParam: 'id', bodyFields: ['reason', 'note'] })
   @HttpCode(HttpStatus.OK)
   @ApiZodBody(resolveAlertSchema)
   resolve(
