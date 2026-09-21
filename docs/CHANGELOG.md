@@ -71,3 +71,26 @@ Test 11 (no trip start without working notifications) and the trip part of test 
 - Guardian API: child's trips today and history.
 - Org API: trips by date, manual generation.
 - Tests: 81 API tests.
+
+## Phase 3 — Notifications and alerts
+
+**Acceptance:** tests 2 (forced end → critical alert to driver, guardian and admin), 3 (never
+ended → `trip_overdue`), 4 (device silent → `driver_device_silent`), 7 (escalation survives a
+restart), 8 (repeats until resolved, stops immediately) and 11 pass; the alert part of test 9
+passes too. ✅
+
+- Web Push delivery pipeline: notification + per-device delivery rows, sent after commit,
+  retried every minute, expired devices revoked; in-app inbox with read state.
+- Bilingual templates from PLAN §8 in `packages/shared`; routine notifications can be muted by
+  guardians, alerts never.
+- Guardians are notified when their child boards, gets off, or is marked absent.
+- Alerts: list (org), my alerts (guardian/driver), detail with history, acknowledge, resolve with
+  a required reason (corrective alight event, reassurance to guardians).
+- Escalation: repeat every 2 min, widen at 5, emergency number at 10; stops on resolve.
+- Watchdog every minute: overdue trips and silent driver devices, per-organisation settings.
+- Jobs on pg-boss (queue in PostgreSQL): watchdog, escalation, dispatch retries, daily trip
+  generation; boot-time reconciliation of open alerts.
+- Admin list of guardians who cannot currently be reached.
+- Migration 2: `pgboss` schema and indexes for due alerts/pending deliveries.
+- Note: existing development databases need `pnpm run setup` again (applies migration 2 and the
+  new role grant).

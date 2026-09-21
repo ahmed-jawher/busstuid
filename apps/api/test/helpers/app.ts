@@ -2,6 +2,8 @@ import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
+import { SideEffects } from '../../src/common/side-effects';
+import { JobsService } from '../../src/jobs/jobs.service';
 import { configureApp } from '../../src/bootstrap';
 import { parseConfig, type AppConfig } from '../../src/config/env';
 import { EMAIL_PROVIDER } from '../../src/email/email.provider';
@@ -16,11 +18,16 @@ export interface TestApp {
   db: TestDatabase;
   mail: CapturingEmailProvider;
   push: FakePushProvider;
+  jobs: JobsService;
+  /** Waits for post-commit work (pushes, alert dispatch) to finish. */
+  drain(): Promise<void>;
   close(): Promise<void>;
 }
 
-export async function createTestApp(): Promise<TestApp> {
-  const db = await createTestDatabase();
+export async function createTestApp(
+  opts: { db?: TestDatabase; env?: Record<string, string> } = {},
+): Promise<TestApp> {
+  const db = opts.db ?? (await createTestDatabase());
   const config = parseConfig({
     NODE_ENV: 'test',
     DATABASE_URL: db.appUrl,
@@ -32,6 +39,7 @@ export async function createTestApp(): Promise<TestApp> {
     PHOTO_URL_SECRET: 'test-photo-secret-0123456789abcdef012345',
     VAPID_PUBLIC_KEY: 'test-vapid-public',
     VAPID_PRIVATE_KEY: 'test-vapid-private',
+    ...opts.env,
   });
   const mail = new CapturingEmailProvider();
   const push = new FakePushProvider();
@@ -51,9 +59,12 @@ export async function createTestApp(): Promise<TestApp> {
     db,
     mail,
     push,
+    jobs: app.get(JobsService),
+    drain: () => app.get(SideEffects).drain(),
     async close() {
+      await app.get(SideEffects).drain();
       await app.close();
-      await db.drop();
+      if (!opts.db) await db.drop();
     },
   };
 }

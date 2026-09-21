@@ -23,9 +23,19 @@ export async function provisionLoginRoles(
         `GRANT CONNECT ON DATABASE ${client.escapeIdentifier(db)} TO ${client.escapeIdentifier(role)}`,
       );
     }
+    await grantJobQueueSchemaRights(client, db);
   } finally {
     await client.end();
   }
+}
+
+/**
+ * pg-boss always runs `CREATE SCHEMA IF NOT EXISTS pgboss`, which PostgreSQL checks against the
+ * database even when the schema exists. The system role may therefore create schemas; it owns
+ * the `pgboss` schema (created by the migration) and nothing else.
+ */
+export async function grantJobQueueSchemaRights(client: Client, db: string): Promise<void> {
+  await client.query(`GRANT CREATE ON DATABASE ${client.escapeIdentifier(db)} TO wusool_system`);
 }
 
 /** Builds a connection URL for `role` on the same server/database as `adminUrl`. */

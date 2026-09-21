@@ -32,6 +32,8 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASSWORD: z.string().optional(),
   MAIL_FROM: z.string().default('Wusool Safe <no-reply@wusool.local>'),
+  /** Background jobs (pg-boss). Off by default in tests, which call the services directly. */
+  JOBS_ENABLED: z.enum(['true', 'false']).optional(),
 });
 
 export interface AppConfig {
@@ -48,6 +50,7 @@ export interface AppConfig {
   vapid: { publicKey: string; privateKey: string; subject: string };
   smtp: { host: string; port: number; secure: boolean; user?: string; password?: string };
   mailFrom: string;
+  jobsEnabled: boolean;
 }
 
 export const APP_CONFIG = Symbol('APP_CONFIG');
@@ -86,5 +89,6 @@ export function parseConfig(env: NodeJS.ProcessEnv): AppConfig {
       password: e.SMTP_PASSWORD || undefined,
     },
     mailFrom: e.MAIL_FROM,
+    jobsEnabled: e.JOBS_ENABLED ? e.JOBS_ENABLED === 'true' : e.NODE_ENV !== 'test',
   };
 }

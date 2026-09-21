@@ -10,8 +10,14 @@ import {
   type TripStatus,
   type TripStudentStatus,
 } from '@wusool/shared';
+import { EscalationService } from '../alerts/escalation.service';
 import { ApiError, Errors } from '../common/api-error';
+import { SideEffects } from '../common/side-effects';
 import { PrismaService, type Tx } from '../database/prisma.service';
+import {
+  RoutineNotificationsService,
+  type StatusChange,
+} from '../notifications/routine-notifications.service';
 import { StudentsService } from '../students/students.service';
 import { loadTripFor } from './trip-access';
 import { TripGenerationService } from './trip-generation.service';
@@ -38,6 +44,9 @@ export class TripsService {
     private readonly prisma: PrismaService,
     private readonly generation: TripGenerationService,
     private readonly students: StudentsService,
+    private readonly escalation: EscalationService,
+    private readonly routine: RoutineNotificationsService,
+    private readonly effects: SideEffects,
   ) {}
 
   /** Trips the caller works on today, across every organisation they drive for (PLAN §11). */
@@ -195,98 +204,115 @@ export class TripsService {
       ).map((e) => [e.clientEventId, e.tripId]),
     );
 
-    return this.prisma.withContext({ userId, orgId: ref.organizationId }, async (tx) => {
-      const trip = await lockTrip(tx, tripId);
-      if (trip.status === 'scheduled' || trip.status === 'cancelled' || !trip.started_at) {
-        throw Errors.conflict('trip_not_started');
-      }
-      // Re-check under the trip lock: a concurrent resend of the same batch may have just landed.
-      for (const e of await tx.tripEvent.findMany({
-        where: { clientEventId: { in: events.map((ev) => ev.clientEventId) } },
-        select: { clientEventId: true, tripId: true },
-      })) {
-        seen.set(e.clientEventId, e.tripId);
-      }
-      const onTrip = new Set(
-        (await tx.tripStudent.findMany({ where: { tripId }, select: { studentId: true } })).map(
-          (s) => s.studentId,
-        ),
-      );
+    const changes: StatusChange[] = [];
+    const response = await this.prisma.withContext(
+      { userId, orgId: ref.organizationId },
+      async (tx) => {
+        const trip = await lockTrip(tx, tripId);
+        if (trip.status === 'scheduled' || trip.status === 'cancelled' || !trip.started_at) {
+          throw Errors.conflict('trip_not_started');
+        }
+        // Re-check under the trip lock: a concurrent resend of the same batch may have just landed.
+        for (const e of await tx.tripEvent.findMany({
+          where: { clientEventId: { in: events.map((ev) => ev.clientEventId) } },
+          select: { clientEventId: true, tripId: true },
+        })) {
+          seen.set(e.clientEventId, e.tripId);
+        }
+        const onTrip = new Set(
+          (await tx.tripStudent.findMany({ where: { tripId }, select: { studentId: true } })).map(
+            (s) => s.studentId,
+          ),
+        );
 
-      const results: EventResult[] = [];
-      const touched = new Set<string>();
-      const batchIds = new Set<string>();
-      // Oldest first, so an undo in the same batch finds its target.
-      const ordered = [...events].sort((a, b) =>
-        a.clientRecordedAt.localeCompare(b.clientRecordedAt),
-      );
-      for (const e of ordered) {
-        const reject = (reason: string) =>
-          results.push({ clientEventId: e.clientEventId, status: 'rejected', reason });
-        if (seen.has(e.clientEventId) || batchIds.has(e.clientEventId)) {
-          if (seen.get(e.clientEventId) && seen.get(e.clientEventId) !== tripId)
-            reject('event_id_conflict');
-          else results.push({ clientEventId: e.clientEventId, status: 'duplicate' });
-          continue;
-        }
-        if (!onTrip.has(e.studentId)) {
-          reject('student_not_on_trip');
-          continue;
-        }
-        const recordedAt = new Date(e.clientRecordedAt);
-        if (trip.ended_at && recordedAt.getTime() > trip.ended_at.getTime() + LATE_EVENT_GRACE_MS) {
-          reject('trip_ended');
-          continue;
-        }
+        const results: EventResult[] = [];
+        const touched = new Set<string>();
+        const batchIds = new Set<string>();
+        // Oldest first, so an undo in the same batch finds its target.
+        const ordered = [...events].sort((a, b) =>
+          a.clientRecordedAt.localeCompare(b.clientRecordedAt),
+        );
+        for (const e of ordered) {
+          const reject = (reason: string) =>
+            results.push({ clientEventId: e.clientEventId, status: 'rejected', reason });
+          if (seen.has(e.clientEventId) || batchIds.has(e.clientEventId)) {
+            if (seen.get(e.clientEventId) && seen.get(e.clientEventId) !== tripId)
+              reject('event_id_conflict');
+            else results.push({ clientEventId: e.clientEventId, status: 'duplicate' });
+            continue;
+          }
+          if (!onTrip.has(e.studentId)) {
+            reject('student_not_on_trip');
+            continue;
+          }
+          const recordedAt = new Date(e.clientRecordedAt);
+          if (
+            trip.ended_at &&
+            recordedAt.getTime() > trip.ended_at.getTime() + LATE_EVENT_GRACE_MS
+          ) {
+            reject('trip_ended');
+            continue;
+          }
 
-        let undoesEventId: string | null = null;
-        if (e.type === 'undo') {
-          const target = await tx.tripEvent.findFirst({
-            where: { tripId, studentId: e.studentId, clientEventId: e.undoesClientEventId },
-            select: { id: true, eventType: true, clientRecordedAt: true },
+          let undoesEventId: string | null = null;
+          if (e.type === 'undo') {
+            const target = await tx.tripEvent.findFirst({
+              where: { tripId, studentId: e.studentId, clientEventId: e.undoesClientEventId },
+              select: { id: true, eventType: true, clientRecordedAt: true },
+            });
+            if (!target || target.eventType === 'undo') {
+              reject('undo_target_not_found');
+              continue;
+            }
+            if (!isUndoInWindow(target.clientRecordedAt, recordedAt)) {
+              reject('undo_window_expired');
+              continue;
+            }
+            undoesEventId = target.id;
+          }
+
+          await tx.tripEvent.create({
+            data: {
+              organizationId: ref.organizationId,
+              tripId,
+              studentId: e.studentId,
+              eventType: e.type,
+              undoesEventId,
+              recordedBy: userId,
+              clientEventId: e.clientEventId,
+              clientRecordedAt: recordedAt,
+              lat: e.lat,
+              lng: e.lng,
+              accuracyM: e.accuracyM,
+            },
           });
-          if (!target || target.eventType === 'undo') {
-            reject('undo_target_not_found');
-            continue;
-          }
-          if (!isUndoInWindow(target.clientRecordedAt, recordedAt)) {
-            reject('undo_window_expired');
-            continue;
-          }
-          undoesEventId = target.id;
+          batchIds.add(e.clientEventId);
+          touched.add(e.studentId);
+          results.push({ clientEventId: e.clientEventId, status: 'accepted' });
         }
 
-        await tx.tripEvent.create({
-          data: {
-            organizationId: ref.organizationId,
-            tripId,
-            studentId: e.studentId,
-            eventType: e.type,
-            undoesEventId,
-            recordedBy: userId,
-            clientEventId: e.clientEventId,
-            clientRecordedAt: recordedAt,
-            lat: e.lat,
-            lng: e.lng,
-            accuracyM: e.accuracyM,
-          },
+        for (const studentId of touched) {
+          const change = await rebuildProjection(tx, tripId, studentId);
+          if (change) changes.push(change);
+        }
+        // Any accepted tap proves the device is alive.
+        if (touched.size > 0) {
+          await tx.trip.update({ where: { id: tripId }, data: { lastHeartbeatAt: new Date() } });
+        }
+        const students = await tx.tripStudent.findMany({
+          where: { tripId, studentId: { in: [...touched] } },
+          select: { studentId: true, status: true, boardedAt: true, alightedAt: true },
         });
-        batchIds.add(e.clientEventId);
-        touched.add(e.studentId);
-        results.push({ clientEventId: e.clientEventId, status: 'accepted' });
-      }
-
-      for (const studentId of touched) await rebuildProjection(tx, tripId, studentId);
-      // Any accepted tap proves the device is alive.
-      if (touched.size > 0) {
-        await tx.trip.update({ where: { id: tripId }, data: { lastHeartbeatAt: new Date() } });
-      }
-      const students = await tx.tripStudent.findMany({
-        where: { tripId, studentId: { in: [...touched] } },
-        select: { studentId: true, status: true, boardedAt: true, alightedAt: true },
-      });
-      return { results, students };
-    });
+        return { results, students };
+      },
+    );
+    // After commit: tell guardians (PLAN §5). Failures are retried by the dispatch job.
+    if (changes.length > 0) {
+      this.effects.run('routine notifications', () =>
+        this.routine.notifyGuardians(tripId, changes),
+      );
+    }
+    return response;
   }
 
   async heartbeat(userId: string, tripId: string, state: 'foreground' | 'app_backgrounded') {
@@ -316,134 +342,154 @@ export class TripsService {
     input: { confirmEmpty: true } | { force: true; reason: string },
   ) {
     const ref = await loadTripFor(this.prisma, userId, tripId, 'end');
-    return this.prisma.withContext({ userId, orgId: ref.organizationId }, async (tx) => {
-      const trip = await lockTrip(tx, tripId);
-      if (!isTripActive(trip.status)) throw Errors.conflict('trip_not_active');
+    const alertIds: string[] = [];
+    const response = await this.prisma.withContext(
+      { userId, orgId: ref.organizationId },
+      async (tx) => {
+        const trip = await lockTrip(tx, tripId);
+        if (!isTripActive(trip.status)) throw Errors.conflict('trip_not_active');
 
-      const riders = await tx.tripStudent.findMany({
-        where: { tripId },
-        select: {
-          studentId: true,
-          status: true,
-          student: { select: { fullNameAr: true, fullNameEn: true } },
-        },
-      });
-      const check = checkTripEnd(riders);
-      const now = new Date();
-      const names = (ids: string[]) =>
-        riders
-          .filter((r) => ids.includes(r.studentId))
-          .map((r) => ({
-            studentId: r.studentId,
-            fullNameAr: r.student.fullNameAr,
-            fullNameEn: r.student.fullNameEn,
-          }));
+        const riders = await tx.tripStudent.findMany({
+          where: { tripId },
+          select: {
+            studentId: true,
+            status: true,
+            student: { select: { fullNameAr: true, fullNameEn: true } },
+          },
+        });
+        const check = checkTripEnd(riders);
+        const now = new Date();
+        const names = (ids: string[]) =>
+          riders
+            .filter((r) => ids.includes(r.studentId))
+            .map((r) => ({
+              studentId: r.studentId,
+              fullNameAr: r.student.fullNameAr,
+              fullNameEn: r.student.fullNameEn,
+            }));
 
-      if ('confirmEmpty' in input) {
-        if (check.onboard.length > 0) {
-          throw new ApiError(HttpStatus.CONFLICT, 'students_onboard', undefined, {
-            students: names(check.onboard),
+        if ('confirmEmpty' in input) {
+          if (check.onboard.length > 0) {
+            throw new ApiError(HttpStatus.CONFLICT, 'students_onboard', undefined, {
+              students: names(check.onboard),
+            });
+          }
+          if (check.unresolved.length > 0) {
+            throw new ApiError(HttpStatus.CONFLICT, 'students_unresolved', undefined, {
+              students: names(check.unresolved),
+            });
+          }
+          await tx.trip.update({
+            where: { id: tripId },
+            data: { status: 'completed', endedAt: now, endType: 'normal', emptyConfirmedAt: now },
           });
+          return { ...(await this.summary(tx, tripId)), alertsOpened: 0 };
         }
+
+        // Forced end: children never accounted for become "missing" — unknown is treated as danger.
         if (check.unresolved.length > 0) {
-          throw new ApiError(HttpStatus.CONFLICT, 'students_unresolved', undefined, {
-            students: names(check.unresolved),
+          await tx.tripStudent.updateMany({
+            where: { tripId, studentId: { in: check.unresolved } },
+            data: { status: 'missing' },
           });
         }
+        const alerting = [
+          ...check.onboard.map((studentId) => ({
+            studentId,
+            severity: 'critical' as const,
+            reason: 'recorded_onboard',
+          })),
+          ...check.unresolved.map((studentId) => ({
+            studentId,
+            severity: 'high' as const,
+            reason: 'never_recorded',
+          })),
+        ];
+        const status: TripStatus = alerting.length > 0 ? 'completed_with_alert' : 'completed';
         await tx.trip.update({
           where: { id: tripId },
-          data: { status: 'completed', endedAt: now, endType: 'normal', emptyConfirmedAt: now },
+          data: { status, endedAt: now, endType: 'forced', forceReason: input.reason },
         });
-        return { ...(await this.summary(tx, tripId)), alertsOpened: 0 };
-      }
+        for (const a of alerting) {
+          const alert = await tx.alert.create({
+            data: {
+              organizationId: ref.organizationId,
+              tripId,
+              studentId: a.studentId,
+              type: 'student_left_onboard',
+              severity: a.severity,
+              // Escalation starts immediately (PLAN §7).
+              nextEscalationAt: now,
+            },
+          });
+          alertIds.push(alert.id);
+          await tx.alertEvent.create({
+            data: {
+              organizationId: ref.organizationId,
+              alertId: alert.id,
+              action: 'opened',
+              actorUserId: userId,
+              payload: { reason: a.reason, forceReason: input.reason },
+            },
+          });
+        }
+        return { ...(await this.summary(tx, tripId)), alertsOpened: alerting.length };
+      },
+    );
+    this.kickAlerts(alertIds);
+    return response;
+  }
 
-      // Forced end: children never accounted for become "missing" — unknown is treated as danger.
-      if (check.unresolved.length > 0) {
-        await tx.tripStudent.updateMany({
-          where: { tripId, studentId: { in: check.unresolved } },
-          data: { status: 'missing' },
+  /** Sends new alerts right after commit instead of waiting for the minute job. */
+  private kickAlerts(ids: string[]): void {
+    if (ids.length > 0)
+      this.effects.run('alert dispatch', () => this.escalation.processAlerts(ids));
+  }
+
+  /** "Add a student from the organisation" for a child not on today's list (PLAN §6.2). */
+  async addUnexpectedStudent(userId: string, tripId: string, studentId: string) {
+    const ref = await loadTripFor(this.prisma, userId, tripId, 'operate');
+    let alertId = '';
+    const response = await this.prisma.withContext(
+      { userId, orgId: ref.organizationId },
+      async (tx) => {
+        const trip = await lockTrip(tx, tripId);
+        if (!isTripActive(trip.status)) throw Errors.conflict('trip_not_active');
+        const enrolled = await tx.orgStudent.findFirst({
+          where: { organizationId: ref.organizationId, studentId, status: 'active' },
         });
-      }
-      const alerting = [
-        ...check.onboard.map((studentId) => ({
-          studentId,
-          severity: 'critical' as const,
-          reason: 'recorded_onboard',
-        })),
-        ...check.unresolved.map((studentId) => ({
-          studentId,
-          severity: 'high' as const,
-          reason: 'never_recorded',
-        })),
-      ];
-      const status: TripStatus = alerting.length > 0 ? 'completed_with_alert' : 'completed';
-      await tx.trip.update({
-        where: { id: tripId },
-        data: { status, endedAt: now, endType: 'forced', forceReason: input.reason },
-      });
-      for (const a of alerting) {
+        if (!enrolled) throw Errors.badRequest('student_not_enrolled');
+        const existing = await tx.tripStudent.findUnique({
+          where: { tripId_studentId: { tripId, studentId } },
+        });
+        if (existing) throw Errors.conflict('student_already_on_trip');
+        await tx.tripStudent.create({
+          data: { organizationId: ref.organizationId, tripId, studentId, isUnexpected: true },
+        });
         const alert = await tx.alert.create({
           data: {
             organizationId: ref.organizationId,
             tripId,
-            studentId: a.studentId,
-            type: 'student_left_onboard',
-            severity: a.severity,
-            // Escalation starts immediately (PLAN §7); dispatch is wired in phase 3.
-            nextEscalationAt: now,
+            studentId,
+            type: 'unexpected_student',
+            severity: 'low',
+            nextEscalationAt: new Date(),
           },
         });
+        alertId = alert.id;
         await tx.alertEvent.create({
           data: {
             organizationId: ref.organizationId,
             alertId: alert.id,
             action: 'opened',
             actorUserId: userId,
-            payload: { reason: a.reason, forceReason: input.reason },
           },
         });
-      }
-      return { ...(await this.summary(tx, tripId)), alertsOpened: alerting.length };
-    });
-  }
-
-  /** "Add a student from the organisation" for a child not on today's list (PLAN §6.2). */
-  async addUnexpectedStudent(userId: string, tripId: string, studentId: string) {
-    const ref = await loadTripFor(this.prisma, userId, tripId, 'operate');
-    return this.prisma.withContext({ userId, orgId: ref.organizationId }, async (tx) => {
-      const trip = await lockTrip(tx, tripId);
-      if (!isTripActive(trip.status)) throw Errors.conflict('trip_not_active');
-      const enrolled = await tx.orgStudent.findFirst({
-        where: { organizationId: ref.organizationId, studentId, status: 'active' },
-      });
-      if (!enrolled) throw Errors.badRequest('student_not_enrolled');
-      const existing = await tx.tripStudent.findUnique({
-        where: { tripId_studentId: { tripId, studentId } },
-      });
-      if (existing) throw Errors.conflict('student_already_on_trip');
-      await tx.tripStudent.create({
-        data: { organizationId: ref.organizationId, tripId, studentId, isUnexpected: true },
-      });
-      const alert = await tx.alert.create({
-        data: {
-          organizationId: ref.organizationId,
-          tripId,
-          studentId,
-          type: 'unexpected_student',
-          severity: 'low',
-          nextEscalationAt: new Date(),
-        },
-      });
-      await tx.alertEvent.create({
-        data: {
-          organizationId: ref.organizationId,
-          alertId: alert.id,
-          action: 'opened',
-          actorUserId: userId,
-        },
-      });
-      return { tripId, studentId, status: 'expected', isUnexpected: true };
-    });
+        return { tripId, studentId, status: 'expected', isUnexpected: true };
+      },
+    );
+    this.kickAlerts([alertId]);
+    return response;
   }
 
   private async summary(tx: Tx, tripId: string) {
@@ -474,13 +520,18 @@ async function lockTrip(tx: Tx, tripId: string) {
   return trip;
 }
 
-async function rebuildProjection(tx: Tx, tripId: string, studentId: string): Promise<void> {
+/** Rebuilds one child's projection; returns the new status if it changed. */
+async function rebuildProjection(
+  tx: Tx,
+  tripId: string,
+  studentId: string,
+): Promise<StatusChange | null> {
   const current = await tx.tripStudent.findUniqueOrThrow({
     where: { tripId_studentId: { tripId, studentId } },
     select: { status: true },
   });
   // A child whose alert was resolved by a human stays resolved (PLAN §7).
-  if (current.status === 'resolved') return;
+  if (current.status === 'resolved') return null;
   const events = await tx.tripEvent.findMany({
     where: { tripId, studentId },
     select: {
@@ -507,6 +558,18 @@ async function rebuildProjection(tx: Tx, tripId: string, studentId: string): Pro
     where: { tripId_studentId: { tripId, studentId } },
     data: { status, boardedAt: folded.boardedAt, alightedAt: folded.alightedAt },
   });
+  if (status === current.status || status === 'expected' || status === 'missing') return null;
+  const lastApplied = events.find((e) => e.id === folded.applied.at(-1));
+  return {
+    studentId,
+    status,
+    at:
+      status === 'boarded'
+        ? folded.boardedAt!
+        : status === 'alighted'
+          ? folded.alightedAt!
+          : (lastApplied?.clientRecordedAt ?? new Date()),
+  };
 }
 
 function countStatuses(students: { status: TripStudentStatus }[]) {

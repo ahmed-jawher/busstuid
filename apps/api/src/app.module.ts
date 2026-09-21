@@ -2,14 +2,18 @@ import { DynamicModule, Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 import { AuthModule } from './auth/auth.module';
+import { AlertsModule } from './alerts/alerts.module';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
+import { SideEffectsModule } from './common/side-effects';
 import { AccessGuard } from './common/guards';
 import { ConfigModule } from './config/config.module';
 import type { AppConfig } from './config/env';
 import { DatabaseModule } from './database/database.module';
 import { EmailModule } from './email/email.module';
 import { HealthController } from './health/health.controller';
+import { JobsModule } from './jobs/jobs.module';
 import { MeModule } from './me/me.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { OrgSetupModule } from './org-setup/org-setup.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { PushModule } from './push/push.module';
@@ -45,6 +49,8 @@ export class AppModule {
           },
         }),
         DatabaseModule,
+        SideEffectsModule,
+        NotificationsModule,
         EmailModule,
         PushModule,
         AuthModule,
@@ -53,6 +59,8 @@ export class AppModule {
         StudentsModule,
         OrgSetupModule,
         TripsModule,
+        AlertsModule,
+        JobsModule,
       ],
       controllers: [HealthController],
       providers: [

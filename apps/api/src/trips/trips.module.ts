@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AlertsModule } from '../alerts/alerts.module';
 import { StudentsModule } from '../students/students.module';
 import { GuardianTripsService } from './guardian-trips.service';
 import { TripGenerationService } from './trip-generation.service';
@@ -6,7 +7,7 @@ import { GuardianTripsController, OrgTripsController, TripsController } from './
 import { TripsService } from './trips.service';
 
 @Module({
-  imports: [StudentsModule],
+  imports: [StudentsModule, AlertsModule],
   controllers: [TripsController, OrgTripsController, GuardianTripsController],
   providers: [TripsService, TripGenerationService, GuardianTripsService],
   exports: [TripGenerationService, TripsService],

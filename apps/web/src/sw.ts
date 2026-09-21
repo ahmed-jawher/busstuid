@@ -26,17 +26,19 @@ self.addEventListener('push', (event) => {
   } catch {
     payload = { title: 'وصول آمن', body: event.data?.text() ?? '' };
   }
-  event.waitUntil(
-    self.registration.showNotification(payload.title, {
-      body: payload.body,
-      tag: payload.tag,
-      data: { url: payload.url },
-      // Critical alerts stay on screen until the user acts (PLAN §7).
-      requireInteraction: payload.critical ?? false,
-      icon: 'icons/icon.svg',
-      badge: 'icons/icon.svg',
-    }),
-  );
+  // `renotify` is supported by browsers but missing from TypeScript's DOM types.
+  const options: NotificationOptions & { renotify?: boolean } = {
+    body: payload.body,
+    tag: payload.tag,
+    data: { url: payload.url },
+    // Critical alerts stay on screen until the user acts (PLAN §7).
+    requireInteraction: payload.critical ?? false,
+    // Escalation repeats reuse the alert's tag; without this the repeat would be silent.
+    renotify: Boolean(payload.tag),
+    icon: 'icons/icon.svg',
+    badge: 'icons/icon.svg',
+  };
+  event.waitUntil(self.registration.showNotification(payload.title, options));
 });
 
 self.addEventListener('notificationclick', (event) => {
