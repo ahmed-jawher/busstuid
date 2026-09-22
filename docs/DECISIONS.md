@@ -249,3 +249,19 @@ Format: the decision, then why.
 - **Notification taps only open this app's own paths** (`/alert/…`), never another site.
 - **The Android build runs in CI**, not locally: installing the Android SDK here would require
   accepting Google's licence on the owner's behalf. GitHub's runner already has it.
+
+## Sign-up by account type (after phase 6)
+
+- **The first sign-up screen asks who the person is:** guardian, independent driver, school or
+  transport company, or a driver employed by one (owner's request). The choice is stored on the
+  user (`signup_role`, migration 4) and decides where they land.
+- **The organisation is created when the email is verified,** not at sign-up, so unverified
+  addresses never reach the platform's review queue. Independent drivers are named after the
+  person and are active at once; schools and companies wait for review as before.
+- **Phone clash after sign-up does not block verification:** the account is verified and the
+  app sends the person to "register an organisation" to resolve it.
+- **Employed drivers get a plain account** and a waiting screen showing the email their
+  employer must add; organisations still add their own drivers, so nobody can make themselves a
+  school's driver.
+- **The guardian interface appears only for guardians** (or anyone who has added a child), so a
+  school admin does not land on an empty "my children" screen.

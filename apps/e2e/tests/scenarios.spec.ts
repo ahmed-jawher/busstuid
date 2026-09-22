@@ -40,6 +40,8 @@ test('1. guardian adds a child; the school approves it', async ({ browser }) => 
   const guardian = await newPage(browser);
   const email = `e2e.parent.${Date.now()}@example.com`;
   await guardian.goto(`${state().webUrl}/register`);
+  // First question on sign-up: who are you?
+  await guardian.getByRole('button', { name: /ولي أمر/ }).click();
   await guardian.getByLabel('الاسم الكامل').fill('نورة الاختبار');
   await guardian.getByLabel('البريد الإلكتروني').fill(email);
   await guardian.getByLabel('رقم الجوال').fill(`3${randomInt(1_000_000, 9_999_999)}`);

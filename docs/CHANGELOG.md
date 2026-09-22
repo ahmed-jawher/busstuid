@@ -152,3 +152,8 @@ passes too. ✅
 - New accounts land on the guardian screen, which hid the "register an organisation or
   independent driver" link. It is now on the guardian home, in Settings, and explained on the
   sign-up page.
+
+## Sign-up by account type
+
+- The first sign-up screen asks: guardian, independent driver, school or company, or driver at
+  one. Organisations are created on email verification; each account lands on its interface.

@@ -13,7 +13,7 @@ export interface Actor {
 }
 
 let counter = 0;
-const uniqueEmail = (prefix: string) =>
+export const uniqueEmail = (prefix: string) =>
   `${prefix}.${Date.now().toString(36)}${(counter++).toString(36)}@example.com`;
 
 /** Unique valid Bahraini mobile numbers (fictional 3xxx xxxx range). */

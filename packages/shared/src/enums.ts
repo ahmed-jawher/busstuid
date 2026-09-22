@@ -9,6 +9,15 @@ export type Role = (typeof ROLES)[number];
 export const ORGANIZATION_TYPES = values('school', 'transport_company', 'independent_driver');
 export type OrganizationType = (typeof ORGANIZATION_TYPES)[number];
 
+/** What a person says they are on the first sign-up screen. */
+export const SIGNUP_ROLES = values(
+  'guardian',
+  'independent_driver',
+  'organization',
+  'staff_driver',
+);
+export type SignupRole = (typeof SIGNUP_ROLES)[number];
+
 export const COUNTRIES = values('BH', 'SA');
 export type Country = (typeof COUNTRIES)[number];
 

@@ -52,8 +52,7 @@
     "resendCode": "Resend code",
     "codeResent": "A new code was sent to your email",
     "totpCode": "Authenticator code",
-    "totpHint": "The 6-digit code in your authenticator app",
-    "orgHint": "School, transport company or independent driver? Create your account first, then register your organisation from Settings. School and company drivers are added by their organisation admin once they have an account."
+    "totpHint": "The 6-digit code in your authenticator app"
   },
   "push": {
     "title": "Turn on notifications",
@@ -184,8 +183,7 @@
     "exportData": "Download my child's data",
     "deleteData": "Delete my child's data",
     "deleteDataWarning": "The photo and name are deleted and the child is unlinked from every provider. Trip and alert records remain, without name or photo, for safety. If the child has another guardian, only your link is removed.",
-    "deleteDataConfirm": "Delete my child's data",
-    "orgPrompt": "Do you represent a school or transport company, or are you an independent driver?"
+    "deleteDataConfirm": "Delete my child's data"
   },
   "enrollment": {
     "pending": "Waiting for approval",
@@ -437,6 +435,31 @@
     "push_token_format": "The device token is not valid. Restart the app and try again.",
     "wrong_provider": "The notification could not be sent to this device.",
     "apns_not_configured": "iPhone notifications are not set up on the server yet.",
-    "fcm_not_configured": "Android notifications are not set up on the server yet."
+    "fcm_not_configured": "Android notifications are not set up on the server yet.",
+    "organization_required": "Enter the school or company name."
+  },
+  "signup": {
+    "whoAreYou": "Create an account — who are you?",
+    "change": "Change",
+    "organization": "Organisation details",
+    "managerName": "Your name (account manager)",
+    "driverPhoneHint": "Guardians find you by this number; two independent drivers cannot share one.",
+    "staffDriverNote": "After creating your account, give your school or transport company your email so they can add you as a driver.",
+    "waitingTitle": "Your account is ready",
+    "waitingBody": "Give your school or transport company this email address so they can add you as a driver. Your trips will then appear here.",
+    "checkAgain": "Check again",
+    "alsoParent": "Also a parent?",
+    "role": {
+      "guardian": "Guardian",
+      "independent_driver": "Independent driver",
+      "organization": "School or transport company",
+      "staff_driver": "Driver at a school or company"
+    },
+    "roleHint": {
+      "guardian": "I follow my children to and from school",
+      "independent_driver": "I drive students in my own vehicle",
+      "organization": "I manage buses, drivers and students",
+      "staff_driver": "My employer adds me after I sign up"
+    }
   }
 }

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, Navigate, useNavigate } from 'react-router';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
 import { COUNTRIES, type Country } from '@wusool/shared';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -21,10 +21,18 @@ export function HomePage() {
   const tiles = [
     orgsWith('driver', 'attendant').length > 0 && { to: '/driver', key: 'home.driver', icon: '🚌' },
     orgsWith('org_admin').length > 0 && { to: '/admin', key: 'home.admin', icon: '🏫' },
-    { to: '/guardian', key: 'home.guardian', icon: '👪' },
+    me?.isGuardian && { to: '/guardian', key: 'home.guardian', icon: '👪' },
     me?.isPlatformAdmin && { to: '/platform', key: 'home.platform', icon: '🛡️' },
   ].filter(Boolean) as { to: string; key: string; icon: string }[];
   if (tiles.length === 1) return <Navigate to={tiles[0]!.to} replace />;
+  if (tiles.length === 0) {
+    // Signed up as an organisation whose creation did not happen (e.g. phone clash): finish it.
+    if (me?.signupRole === 'independent_driver' || me?.signupRole === 'organization') {
+      const type = me.signupRole === 'organization' ? 'school' : 'independent_driver';
+      return <Navigate to={`/organizations/new?type=${type}`} replace />;
+    }
+    return <StaffDriverWaiting />;
+  }
   return (
     <section className="space-y-4">
       <PageHeader title={t('home.chooseRole')} />
@@ -48,6 +56,33 @@ export function HomePage() {
         {t('admin.createOrg')}
       </Link>
     </section>
+  );
+}
+
+/** A driver employed by a school or company, before their organisation has added them. */
+function StaffDriverWaiting() {
+  const { t } = useTranslation();
+  const { me, refresh } = useSession();
+  useQuery({ queryKey: ['staff-driver-wait'], queryFn: refresh, refetchInterval: 30_000 });
+  return (
+    <div className="mx-auto max-w-lg space-y-4">
+      <PageHeader title={t('signup.waitingTitle')} />
+      <Card className="space-y-3">
+        <p>{t('signup.waitingBody')}</p>
+        <p className="rounded-lg bg-background p-3 text-center font-bold" dir="ltr">
+          {me?.email}
+        </p>
+        <Button variant="outline" className="w-full" onClick={() => void refresh()}>
+          {t('signup.checkAgain')}
+        </Button>
+      </Card>
+      <p className="text-sm text-muted">
+        {t('signup.alsoParent')}{' '}
+        <Link to="/children/new" className="font-semibold text-primary underline">
+          {t('guardian.addChild')}
+        </Link>
+      </p>
+    </div>
   );
 }
 
@@ -123,7 +158,12 @@ export function SettingsPage() {
         </p>
         <p className="text-xs text-muted">{t('settings.phoneUnverified')}</p>
       </Card>
-      <Card>
+      <Card className="flex flex-col gap-3">
+        {!me.isGuardian && (
+          <Link to="/children/new" className="font-semibold text-primary underline">
+            {t('guardian.addChild')}
+          </Link>
+        )}
         <Link to="/organizations/new" className="font-semibold text-primary underline">
           {t('admin.createOrg')}
         </Link>
@@ -184,8 +224,11 @@ export function CreateOrgPage() {
   const { t } = useTranslation();
   const { refresh } = useSession();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const [form, setForm] = useState({
-    type: 'independent_driver',
+    type: ['school', 'transport_company'].includes(params.get('type') ?? '')
+      ? params.get('type')!
+      : 'independent_driver',
     nameAr: '',
     nameEn: '',
     country: 'BH' as Country,

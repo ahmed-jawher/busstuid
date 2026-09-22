@@ -1,4 +1,5 @@
 import type {
+  SignupRole,
   AlertSeverity,
   AlertStatus,
   AlertType,
@@ -34,6 +35,9 @@ export interface Me {
   muteRoutineNotifications: boolean;
   isPlatformAdmin: boolean;
   totpEnabled: boolean;
+  signupRole: SignupRole;
+  /** Signed up as a guardian, or has added a child. */
+  isGuardian: boolean;
   memberships: { role: Role; organization: OrgSummary }[];
 }
 
