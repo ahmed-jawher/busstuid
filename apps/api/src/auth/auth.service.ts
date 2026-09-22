@@ -1,8 +1,12 @@
-import { HttpStatus, Inject, Injectable } from '@nestjs/common';
-import type { Locale } from '@wusool/shared';
+import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import type { Country, Locale, SignupRole } from '@wusool/shared';
+import { AuditService } from '../audit/audit';
 import { ApiError, Errors } from '../common/api-error';
 import { APP_CONFIG, type AppConfig } from '../config/env';
 import { PrismaService } from '../database/prisma.service';
+import { createOrganization, type NewOrganization } from '../organizations/create-organization';
+import { assertDriverPhoneAvailable } from '../organizations/driver-phone';
 import { decryptField, verifyTotp } from './totp';
 import { EmailCodesService } from './email-codes.service';
 import { checkPasswordPolicy, hashPassword, verifyPassword } from './passwords';
@@ -17,16 +21,38 @@ export interface RegisterData {
   fullNameAr: string;
   fullNameEn?: string;
   phone: string;
+  country: Country;
   locale: Locale;
+  signupRole?: SignupRole;
+  organization?: { type: 'school' | 'transport_company'; nameAr: string; nameEn?: string };
+}
+
+/** The organisation a person asked for at sign-up; created once the email is verified. */
+function pendingOrganizationFor(input: RegisterData): NewOrganization | null {
+  if (input.signupRole === 'independent_driver') {
+    return {
+      type: 'independent_driver',
+      nameAr: input.fullNameAr,
+      ...(input.fullNameEn ? { nameEn: input.fullNameEn } : {}),
+      country: input.country,
+    };
+  }
+  if (input.signupRole === 'organization' && input.organization) {
+    return { ...input.organization, country: input.country };
+  }
+  return null;
 }
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger('Auth');
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly codes: EmailCodesService,
     private readonly tokens: TokensService,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
+    private readonly audit: AuditService,
   ) {}
 
   /**
@@ -56,6 +82,12 @@ export class AuthService {
       return;
     }
 
+    // An independent driver's phone links guardians to them, so it must be free (PLAN §3.1).
+    // Checked now so the form can say so, and again when the organisation is created.
+    if (input.signupRole === 'independent_driver') {
+      await this.prisma.systemTx((tx) => assertDriverPhoneAvailable(tx, input.phone));
+    }
+    const pending = pendingOrganizationFor(input);
     const user = await this.prisma.system.user.create({
       data: {
         email: input.email,
@@ -64,6 +96,10 @@ export class AuthService {
         fullNameEn: input.fullNameEn ?? null,
         phoneE164: input.phone,
         preferredLocale: input.locale,
+        signupRole: input.signupRole ?? 'guardian',
+        pendingOrganization: pending
+          ? (pending as unknown as Prisma.InputJsonObject)
+          : Prisma.DbNull,
       },
     });
     await this.codes.issue({
@@ -80,13 +116,36 @@ export class AuthService {
     if (!user) throw Errors.badRequest('code_invalid');
     if (user.emailVerifiedAt) throw Errors.conflict('email_already_verified');
     await this.codes.consume(user.id, 'verify_email', code);
-    return this.prisma.systemTx(async (tx) => {
+    let createdOrgId: string | null = null;
+    const tokens = await this.prisma.systemTx(async (tx) => {
       const verified = await tx.user.update({
         where: { id: user.id },
-        data: { emailVerifiedAt: new Date() },
+        data: { emailVerifiedAt: new Date(), pendingOrganization: Prisma.DbNull },
       });
+      const pending = user.pendingOrganization as NewOrganization | null;
+      if (pending) {
+        try {
+          createdOrgId = (await createOrganization(tx, user.id, pending)).id;
+        } catch (e) {
+          // E.g. the phone was taken by another driver meanwhile. Verification still succeeds;
+          // the app then asks the person to register the organisation themselves.
+          if (!(e instanceof ApiError)) throw e;
+          this.logger.warn(`sign-up organisation not created: ${e.code}`);
+        }
+      }
       return this.tokens.issue(tx, verified, deviceInfo);
     });
+    if (createdOrgId) {
+      await this.audit.record({
+        actorUserId: user.id,
+        organizationId: createdOrgId,
+        action: 'organization.create',
+        entityType: 'organization',
+        entityId: createdOrgId,
+        diff: { via: 'signup' },
+      });
+    }
+    return tokens;
   }
 
   async resendCode(

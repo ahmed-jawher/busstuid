@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { COUNTRIES, EMAIL_CODE_PURPOSES, LOCALES, ORGANIZATION_TYPES } from './enums';
+import { COUNTRIES, EMAIL_CODE_PURPOSES, LOCALES, ORGANIZATION_TYPES, SIGNUP_ROLES } from './enums';
 import { normalizePhone } from './phone';
 
 // Request schemas shared by the API (validation) and the web app (forms). PLAN §5.1, §11.
@@ -44,6 +44,24 @@ export const registerSchema = z
     fullNameEn: nameSchema.optional(),
     ...phoneFields,
     locale: z.enum(LOCALES).default('ar'),
+    signupRole: z.enum(SIGNUP_ROLES).default('guardian'),
+    /** Required when signing up as a school or transport company. */
+    organization: z
+      .object({
+        type: z.enum(['school', 'transport_company']),
+        nameAr: nameSchema,
+        nameEn: nameSchema.optional(),
+      })
+      .optional(),
+  })
+  .superRefine((v, ctx) => {
+    if (v.signupRole === 'organization' && !v.organization) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['organization', 'nameAr'],
+        message: 'organization_required',
+      });
+    }
   })
   .transform(withNormalizedPhone);
 export type RegisterInput = z.infer<typeof registerSchema>;

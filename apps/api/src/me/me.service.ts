@@ -41,6 +41,7 @@ export class MeService {
           muteRoutineNotifications: true,
           isPlatformAdmin: true,
           totpEnabledAt: true,
+          signupRole: true,
           status: true,
         },
       }),
@@ -56,11 +57,16 @@ export class MeService {
         },
       },
     });
+    // Guardian interface: for everyone who signed up as a guardian or has added a child.
+    const childLinks = await this.prisma.withContext({ userId }, (tx) =>
+      tx.studentGuardian.count({ where: { guardianUserId: userId, student: { deletedAt: null } } }),
+    );
     const { status: _status, emailVerifiedAt, totpEnabledAt, ...rest } = user;
     return {
       ...rest,
       emailVerified: emailVerifiedAt !== null,
       totpEnabled: totpEnabledAt !== null,
+      isGuardian: user.signupRole === 'guardian' || childLinks > 0,
       memberships,
     };
   }

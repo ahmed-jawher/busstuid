@@ -124,12 +124,6 @@ export function GuardianHomePage() {
           </li>
         ))}
       </ul>
-      <p className="border-t border-border pt-4 text-sm text-muted">
-        {t('guardian.orgPrompt')}{' '}
-        <Link to="/organizations/new" className="font-semibold text-primary underline">
-          {t('admin.createOrg')}
-        </Link>
-      </p>
     </div>
   );
 }
