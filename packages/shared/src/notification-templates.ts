@@ -34,28 +34,28 @@ type Render = (d: TemplateData) => { title: string; body: string };
 const TEMPLATES: Record<NotificationTemplate, Record<Locale, Render>> = {
   boarded: {
     ar: (d) => ({
-      title: 'وصول آمن',
+      title: 'طمّني',
       body: `✅ صعد ${d.student} إلى ${d.vehicle} الساعة ${d.time}`,
     }),
     en: (d) => ({
-      title: 'Wusool Safe',
+      title: 'Tammeni',
       body: `✅ ${d.student} boarded ${d.vehicle} at ${d.time}`,
     }),
   },
   alighted: {
-    ar: (d) => ({ title: 'وصول آمن', body: `🏫 نزل ${d.student} عند ${d.stop} الساعة ${d.time}` }),
+    ar: (d) => ({ title: 'طمّني', body: `🏫 نزل ${d.student} عند ${d.stop} الساعة ${d.time}` }),
     en: (d) => ({
-      title: 'Wusool Safe',
+      title: 'Tammeni',
       body: `🏫 ${d.student} got off at ${d.stop} at ${d.time}`,
     }),
   },
   absent: {
     ar: (d) => ({
-      title: 'وصول آمن',
+      title: 'طمّني',
       body: `📋 سجّل السائق ${d.student} غائباً عن رحلة ${d.tripName}`,
     }),
     en: (d) => ({
-      title: 'Wusool Safe',
+      title: 'Tammeni',
       body: `📋 The driver marked ${d.student} absent from ${d.tripName}`,
     }),
   },
@@ -95,17 +95,17 @@ const TEMPLATES: Record<NotificationTemplate, Record<Locale, Render>> = {
   },
   unexpected_student: {
     ar: (d) => ({
-      title: 'وصول آمن',
+      title: 'طمّني',
       body: `ℹ️ أُضيف ${d.student} إلى رحلة ${d.tripName} وهو غير مسجّل فيها.`,
     }),
     en: (d) => ({
-      title: 'Wusool Safe',
+      title: 'Tammeni',
       body: `ℹ️ ${d.student} was added to ${d.tripName} without being on its list.`,
     }),
   },
   resolved: {
-    ar: (d) => ({ title: 'وصول آمن', body: `✔️ تم التأكد من سلامة ${d.student}` }),
-    en: (d) => ({ title: 'Wusool Safe', body: `✔️ ${d.student} has been confirmed safe` }),
+    ar: (d) => ({ title: 'طمّني', body: `✔️ تم التأكد من سلامة ${d.student}` }),
+    en: (d) => ({ title: 'Tammeni', body: `✔️ ${d.student} has been confirmed safe` }),
   },
 };
 

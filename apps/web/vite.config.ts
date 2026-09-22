@@ -24,8 +24,8 @@ export default defineConfig({
       injectRegister: false,
       registerType: 'prompt',
       manifest: {
-        name: 'وصول آمن',
-        short_name: 'وصول آمن',
+        name: 'طمّني',
+        short_name: 'طمّني',
         description: 'سلامة الطلاب في النقل المدرسي',
         lang: 'ar',
         dir: 'rtl',

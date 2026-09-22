@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">وصول آمن</string>
-    <string name="title_activity_main">وصول آمن</string>
-    <string name="package_name">com.wusoolsafe.app</string>
-    <string name="custom_url_scheme">com.wusoolsafe.app</string>
+    <string name="app_name">طمّني</string>
+    <string name="title_activity_main">طمّني</string>
+    <string name="package_name">com.tammeni.app</string>
+    <string name="custom_url_scheme">com.tammeni.app</string>
 </resources>

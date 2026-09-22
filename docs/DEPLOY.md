@@ -19,7 +19,7 @@ works; 2 vCPU / 4 GB RAM is plenty to start.
 
 ```bash
 git clone https://github.com/ahmed-jawher/busstuid.git && cd busstuid
-node scripts/prod-env.mjs --domain app.example.com --mail-from "Wusool Safe <no-reply@example.com>"
+node scripts/prod-env.mjs --domain app.example.com --mail-from "Tammeni <no-reply@example.com>"
 # edit .env.production: fill SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASSWORD
 docker compose -f infra/docker-compose.prod.yml --env-file .env.production up -d --build
 ```

@@ -24,7 +24,7 @@ self.addEventListener('push', (event) => {
   try {
     payload = event.data?.json() as PushPayload;
   } catch {
-    payload = { title: 'وصول آمن', body: event.data?.text() ?? '' };
+    payload = { title: 'طمّني', body: event.data?.text() ?? '' };
   }
   // `renotify` is supported by browsers but missing from TypeScript's DOM types.
   const options: NotificationOptions & { renotify?: boolean } = {

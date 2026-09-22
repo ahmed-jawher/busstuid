@@ -157,3 +157,9 @@ passes too. ✅
 
 - The first sign-up screen asks: guardian, independent driver, school or company, or driver at
   one. Organisations are created on email verification; each account lands on its interface.
+
+## Name: طمّني — Tammeni
+
+- Renamed everywhere users see it (app, emails, notifications, stores, authenticator issuer);
+  app id `com.tammeni.app`.
+- Removed the pilot-version banner at the owner's request.

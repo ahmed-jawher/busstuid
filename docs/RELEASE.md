@@ -16,7 +16,7 @@ What remains needs the owner's accounts, a Mac for iOS, and real phones.
 
 ## 0. Before anything
 
-- The app id is `com.wusoolsafe.app` (`apps/web/capacitor.config.ts`, iOS bundle id,
+- The app id is `com.tammeni.app` (`apps/web/capacitor.config.ts`, iOS bundle id,
   `APNS_BUNDLE_ID`). **Change it now if you want another one** — it cannot change after the
   first store upload. Change it in all three places, then run `npx cap sync`.
 - The production API must be live over HTTPS (docs/DEPLOY.md). Native builds require its
@@ -40,7 +40,7 @@ VITE_API_URL=https://app.example.com/v1 pnpm --filter @wusool/web native:sync
 
 ## 2. Android
 
-1. **Firebase:** create a project → _Add app_ → Android → package `com.wusoolsafe.app`.
+1. **Firebase:** create a project → _Add app_ → Android → package `com.tammeni.app`.
    Download `google-services.json` into `apps/web/android/app/`. It is **never committed** (the
    secret scan refuses it); keep a copy in your password manager.
 2. **Server key:** Firebase → Project settings → Service accounts → _Generate new private key_.
@@ -58,7 +58,7 @@ VITE_API_URL=https://app.example.com/v1 pnpm --filter @wusool/web native:sync
    tracking), all encrypted in transit, deletion available in the app. The app is for guardians,
    drivers and schools — it is not directed at children.
 5. **Phones:** on Android 14 and later, reminders arrive on time only if the user allows
-   _Alarms & reminders_ for the app (Settings → Apps → وصول آمن). Without it they can be a few
+   _Alarms & reminders_ for the app (Settings → Apps → طمّني). Without it they can be a few
    minutes late; alerts sent by the server (push) are not affected. Some manufacturers (Xiaomi,
    Huawei, Oppo…) also stop background apps — tell drivers to set battery use to _Unrestricted_.
 
@@ -73,7 +73,7 @@ VITE_API_URL=https://app.example.com/v1 pnpm --filter @wusool/web native:sync
    APNS_TEAM_ID=YYYYYYYYYY
    APNS_ENV=production   # TestFlight and App Store; "sandbox" for builds run from Xcode
    ```
-2. **Identifier:** register the App ID `com.wusoolsafe.app` with the _Push Notifications_ and
+2. **Identifier:** register the App ID `com.tammeni.app` with the _Push Notifications_ and
    _Time Sensitive Notifications_ capabilities (already declared in `App/App.entitlements`).
 3. **Build:** on the Mac, `pnpm install`, the `native:sync` command above, then
    `npx cap open ios` → select your team under _Signing & Capabilities_ → _Product → Archive_ →
@@ -95,5 +95,4 @@ For each platform, with the phone locked and the app closed:
 4. Leave a trip running past its planned end: the overdue alert arrives (server watchdog).
 5. Turn on airplane mode, tap children, turn it off: the taps sync and guardians are notified.
 
-Only after this works on both platforms should the "trial version" banner at the top of every screen
-be removed (PLAN §20.4).
+No school should rely on the app before this works on both platforms.

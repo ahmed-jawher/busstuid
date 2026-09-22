@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Creates .env.production with fresh secrets and VAPID keys for infra/docker-compose.prod.yml.
-//   node scripts/prod-env.mjs --domain app.example.com --mail-from "Wusool Safe <no-reply@example.com>"
+//   node scripts/prod-env.mjs --domain app.example.com --mail-from "Tammeni <no-reply@example.com>"
 // Never overwrites an existing file (rotating secrets would lock everyone out).
 import { randomBytes } from 'node:crypto';
 import { existsSync, writeFileSync } from 'node:fs';
@@ -61,7 +61,7 @@ SMTP_PORT=${arg('smtp-port', '587')}
 SMTP_SECURE=false
 SMTP_USER=
 SMTP_PASSWORD=
-MAIL_FROM=${JSON.stringify(arg('mail-from', `Wusool Safe <no-reply@${plainHttp ? 'example.com' : domain}>`))}
+MAIL_FROM=${JSON.stringify(arg('mail-from', `Tammeni <no-reply@${plainHttp ? 'example.com' : domain}>`))}
 
 # Optional error monitoring (off unless set).
 SENTRY_DSN=
@@ -71,7 +71,7 @@ FCM_SERVICE_ACCOUNT_BASE64=
 APNS_KEY_BASE64=
 APNS_KEY_ID=
 APNS_TEAM_ID=
-APNS_BUNDLE_ID=com.wusoolsafe.app
+APNS_BUNDLE_ID=com.tammeni.app
 APNS_ENV=production
 `;
 writeFileSync(out, env, { mode: 0o600 });
