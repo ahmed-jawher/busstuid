@@ -33,7 +33,7 @@ const envSchema = z.object({
     .transform((v) => v === 'true'),
   SMTP_USER: z.string().optional(),
   SMTP_PASSWORD: z.string().optional(),
-  MAIL_FROM: z.string().default('Wusool Safe <no-reply@wusool.local>'),
+  MAIL_FROM: z.string().default('Tammeni <no-reply@wusool.local>'),
   /** Background jobs (pg-boss). Off by default in tests, which call the services directly. */
   JOBS_ENABLED: z.enum(['true', 'false']).optional(),
   /** 'log' records pushes instead of sending them (end-to-end tests); refused in production. */
@@ -51,7 +51,7 @@ const envSchema = z.object({
   APNS_BUNDLE_ID: z
     .string()
     .optional()
-    .transform((v) => v || 'com.wusoolsafe.app'),
+    .transform((v) => v || 'com.tammeni.app'),
   /** Development builds from Xcode get sandbox tokens; TestFlight and the App Store production. */
   APNS_ENV: z.enum(['production', 'sandbox']).optional().or(z.literal('')),
 });

@@ -115,6 +115,7 @@ export const COMMON_PASSWORDS: ReadonlySet<string> = new Set([
   'teacher1',
   'wusool123',
   'wusoolsafe',
+  'tammeni',
   'password2024',
   'password2025',
   'password2026',

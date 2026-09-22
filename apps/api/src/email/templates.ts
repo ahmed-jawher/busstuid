@@ -6,11 +6,11 @@ import type { EmailMessage } from './email.provider';
 const COPY: Record<EmailCodePurpose, Record<Locale, { subject: string; intro: string }>> = {
   verify_email: {
     ar: {
-      subject: 'رمز تأكيد بريدك في وصول آمن',
+      subject: 'رمز تأكيد بريدك في طمّني',
       intro: 'استخدم هذا الرمز لتأكيد بريدك الإلكتروني:',
     },
     en: {
-      subject: 'Your Wusool Safe verification code',
+      subject: 'Your Tammeni verification code',
       intro: 'Use this code to verify your email:',
     },
   },
@@ -62,7 +62,7 @@ export function codeEmail(
 
   const html = `<!doctype html><html><body style="margin:0;padding:24px;background:#f6f6f6;font-family:'IBM Plex Sans Arabic',Tahoma,Arial,sans-serif;color:#161616">
   <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;padding:24px">
-    <p style="margin:0 0 20px;font-size:20px;font-weight:700;color:#ce1126">وصول آمن · Wusool Safe</p>
+    <p style="margin:0 0 20px;font-size:20px;font-weight:700;color:#ce1126">طمّني · Tammeni</p>
     ${order.map(section).join('<hr style="border:none;border-top:1px solid #e5e5e5;margin:0 0 24px">')}
   </div></body></html>`;
 

@@ -265,3 +265,15 @@ Format: the decision, then why.
   school's driver.
 - **The guardian interface appears only for guardians** (or anyone who has added a child), so a
   school admin does not land on an empty "my children" screen.
+
+## Name and pilot banner (owner's request, 2026-09-23)
+
+- **The product is now طمّني — Tammeni** ("reassure me"), chosen by the owner. The app id is
+  `com.tammeni.app` (changed before any store upload, when it still could be). Internal code
+  names stay `wusool` (packages, database roles, storage keys) to avoid a risky data migration;
+  users never see them.
+- **The "pilot version — do not rely on it alone" banner (PLAN §20.4) was removed** at the
+  owner's request. The underlying limits are unchanged and documented in docs/STATUS.md and
+  docs/RELEASE.md: on the web, reminders need the page open and iPhones need the site installed;
+  the server watchdog remains the main protection. Real-phone checks are still required before a
+  school relies on the app.

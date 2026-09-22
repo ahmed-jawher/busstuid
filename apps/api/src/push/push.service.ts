@@ -6,8 +6,8 @@ import { PrismaService } from '../database/prisma.service';
 import { PUSH_PROVIDER, toPushTarget, type PushProvider } from './push.provider';
 
 const TEST_MESSAGE: Record<Locale, { title: string; body: string }> = {
-  ar: { title: 'وصول آمن', body: '✅ الإشعارات تعمل على هذا الجهاز.' },
-  en: { title: 'Wusool Safe', body: '✅ Notifications work on this device.' },
+  ar: { title: 'طمّني', body: '✅ الإشعارات تعمل على هذا الجهاز.' },
+  en: { title: 'Tammeni', body: '✅ Notifications work on this device.' },
 };
 
 @Injectable()

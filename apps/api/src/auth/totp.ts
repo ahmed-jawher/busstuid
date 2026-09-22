@@ -67,7 +67,7 @@ export function verifyTotp(secret: string, code: string, time = Date.now()): boo
 }
 
 export function otpauthUri(secret: string, account: string): string {
-  const issuer = 'Wusool Safe';
+  const issuer = 'Tammeni';
   return `otpauth://totp/${encodeURIComponent(`${issuer}:${account}`)}?secret=${secret}&issuer=${encodeURIComponent(issuer)}&digits=6&period=${STEP_SECONDS}`;
 }
 

@@ -15,7 +15,7 @@ const ec = generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
 const pem = (k: typeof rsa.privateKey) => k.export({ type: 'pkcs8', format: 'pem' }).toString();
 
 const message: PushMessage = {
-  title: 'وصول آمن',
+  title: 'طمّني',
   body: '🚨 تنبيه',
   url: '/alert/1',
   tag: 'alert-1',
@@ -81,7 +81,7 @@ describe('FCM provider', () => {
     const body = JSON.parse(send.body).message;
     expect(body).toMatchObject({
       token: 'device-token-1234567890',
-      notification: { title: 'وصول آمن', body: '🚨 تنبيه' },
+      notification: { title: 'طمّني', body: '🚨 تنبيه' },
       data: { url: '/alert/1', tag: 'alert-1', critical: '1' },
       android: {
         priority: 'HIGH',
@@ -148,7 +148,7 @@ describe('APNs provider', () => {
     keyId: 'KEY1234567',
     teamId: 'TEAM123456',
     privateKey: pem(ec.privateKey),
-    bundleId: 'com.wusoolsafe.app',
+    bundleId: 'com.tammeni.app',
     production: true,
   };
   const token = 'ab'.repeat(32);
@@ -161,7 +161,7 @@ describe('APNs provider', () => {
     const req = fake.requests[0]!;
     expect(req.url).toBe(`https://api.push.apple.com/3/device/${token}`);
     expect(req.headers).toMatchObject({
-      'apns-topic': 'com.wusoolsafe.app',
+      'apns-topic': 'com.tammeni.app',
       'apns-push-type': 'alert',
       'apns-priority': '10',
       'apns-expiration': String(1_700_000_000 + 120),
@@ -180,7 +180,7 @@ describe('APNs provider', () => {
     ).toBe(true);
     expect(JSON.parse(req.body)).toEqual({
       aps: {
-        alert: { title: 'وصول آمن', body: '🚨 تنبيه' },
+        alert: { title: 'طمّني', body: '🚨 تنبيه' },
         sound: 'default',
         'interruption-level': 'time-sensitive',
         'thread-id': 'alert-1',
@@ -366,7 +366,7 @@ describe('routing and configuration', () => {
     });
     expect(both.apns).toMatchObject({
       privateKey: '-----KEY-----',
-      bundleId: 'com.wusoolsafe.app',
+      bundleId: 'com.tammeni.app',
       production: true,
     });
     expect(

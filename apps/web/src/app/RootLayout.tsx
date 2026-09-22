@@ -32,12 +32,6 @@ export function RootLayout() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <div
-        role="status"
-        className="bg-warning px-4 py-2 text-center text-sm font-semibold text-white dark:text-black"
-      >
-        {t('app.betaBanner')}
-      </div>
       <header className="border-b border-border bg-surface">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-4 py-2">
           <Link to="/" className="text-xl font-bold text-primary">

@@ -1,5 +1,5 @@
 # Production on one small VPS (PLAN §9): PostgreSQL + API + Caddy (web + HTTPS) + daily backups.
-#   node scripts/prod-env.mjs --domain app.example.com --mail-from "Wusool Safe <no-reply@example.com>"
+#   node scripts/prod-env.mjs --domain app.example.com --mail-from "Tammeni <no-reply@example.com>"
 #   docker compose -f infra/docker-compose.prod.yml --env-file .env.production up -d --build
 # See docs/DEPLOY.md.
 name: wusool

@@ -1,4 +1,4 @@
-// Wusool Safe data model (PLAN §10).
+// Tammeni data model (PLAN §10).
 //
 // Things Prisma cannot express live in the SQL of each migration, next to the generated DDL:
 // Row Level Security policies, append-only triggers, partial unique indexes, CHECK constraints

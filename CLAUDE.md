@@ -1,4 +1,7 @@
-# CLAUDE.md — Wusool Safe (وصول آمن)
+# CLAUDE.md — Tammeni (طمّني)
+
+Formerly "Wusool Safe"; the internal code name stays `wusool` (packages, database roles, storage
+keys). Users only ever see Tammeni / طمّني.
 
 Student-safety system for school transport. The full plan is [docs/PLAN.md](docs/PLAN.md); read it
 before changing behaviour. Section 20 (autonomous execution) wins on any conflict. Decisions taken

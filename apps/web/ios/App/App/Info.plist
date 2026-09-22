@@ -12,7 +12,7 @@
 		<string>en</string>
 	</array>
 	<key>CFBundleDisplayName</key>
-        <string>وصول آمن</string>
+        <string>طمّني</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

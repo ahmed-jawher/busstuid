@@ -1,4 +1,4 @@
-package com.wusoolsafe.app;
+package com.tammeni.app;
 
 import com.getcapacitor.BridgeActivity;
 

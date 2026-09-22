@@ -102,7 +102,7 @@ jobs:
       - name: Smoke test through Caddy
         run: |
           curl -fsS http://localhost/v1/health | tee /dev/stderr | grep '"database":"up"'
-          curl -fsS http://localhost/ | grep -q 'وصول آمن'
+          curl -fsS http://localhost/ | grep -q 'طمّني'
           curl -fsS http://localhost/trip/some-deep-link | grep -q '<div id="root">'
           curl -fsSI http://localhost/ | grep -qi 'content-security-policy'
           docker compose -f infra/docker-compose.prod.yml --env-file .env.production exec -T backup node dist/ops/cli.js backup
