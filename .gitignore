@@ -22,3 +22,8 @@ apps/e2e/screenshots/
 backups/
 apps/api/backups/
 infra/backups/
+
+# Firebase / Apple keys: never committed (docs/RELEASE.md)
+google-services.json
+GoogleService-Info.plist
+*.p8
