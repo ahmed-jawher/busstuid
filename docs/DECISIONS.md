@@ -278,6 +278,23 @@ Format: the decision, then why.
   the server watchdog remains the main protection. Real-phone checks are still required before a
   school relies on the app.
 
+## Test hosting (owner's request, 2026-09-22)
+
+- **Testing runs on one small DigitalOcean droplet** (2 GB RAM + 2 GB swap) with the existing
+  `infra/docker-compose.prod.yml`: the cheapest setup that behaves like production (no free host
+  that sleeps, because a sleeping server stops the watchdog). The plan is to move to AWS if the
+  pilot succeeds; data residency (PLAN §14) is decided then, so only testers who know it is a
+  trial use it.
+- **No domain yet: the address is `46-101-190-48.sslip.io`**, a free name that resolves to the
+  server's IP and gets a normal Let's Encrypt certificate. Native test builds have this API
+  address built in, so moving to a real domain means new test builds.
+- **Email goes through Brevo on port 2525** because DigitalOcean blocks the usual SMTP ports
+  (docs/DEPLOY.md). The sender is a Gmail address for now; a domain of our own (with SPF, DKIM
+  and DMARC) replaces it before schools use the app.
+- **`@capacitor/preferences` is not a dependency:** native preferences stay in the web view's
+  `localStorage` (`src/platform/native/index.ts`). `cap sync` had removed its stale entries from
+  the Android Gradle files; the regenerated files are committed.
+
 ## Automatic deploys (owner's request, 2026-09-23)
 
 - **Every push to `main` that passes CI is deployed** by GitHub Actions (docs/DEPLOY.md §6).
