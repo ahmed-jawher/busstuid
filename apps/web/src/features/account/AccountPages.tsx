@@ -123,6 +123,11 @@ export function SettingsPage() {
         </p>
         <p className="text-xs text-muted">{t('settings.phoneUnverified')}</p>
       </Card>
+      <Card>
+        <Link to="/organizations/new" className="font-semibold text-primary underline">
+          {t('admin.createOrg')}
+        </Link>
+      </Card>
       <Card className="space-y-3">
         <Checkbox
           label={t('settings.muteRoutine')}

@@ -186,6 +186,7 @@ export function RegisterPage() {
           {t('auth.createAccount')}
         </Button>
       </form>
+      <p className="mt-4 text-sm text-muted">{t('auth.orgHint')}</p>
       <p className="mt-4 text-sm">
         {t('auth.haveAccount')}{' '}
         <Link className="font-semibold text-primary" to="/login">
