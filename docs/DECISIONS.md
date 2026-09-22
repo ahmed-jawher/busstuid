@@ -277,3 +277,13 @@ Format: the decision, then why.
   docs/RELEASE.md: on the web, reminders need the page open and iPhones need the site installed;
   the server watchdog remains the main protection. Real-phone checks are still required before a
   school relies on the app.
+
+## Automatic deploys (owner's request, 2026-09-23)
+
+- **Every push to `main` that passes CI is deployed** by GitHub Actions (docs/DEPLOY.md §6).
+  Images are built on GitHub, not on the small server, so a deploy only pulls and restarts.
+- **A backup is taken before every deploy**, and an unhealthy API puts the previous version back
+  automatically. Migrations are never undone automatically, because a `down.sql` may delete trip
+  history.
+- **Rollback is a manual "Run workflow" with a commit SHA,** reusing that commit's images.
+- **This change was committed straight to `main`** at the owner's request, instead of a PR.

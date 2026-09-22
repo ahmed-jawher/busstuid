@@ -1,0 +1,12 @@
+# Automatic deploys (docs/DEPLOY.md §6): run the images GitHub Actions built instead of building
+# on the server. Used on top of docker-compose.prod.yml by infra/deploy.sh:
+#   docker compose -f infra/docker-compose.prod.yml -f infra/docker-compose.images.yml \
+#     --env-file .env.production --env-file .deploy.env up -d --no-build
+# .deploy.env holds IMAGE_TAG (the deployed commit) and is written by infra/deploy.sh.
+services:
+  api:
+    image: ${IMAGE_PREFIX:-ghcr.io/ahmed-jawher/busstuid}-api:${IMAGE_TAG:?set by infra/deploy.sh}
+  backup:
+    image: ${IMAGE_PREFIX:-ghcr.io/ahmed-jawher/busstuid}-api:${IMAGE_TAG:?set by infra/deploy.sh}
+  web:
+    image: ${IMAGE_PREFIX:-ghcr.io/ahmed-jawher/busstuid}-web:${IMAGE_TAG:?set by infra/deploy.sh}

@@ -1,0 +1,133 @@
+# Automatic deploys (docs/DEPLOY.md §6).
+# - After CI passes on main: build the API and web images, push them to GitHub Container
+#   Registry tagged with the commit, then run infra/deploy.sh on the server over SSH (backup →
+#   pull → start → health check, with the previous version started again if the API is unhealthy).
+# - Actions → Deploy → Run workflow: deploy any earlier commit again (rollback) without waiting
+#   for CI; leave "version" empty to redeploy the latest main.
+# Needs: secrets DEPLOY_SSH_KEY + DEPLOY_KNOWN_HOSTS, variables DEPLOY_HOST + DEPLOY_URL.
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Commit SHA to deploy (empty = latest main)
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  packages: write
+
+# One deploy at a time, in order; never cancel one halfway.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version || github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Resolve version
+        id: v
+        run: echo "tag=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check for existing images
+        id: have
+        run: |
+          if docker manifest inspect "$IMAGE_PREFIX-api:${{ steps.v.outputs.tag }}" > /dev/null 2>&1 &&
+             docker manifest inspect "$IMAGE_PREFIX-web:${{ steps.v.outputs.tag }}" > /dev/null 2>&1; then
+            echo "images=yes" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: docker/setup-buildx-action@v3
+        if: steps.have.outputs.images != 'yes'
+
+      - name: Build API image
+        if: steps.have.outputs.images != 'yes'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/api.Dockerfile
+          push: true
+          tags: ${{ env.IMAGE_PREFIX }}-api:${{ steps.v.outputs.tag }}
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+
+      - name: Build web image
+        if: steps.have.outputs.images != 'yes'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/web.Dockerfile
+          push: true
+          tags: ${{ env.IMAGE_PREFIX }}-web:${{ steps.v.outputs.tag }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+
+      - name: SSH setup
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy_key ~/.ssh/known_hosts
+
+      - name: Deploy to the server
+        env:
+          HOST: deploy@${{ vars.DEPLOY_HOST }}
+          TAG: ${{ steps.v.outputs.tag }}
+          ACTOR: ${{ github.actor }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ssh_() { ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes "$HOST" "$@"; }
+          # The compose files and deploy script of the version being deployed.
+          tar -c infra | ssh_ 'mkdir -p ~/tammeni && tar -x -C ~/tammeni'
+          # Short-lived registry login: this job's token expires when the job ends.
+          printf '%s' "$REGISTRY_TOKEN" | ssh_ "docker login ghcr.io -u '$ACTOR' --password-stdin > /dev/null"
+          status=0
+          ssh_ "IMAGE_PREFIX='$IMAGE_PREFIX' bash ~/tammeni/infra/deploy.sh '$TAG'" || status=$?
+          ssh_ 'docker logout ghcr.io > /dev/null' || true
+          exit $status
+
+      - name: Health check
+        env:
+          URL: ${{ vars.DEPLOY_URL }}
+        run: |
+          for i in $(seq 1 12); do
+            curl -fsS --max-time 10 "$URL/v1/health" && exit 0
+            sleep 5
+          done
+          echo "::error::$URL/v1/health did not answer" && exit 1
+
+      - name: Summary
+        if: always()
+        env:
+          URL: ${{ vars.DEPLOY_URL }}
+          TAG: ${{ steps.v.outputs.tag }}
+          STATUS: ${{ job.status }}
+        run: echo "Version \`$TAG\` → $URL ($STATUS)" >> "$GITHUB_STEP_SUMMARY"

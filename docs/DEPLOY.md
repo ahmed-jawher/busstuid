@@ -72,3 +72,43 @@ Migrations run automatically on API start. To roll back the newest migration, ru
   client IPs.
 - Sentry is off unless `SENTRY_DSN` is set; no request bodies or user data are sent.
 - Encrypt the server disk (PLAN §14) — most VPS providers offer it at creation time.
+
+## 6. Automatic deploys (GitHub Actions)
+
+`.github/workflows/deploy.yml` runs after **CI passes on `main`**: it builds the API and web
+images, pushes them to GitHub Container Registry tagged with the commit
+(`ghcr.io/<owner>/<repo>-api:<sha>`, `-web:<sha>`), then runs `infra/deploy.sh <sha>` on the
+server over SSH:
+
+1. pull the new images;
+2. **encrypted backup** of the database (the version still running);
+3. start the new version — the API applies migrations on start;
+4. wait for the API to be healthy. If it is not, the **previous images are started again** and
+   the workflow fails (red in GitHub, email to the owner).
+
+**Rollback:** Actions → _Deploy_ → _Run workflow_ → enter the commit SHA to go back to. It reuses
+that commit's images (no rebuild, no CI wait). Then revert the change on `main` so the next deploy
+does not bring it back.
+
+**Migrations are not undone** by either path: a `down.sql` can delete data (principle 2). Write
+migrations so the previous version keeps working (add first, remove in a later release). If one
+must be undone, a person runs `db:rollback` or restores the pre-deploy backup.
+
+**Setup (once):**
+
+- On the server, the `deploy` user runs Docker; the stack lives in `~/tammeni` with
+  `.env.production` (never in GitHub). `.deploy.env` records the running commit (`IMAGE_TAG`).
+- A dedicated SSH key for GitHub, added to `deploy`'s `authorized_keys` with
+  `no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty`.
+- Repository **secrets** `DEPLOY_SSH_KEY` (that private key) and `DEPLOY_KNOWN_HOSTS`
+  (`ssh-keyscan -t ed25519 <server-ip>`); **variables** `DEPLOY_HOST` (server IP) and
+  `DEPLOY_URL` (`https://…`, used for the health check).
+- The registry login on the server uses the job's own short-lived token and is removed after
+  each deploy.
+
+Manual commands on the server must include the image override:
+
+```bash
+docker compose -f infra/docker-compose.prod.yml -f infra/docker-compose.images.yml \
+  --env-file .env.production --env-file .deploy.env ps
+```
