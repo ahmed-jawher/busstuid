@@ -146,3 +146,9 @@ passes too. ✅
 - `native:sync` build that refuses a missing or local API address.
 - CI builds a debug APK on every pull request.
 - docs/RELEASE.md: the owner's steps for Firebase, Apple, signing, stores and on-device checks.
+
+## Fix — registering an organisation
+
+- New accounts land on the guardian screen, which hid the "register an organisation or
+  independent driver" link. It is now on the guardian home, in Settings, and explained on the
+  sign-up page.
