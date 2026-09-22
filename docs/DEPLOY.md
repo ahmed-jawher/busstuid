@@ -15,6 +15,11 @@ works; 2 vCPU / 4 GB RAM is plenty to start.
 - An email provider account for verification codes (Brevo, Resend, Amazon SES…), with SPF,
   DKIM and DMARC configured for the domain so codes do not land in spam.
 
+- **DigitalOcean (and some other hosts) block outgoing SMTP ports 25, 465 and 587** on new
+  accounts, so Gmail SMTP cannot work there. Use a provider that also listens on another port,
+  e.g. Brevo on `smtp-relay.brevo.com:2525` (`SMTP_PORT=2525`, `SMTP_SECURE=false`), or ask the
+  host to lift the block.
+
 ## 2. First install
 
 ```bash
