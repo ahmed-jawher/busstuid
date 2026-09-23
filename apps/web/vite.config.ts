@@ -14,6 +14,11 @@ export default defineConfig({
   resolve: {
     alias: { '@': path.resolve(__dirname, 'src') },
   },
+  build: {
+    // Small font subsets would otherwise be inlined as data: URLs, which the CSP (font-src
+    // 'self') blocks. Always emit fonts as files.
+    assetsInlineLimit: (file) => (/\.woff2?$/.test(file) ? false : undefined),
+  },
   plugins: [
     react(),
     tailwindcss(),
