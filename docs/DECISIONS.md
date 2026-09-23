@@ -380,3 +380,18 @@ Format: the decision, then why.
   so "روضة الإبداع", "ابداع" and "Creativity" all find the same place.
 - **Branches with the same name carry their governorate** (and block, when two share one), and
   kindergarten names get the word "روضة"/"حضانة" that the ministry's list leaves out.
+
+## Privacy policy and terms (owner's request, 2026-09-23)
+
+- **Both documents live in the app** at `/privacy` and `/terms`, open without an account, in
+  Arabic and English. The stores need a public address for the privacy policy, and Apple rejects
+  an app whose policy link does not work.
+- **They describe what the code actually does** — the data listed is the data the schema stores,
+  the retention periods are the ones the retention job uses, and the rights named are the buttons
+  that exist (export, delete child, delete account, withdraw consent). If behaviour changes, the
+  text changes with it.
+- **They are drafts, not legal advice.** A lawyer must read them before a real school uses
+  Tammeni: children's data, Bahrain's Personal Data Protection Law 30/2018, and the fact that the
+  server is currently in Germany (transfer outside the country).
+- **The owner's legal name is a placeholder** in `legal-content.ts` until they confirm the exact
+  name that will appear in the stores.

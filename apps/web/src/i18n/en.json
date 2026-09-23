@@ -642,7 +642,7 @@
       "4": "Strong"
     },
     "createAccountButton": "Create account",
-    "terms": "By creating an account you agree to the terms and the privacy policy.",
+    "terms": "By creating an account you agree to the",
     "checkEmail": "Check your email",
     "codeSentTo": "We sent a 6-digit code to",
     "codeValid": ". It is valid for 10 minutes.",
@@ -857,5 +857,10 @@
     "doneAlertBody": "The guardian and the admins were told. Follow up with the admins until the alert is closed.",
     "addHint": "Added as “unexpected”; their guardian and the admins are told.",
     "searchHint": "Search by name, child code, or guardian's phone"
+  },
+  "legal": {
+    "privacy": "Privacy policy",
+    "terms": "Terms of use",
+    "updated": "Last updated"
   }
 }

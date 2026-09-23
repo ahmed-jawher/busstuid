@@ -198,3 +198,8 @@ passes too. ✅
 
 - 516 schools, kindergartens and nurseries ship with the app; the guardian picks their school
   from the list when adding a child, or types a name that is not listed.
+
+## Privacy policy and terms
+
+- Public /privacy and /terms pages in both languages, linked from sign-up, describing the data
+  the app really stores. Drafts pending a lawyer review.
