@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import { COUNTRIES, EMAIL_CODE_PURPOSES, LOCALES, ORGANIZATION_TYPES, SIGNUP_ROLES } from './enums';
+import {
+  COUNTRIES,
+  EMAIL_CODE_PURPOSES,
+  ENROLLABLE_ORG_TYPES,
+  LOCALES,
+  ORGANIZATION_TYPES,
+  SIGNUP_ROLES,
+} from './enums';
 import { normalizePhone } from './phone';
 
 // Request schemas shared by the API (validation) and the web app (forms). PLAN §5.1, §11.
@@ -14,7 +21,15 @@ export const codeSchema = z
   .trim()
   .regex(/^\d{6}$/, 'code_format');
 
-export const nameSchema = z.string().trim().min(2).max(100);
+export const nameSchema = z
+  .string()
+  .trim()
+  .min(2)
+  .max(100)
+  .transform((v) => v.replace(/\s+/g, ' '));
+
+/** Latin letters required: an "English name" written in Arabic helps nobody. */
+export const nameEnSchema = nameSchema.refine((v) => /[A-Za-z]/.test(v), 'name_en_latin');
 
 const countrySchema = z.enum(COUNTRIES);
 
@@ -41,16 +56,16 @@ export const registerSchema = z
     email: emailSchema,
     password: passwordSchema,
     fullNameAr: nameSchema,
-    fullNameEn: nameSchema.optional(),
+    fullNameEn: nameEnSchema.optional(),
     ...phoneFields,
     locale: z.enum(LOCALES).default('ar'),
     signupRole: z.enum(SIGNUP_ROLES).default('guardian'),
     /** Required when signing up as a school or transport company. */
     organization: z
       .object({
-        type: z.enum(['school', 'transport_company']),
+        type: z.enum(ENROLLABLE_ORG_TYPES),
         nameAr: nameSchema,
-        nameEn: nameSchema.optional(),
+        nameEn: nameEnSchema,
       })
       .optional(),
   })
@@ -61,6 +76,10 @@ export const registerSchema = z
         path: ['organization', 'nameAr'],
         message: 'organization_required',
       });
+    }
+    // An independent driver's own name is shown to guardians as the organisation's name.
+    if (v.signupRole === 'independent_driver' && !v.fullNameEn) {
+      ctx.addIssue({ code: 'custom', path: ['fullNameEn'], message: 'name_en_required' });
     }
   })
   .transform(withNormalizedPhone);
@@ -127,7 +146,7 @@ export const changePasswordSchema = z.object({
 export const createOrganizationSchema = z.object({
   type: z.enum(ORGANIZATION_TYPES),
   nameAr: nameSchema,
-  nameEn: nameSchema.optional(),
+  nameEn: nameEnSchema,
   country: countrySchema,
 });
 
@@ -135,7 +154,9 @@ export const driverLookupSchema = z.object({ ...phoneFields }).transform(withNor
 
 export const directoryQuerySchema = z.object({
   country: countrySchema,
-  type: z.enum(['school', 'transport_company']).optional(),
+  type: z.enum(ENROLLABLE_ORG_TYPES).optional(),
+  /** Free-text search over both names (the directory can hold every school in the country). */
+  q: z.string().trim().max(80).optional(),
 });
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'date_format');

@@ -12,12 +12,14 @@ describe('sign-up by account type', () => {
 
   async function signUp(extra: object, phone = uniquePhone()) {
     const email = uniqueEmail('signup');
+    const suffix = email.split('@')[0]!.replace(/W/g, '');
     await t.http
       .post('/v1/auth/register')
       .send({
         email,
         password: PASSWORD,
-        fullNameAr: 'أحمد السائق',
+        fullNameAr: `أحمد السائق ${suffix}`,
+        fullNameEn: `Ahmed Driver ${suffix}`,
         phone,
         country: 'BH',
         ...extra,
@@ -54,7 +56,7 @@ describe('sign-up by account type', () => {
     expect(me.memberships[0]!.organization).toMatchObject({
       type: 'independent_driver',
       status: 'active',
-      nameAr: 'أحمد السائق',
+      nameAr: expect.stringContaining('أحمد السائق'),
     });
     const audit = await t.db.admin.auditLog.findFirst({
       where: {
@@ -112,6 +114,7 @@ describe('sign-up by account type', () => {
         email: uniqueEmail('signup'),
         password: PASSWORD,
         fullNameAr: 'سائق آخر',
+        fullNameEn: 'Another Driver',
         phone,
         country: 'BH',
         signupRole: 'independent_driver',
@@ -129,6 +132,7 @@ describe('sign-up by account type', () => {
         email,
         password: PASSWORD,
         fullNameAr: 'سائق',
+        fullNameEn: 'Driver',
         phone,
         country: 'BH',
         signupRole: 'independent_driver',

@@ -6,7 +6,16 @@ const values = <T extends readonly [string, ...string[]]>(...v: T) => v;
 export const ROLES = values('platform_admin', 'org_admin', 'driver', 'attendant', 'guardian');
 export type Role = (typeof ROLES)[number];
 
-export const ORGANIZATION_TYPES = values('school', 'transport_company', 'independent_driver');
+export const ORGANIZATION_TYPES = values(
+  'school',
+  'kindergarten',
+  'transport_company',
+  'independent_driver',
+);
+
+/** Organisations a guardian can enrol a child with (an independent driver is found by phone). */
+export const ENROLLABLE_ORG_TYPES = values('school', 'kindergarten', 'transport_company');
+export type EnrollableOrgType = (typeof ENROLLABLE_ORG_TYPES)[number];
 export type OrganizationType = (typeof ORGANIZATION_TYPES)[number];
 
 /** What a person says they are on the first sign-up screen. */

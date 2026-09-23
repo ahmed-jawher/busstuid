@@ -43,7 +43,7 @@ export class OrganizationsController {
   @Get('directory')
   @ApiZodQuery(directoryQuerySchema)
   directory(@Query(zod(directoryQuerySchema)) q: z.output<typeof directoryQuerySchema>) {
-    return this.orgs.directory(q.country, q.type);
+    return this.orgs.directory(q.country, q.type, q.q);
   }
 
   @Get('driver-lookup')

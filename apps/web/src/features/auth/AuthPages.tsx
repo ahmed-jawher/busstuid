@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import type { SignupRole } from '@wusool/shared';
+import { ENROLLABLE_ORG_TYPES, type EnrollableOrgType, type SignupRole } from '@wusool/shared';
 import { Icon, type IconName } from '@/components/Icon';
 import { Logo } from '@/components/Logo';
 import { useToast } from '@/components/toast';
@@ -286,8 +286,9 @@ export function RegisterPage() {
   const role = ROLES.find((c) => c.role === params.get('as'));
   const [form, setForm] = useState({ fullNameAr: '', email: '', phone: '', password: '' });
   const [org, setOrg] = useState({
-    type: 'school' as 'school' | 'transport_company',
+    type: 'school' as EnrollableOrgType,
     nameAr: '',
+    nameEn: '',
   });
   const [tried, setTried] = useState(false);
   const set = (k: keyof typeof form) => (v: string) => setForm({ ...form, [k]: v });
@@ -353,10 +354,7 @@ export function RegisterPage() {
               label={t('admin.orgType')}
               value={org.type}
               onChange={(type) => setOrg({ ...org, type })}
-              options={[
-                { value: 'school', label: t('orgType.school') },
-                { value: 'transport_company', label: t('orgType.transport_company') },
-              ]}
+              options={ENROLLABLE_ORG_TYPES.map((v) => ({ value: v, label: t(`orgType.${v}`) }))}
             />
             <FieldLabel label={t('onb.orgName')} error={err('organization.nameAr')}>
               <input
@@ -364,6 +362,15 @@ export function RegisterPage() {
                 onChange={(e) => setOrg({ ...org, nameAr: e.target.value })}
                 aria-invalid={!!err('organization.nameAr') || undefined}
                 className={inputClass}
+              />
+            </FieldLabel>
+            <FieldLabel label={t('onb.orgNameEn')} error={err('organization.nameEn')}>
+              <input
+                dir="ltr"
+                value={org.nameEn}
+                onChange={(e) => setOrg({ ...org, nameEn: e.target.value })}
+                aria-invalid={!!err('organization.nameEn') || undefined}
+                className={cn(inputClass, 'text-start')}
               />
             </FieldLabel>
           </>

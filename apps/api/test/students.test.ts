@@ -75,7 +75,12 @@ describe('guardians, children and enrollment', () => {
     const pending = await t.http
       .post('/v1/organizations')
       .set(pendingAdmin.auth)
-      .send({ type: 'school', nameAr: 'مدرسة غير معتمدة', country: 'BH' })
+      .send({
+        type: 'school',
+        nameAr: 'مدرسة غير معتمدة',
+        nameEn: 'Unapproved School',
+        country: 'BH',
+      })
       .expect(201);
     expect(pending.body.status).toBe('pending_review');
     await expect(addChild(t, guardianA, pending.body.id)).rejects.toThrow(
@@ -337,7 +342,12 @@ describe('organisations and the independent-driver phone rule', () => {
     const org = await t.http
       .post('/v1/organizations')
       .set(driver.auth)
-      .send({ type: 'independent_driver', nameAr: 'نقل سالم', country: 'BH' })
+      .send({
+        type: 'independent_driver',
+        nameAr: 'نقل سالم',
+        nameEn: 'Salem Transport',
+        country: 'BH',
+      })
       .expect(201);
     expect(org.body.status).toBe('active');
     const roles = await t.db.admin.membership.findMany({ where: { userId: driver.id } });
@@ -359,13 +369,13 @@ describe('organisations and the independent-driver phone rule', () => {
     await t.http
       .post('/v1/organizations')
       .set(first.auth)
-      .send({ type: 'independent_driver', nameAr: 'الأول', country: 'BH' })
+      .send({ type: 'independent_driver', nameAr: 'الأول', nameEn: 'The First', country: 'BH' })
       .expect(201);
     const impostor = await registerVerified(t, { prefix: 'd2', phone });
     const res = await t.http
       .post('/v1/organizations')
       .set(impostor.auth)
-      .send({ type: 'independent_driver', nameAr: 'منتحل', country: 'BH' })
+      .send({ type: 'independent_driver', nameAr: 'منتحل', nameEn: 'Impostor', country: 'BH' })
       .expect(409);
     expect(res.body.error.code).toBe('phone_in_use_by_driver');
   });
@@ -375,7 +385,7 @@ describe('organisations and the independent-driver phone rule', () => {
     const created = await t.http
       .post('/v1/organizations')
       .set(admin.auth)
-      .send({ type: 'school', nameAr: 'مدرسة جديدة', country: 'BH' })
+      .send({ type: 'school', nameAr: 'مدرسة جديدة', nameEn: 'New School', country: 'BH' })
       .expect(201);
     const guardian = await registerVerified(t, { prefix: 'g' });
     const listed = async () =>

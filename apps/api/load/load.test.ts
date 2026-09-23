@@ -69,6 +69,9 @@ async function main(): Promise<{ completed: number; errors: number }> {
   const org = await db.organization.create({
     data: {
       type: 'transport_company',
+      nameEn: 'Load Test Company',
+      nameKeyAr: 'شركة الحِمل',
+      nameKeyEn: 'load test company',
       nameAr: 'اختبار الحمل',
       country: 'BH',
       timezone: 'Asia/Bahrain',

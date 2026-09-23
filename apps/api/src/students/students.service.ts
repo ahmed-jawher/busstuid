@@ -11,6 +11,7 @@ const CONSENT_PURPOSE = 'transport_safety';
 
 const CHILD_SELECT = {
   id: true,
+  publicCode: true,
   fullNameAr: true,
   fullNameEn: true,
   dateOfBirth: true,

@@ -1,6 +1,6 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import type { Country, Locale, SignupRole } from '@wusool/shared';
+import type { Country, EnrollableOrgType, Locale, SignupRole } from '@wusool/shared';
 import { AuditService } from '../audit/audit';
 import { ApiError, Errors } from '../common/api-error';
 import { APP_CONFIG, type AppConfig } from '../config/env';
@@ -24,7 +24,7 @@ export interface RegisterData {
   country: Country;
   locale: Locale;
   signupRole?: SignupRole;
-  organization?: { type: 'school' | 'transport_company'; nameAr: string; nameEn?: string };
+  organization?: { type: EnrollableOrgType; nameAr: string; nameEn: string };
 }
 
 /** The organisation a person asked for at sign-up; created once the email is verified. */
@@ -33,7 +33,8 @@ function pendingOrganizationFor(input: RegisterData): NewOrganization | null {
     return {
       type: 'independent_driver',
       nameAr: input.fullNameAr,
-      ...(input.fullNameEn ? { nameEn: input.fullNameEn } : {}),
+      // Required for this role by the sign-up schema.
+      nameEn: input.fullNameEn ?? input.fullNameAr,
       country: input.country,
     };
   }

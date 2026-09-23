@@ -26,6 +26,7 @@ enum Role {
 
 enum OrganizationType {
   school
+  kindergarten
   transport_company
   independent_driver
 }
@@ -188,7 +189,11 @@ model Organization {
   id        String             @id @default(uuid(7)) @db.Uuid
   type      OrganizationType
   nameAr    String             @map("name_ar")
-  nameEn    String?            @map("name_en")
+  nameEn    String             @map("name_en")
+  /// Lower-cased name used for the "no two schools with the same name" rule; for an independent
+  /// driver it is the organisation's own id, because two drivers may share a name.
+  nameKeyAr String             @map("name_key_ar")
+  nameKeyEn String             @map("name_key_en")
   country   Country
   timezone  String
   settings  Json               @default("{}")
@@ -205,11 +210,15 @@ model Organization {
   trips              Trip[]
   alerts             Alert[]
 
+  @@unique([country, type, nameKeyAr])
+  @@unique([country, type, nameKeyEn])
   @@map("organizations")
 }
 
 model User {
   id                       String     @id @default(uuid(7)) @db.Uuid
+  /// Short code a school uses to add exactly the right driver. Not a sign-in name.
+  publicCode               String     @unique @default(dbgenerated("('D'::text || upper(substr(md5((gen_random_uuid())::text), 1, 5)))")) @map("public_code")
   /// Always stored lower-case (CHECK constraint in SQL).
   email                    String     @unique
   emailVerifiedAt          DateTime?  @map("email_verified_at") @db.Timestamptz(3)
@@ -330,6 +339,8 @@ model RefreshToken {
 
 model Student {
   id                  String    @id @default(uuid(7)) @db.Uuid
+  /// Short code shown to drivers and schools to tell two children apart. Not a sign-in name.
+  publicCode          String    @unique @default(dbgenerated("('S'::text || upper(substr(md5((gen_random_uuid())::text), 1, 5)))")) @map("public_code")
   createdByGuardianId String    @map("created_by_guardian_id") @db.Uuid
   fullNameAr          String    @map("full_name_ar")
   fullNameEn          String?   @map("full_name_en")

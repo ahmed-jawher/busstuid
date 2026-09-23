@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Country } from '@wusool/shared';
+import { ENROLLABLE_ORG_TYPES, type Country, type EnrollableOrgType } from '@wusool/shared';
 import { Errors } from '../common/api-error';
 import { createOrganization, PUBLIC_ORG, type NewOrganization } from './create-organization';
 import { PrismaService } from '../database/prisma.service';
@@ -13,16 +13,25 @@ export class OrganizationsService {
   }
 
   /** Active schools and transport companies a guardian can pick from (PLAN §5 step 3). */
-  directory(country: Country, type?: 'school' | 'transport_company') {
+  directory(country: Country, type?: EnrollableOrgType, q?: string) {
     return this.prisma.system.organization.findMany({
       where: {
         country,
         status: 'active',
         deletedAt: null,
-        type: type ?? { in: ['school', 'transport_company'] },
+        type: type ?? { in: [...ENROLLABLE_ORG_TYPES] },
+        ...(q
+          ? {
+              OR: [
+                { nameAr: { contains: q, mode: 'insensitive' } },
+                { nameEn: { contains: q, mode: 'insensitive' } },
+              ],
+            }
+          : {}),
       },
       select: PUBLIC_ORG,
       orderBy: { nameAr: 'asc' },
+      take: 50,
     });
   }
 

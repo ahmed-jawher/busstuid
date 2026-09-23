@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { COUNTRY_DEFAULTS, type Country, type OrganizationType } from '@wusool/shared';
 import { Errors } from '../common/api-error';
 import type { Tx } from '../database/prisma.service';
@@ -14,7 +15,7 @@ export const PUBLIC_ORG = {
 export interface NewOrganization {
   type: OrganizationType;
   nameAr: string;
-  nameEn?: string;
+  nameEn: string;
   country: Country;
 }
 
@@ -39,11 +40,31 @@ export async function createOrganization(tx: Tx, userId: string, input: NewOrgan
     if (existing) throw Errors.conflict('already_independent_driver');
     await assertDriverPhoneAvailable(tx, user.phoneE164, userId);
   }
+  // Schools, kindergartens and companies must have names nobody else uses in that country
+  // (PLAN §5 step 3): a guardian must never choose between two identical school names.
+  // Independent drivers are found by phone, so two of them may share a name.
+  const id = randomUUID();
+  const keys = independent
+    ? { nameKeyAr: id, nameKeyEn: id }
+    : { nameKeyAr: input.nameAr.toLowerCase(), nameKeyEn: input.nameEn.toLowerCase() };
+  if (!independent) {
+    const clash = await tx.organization.findFirst({
+      where: {
+        country: input.country,
+        type: input.type,
+        OR: [{ nameKeyAr: keys.nameKeyAr }, { nameKeyEn: keys.nameKeyEn }],
+      },
+      select: { id: true },
+    });
+    if (clash) throw Errors.conflict('organization_name_taken');
+  }
   const org = await tx.organization.create({
     data: {
+      id,
       type: input.type,
       nameAr: input.nameAr,
-      nameEn: input.nameEn ?? null,
+      nameEn: input.nameEn,
+      ...keys,
       country: input.country,
       timezone: COUNTRY_DEFAULTS[input.country].timezone,
       status: independent ? 'active' : 'pending_review',

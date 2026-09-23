@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
+import { ENROLLABLE_ORG_TYPES, type EnrollableOrgType } from '@wusool/shared';
 import { setAppearance, useAppearance } from '@/app/preferences';
 import { Icon, type IconName } from '@/components/Icon';
 import { Logo } from '@/components/Logo';
@@ -301,6 +302,9 @@ export function AccountPage() {
           </div>
           <div className="text-[13px] text-muted" dir="ltr">
             {me.phoneE164}
+          </div>
+          <div className="text-[13px] text-muted">
+            {t('settings.myCode')}: <span dir="ltr">{me.publicCode}</span>
           </div>
         </div>
       </div>
@@ -645,9 +649,9 @@ export function CreateOrgPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const [form, setForm] = useState({
-    type: (['school', 'transport_company'].includes(params.get('type') ?? '')
-      ? params.get('type')!
-      : 'independent_driver') as 'independent_driver' | 'school' | 'transport_company',
+    type: (ENROLLABLE_ORG_TYPES as readonly string[]).includes(params.get('type') ?? '')
+      ? (params.get('type') as EnrollableOrgType)
+      : ('independent_driver' as const),
     nameAr: '',
     nameEn: '',
   });
@@ -655,7 +659,7 @@ export function CreateOrgPage() {
     mutationFn: () =>
       api<OrgSummary>('/organizations', {
         method: 'POST',
-        body: { ...form, nameEn: form.nameEn.trim() || undefined, country: 'BH' },
+        body: { ...form, country: 'BH' },
       }),
     onSuccess: async (org) => {
       await refresh();
@@ -676,7 +680,7 @@ export function CreateOrgPage() {
           label={t('admin.orgType')}
           value={form.type}
           onChange={(type) => setForm({ ...form, type })}
-          options={(['independent_driver', 'school', 'transport_company'] as const).map((v) => ({
+          options={(['independent_driver', ...ENROLLABLE_ORG_TYPES] as const).map((v) => ({
             value: v,
             label: t(`orgType.${v}`),
           }))}
@@ -691,10 +695,11 @@ export function CreateOrgPage() {
         </FieldLabel>
         <FieldLabel label={t('admin.orgNameEn')}>
           <input
+            required
             dir="ltr"
             value={form.nameEn}
             onChange={(e) => setForm({ ...form, nameEn: e.target.value })}
-            className={cn(inputClass, 'text-end')}
+            className={cn(inputClass, 'text-start')}
           />
         </FieldLabel>
         {form.type !== 'independent_driver' && (

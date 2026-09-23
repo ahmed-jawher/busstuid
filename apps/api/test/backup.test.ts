@@ -23,6 +23,9 @@ describe.skipIf(!available)('encrypted backups', () => {
     await source.admin.organization.create({
       data: {
         type: 'school',
+        nameEn: 'Backup Test School',
+        nameKeyAr: 'مدرسة النسخ',
+        nameKeyEn: 'backup test school',
         nameAr: 'مدرسة النسخة',
         country: 'BH',
         timezone: 'Asia/Bahrain',

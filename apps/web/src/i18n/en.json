@@ -185,7 +185,8 @@
     "exportData": "Download my child's data",
     "deleteData": "Delete my child's data",
     "deleteDataWarning": "The name and photo are deleted and the links removed. Trip and alert records stay without a name. If another guardian exists, only your link is removed.",
-    "deleteDataConfirm": "Delete my child's data"
+    "deleteDataConfirm": "Delete my child's data",
+    "childCode": "Child code"
   },
   "enrollment": {
     "pending": "Waiting for approval",
@@ -399,7 +400,8 @@
   "orgType": {
     "school": "School",
     "transport_company": "Transport company",
-    "independent_driver": "Independent driver"
+    "independent_driver": "Independent driver",
+    "kindergarten": "Kindergarten"
   },
   "role": {
     "org_admin": "Admin",
@@ -451,7 +453,8 @@
     "totpScan": "Add this key to your authenticator app, then type the code it shows.",
     "totpOpenApp": "Open in authenticator app",
     "totpEnable": "Turn on",
-    "totpDisable": "Turn off two-step verification"
+    "totpDisable": "Turn off two-step verification",
+    "myCode": "Your code"
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -544,7 +547,10 @@
     "request_not_decided": "This request has not been decided yet.",
     "undo_window_passed": "The 10-minute undo window has passed.",
     "student_on_route": "Cannot undo: the student is assigned to a route. Remove them from it first.",
-    "password_unchanged": "The new password is the same as the current one."
+    "password_unchanged": "The new password is the same as the current one.",
+    "organization_name_taken": "That name is already registered. Check you are not adding the same place twice.",
+    "name_en_latin": "Write the name in English letters.",
+    "name_en_required": "Write your name in English as well."
   },
   "signup": {
     "whoAreYou": "Who are you?",
@@ -657,7 +663,8 @@
       "copied": "Copied ✓"
     },
     "welcomeTitle": "Welcome",
-    "welcomeSub": "With Tammeni, your child is safe door to door."
+    "welcomeSub": "With Tammeni, your child is safe door to door.",
+    "orgNameEn": "Name in English"
   },
   "gd": {
     "tabs": {
@@ -847,6 +854,7 @@
     "doneBody": "You checked the bus is empty. Thank you.",
     "doneAlertTitle": "Trip ended with an alert",
     "doneAlertBody": "The guardian and the admins were told. Follow up with the admins until the alert is closed.",
-    "addHint": "Added as “unexpected”; their guardian and the admins are told."
+    "addHint": "Added as “unexpected”; their guardian and the admins are told.",
+    "searchHint": "Search by name, child code, or guardian's phone"
   }
 }
