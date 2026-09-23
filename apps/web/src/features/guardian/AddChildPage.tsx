@@ -41,20 +41,23 @@ function SchoolField({ value, onChange }: { value: string; onChange: (v: string)
   const label = (s: DirectorySchool) => (i18n.language === 'en' ? s.en : s.ar);
   const matches = (schools.data ?? []).filter((s) => label(s) !== value.trim());
   return (
-    <FieldLabel label={t('guardian.schoolName')}>
-      <input
-        value={value}
-        onChange={(e) => {
-          onChange(e.target.value);
-          setOpen(true);
-        }}
-        onFocus={() => setOpen(true)}
-        placeholder={t('gd.add.schoolPh')}
-        autoComplete="off"
-        className={inputClass}
-      />
+    <div className="flex flex-col gap-1.5">
+      <FieldLabel label={t('guardian.schoolName')}>
+        <input
+          value={value}
+          onChange={(e) => {
+            onChange(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          placeholder={t('gd.add.schoolPh')}
+          autoComplete="off"
+          className={inputClass}
+        />
+      </FieldLabel>
+      <p className="text-xs text-muted">{t('gd.add.schoolHint')}</p>
       {open && matches.length > 0 && (
-        <ul className="mt-1 max-h-56 overflow-y-auto rounded-[14px] border border-border bg-surface">
+        <ul className="max-h-56 overflow-y-auto rounded-[14px] border border-border bg-surface">
           {matches.map((s) => (
             <li key={s.ar}>
               <button
@@ -71,8 +74,7 @@ function SchoolField({ value, onChange }: { value: string; onChange: (v: string)
           ))}
         </ul>
       )}
-      <p className="mt-1 text-xs text-muted">{t('gd.add.schoolHint')}</p>
-    </FieldLabel>
+    </div>
   );
 }
 
