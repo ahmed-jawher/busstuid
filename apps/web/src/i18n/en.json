@@ -787,7 +787,8 @@
       "err3": "The photo is required.",
       "err4": "Consent is required.",
       "sentTitle": "Link request sent",
-      "sentBody": "We will tell you when {{org}} approves. Until then {{name}} shows as \"awaiting approval\"."
+      "sentBody": "We will tell you when {{org}} approves. Until then {{name}} shows as \"awaiting approval\".",
+      "schoolHint": "Pick from the list, or type the name if your child's school is not there."
     },
     "alert": {
       "reason": "Reason:",

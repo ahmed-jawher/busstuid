@@ -1,8 +1,8 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
-import { PRIVACY_POLICY_VERSION } from '@wusool/shared';
+import { PRIVACY_POLICY_VERSION, type DirectorySchool } from '@wusool/shared';
 import { Icon, type IconName } from '@/components/Icon';
 import {
   BackBar,
@@ -24,6 +24,59 @@ import { orgName } from '@/lib/format';
 import type { OrgSummary } from '@/lib/types';
 import { platform } from '@/platform';
 import { OrgList, useDirectory } from './GuardianPages';
+
+/**
+ * Schools published by the ministry (docs: packages/shared/src/schools.ts). Picking from the
+ * list means every family writes the same school the same way; a school that is not listed yet
+ * can still be typed.
+ */
+function SchoolField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { t, i18n } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const schools = useQuery({
+    queryKey: ['schools', value],
+    queryFn: () => api<DirectorySchool[]>(`/schools?country=BH&q=${encodeURIComponent(value)}`),
+    enabled: open,
+  });
+  const label = (s: DirectorySchool) => (i18n.language === 'en' ? s.en : s.ar);
+  const matches = (schools.data ?? []).filter((s) => label(s) !== value.trim());
+  return (
+    <div className="flex flex-col gap-1.5">
+      <FieldLabel label={t('guardian.schoolName')}>
+        <input
+          value={value}
+          onChange={(e) => {
+            onChange(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          placeholder={t('gd.add.schoolPh')}
+          autoComplete="off"
+          className={inputClass}
+        />
+      </FieldLabel>
+      <p className="text-xs text-muted">{t('gd.add.schoolHint')}</p>
+      {open && matches.length > 0 && (
+        <ul className="max-h-56 overflow-y-auto rounded-[14px] border border-border bg-surface">
+          {matches.map((s) => (
+            <li key={s.ar}>
+              <button
+                type="button"
+                onClick={() => {
+                  onChange(label(s));
+                  setOpen(false);
+                }}
+                className="flex min-h-12 w-full items-center px-3.5 py-2 text-start text-[15px]"
+              >
+                {label(s)}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 interface DriverMatch extends OrgSummary {
   driverNameAr: string;
@@ -201,14 +254,7 @@ export function AddChildPage() {
                 className={inputClass}
               />
             </FieldLabel>
-            <FieldLabel label={t('guardian.schoolName')}>
-              <input
-                value={form.schoolName}
-                onChange={(e) => set('schoolName')(e.target.value)}
-                placeholder={t('gd.add.schoolPh')}
-                className={inputClass}
-              />
-            </FieldLabel>
+            <SchoolField value={form.schoolName} onChange={set('schoolName')} />
             <fieldset className="flex flex-col gap-2 text-sm font-semibold">
               <legend className="mb-2">{t('guardian.relationship')}</legend>
               <div className="flex flex-wrap gap-2">
