@@ -38,11 +38,14 @@ export interface Me {
   signupRole: SignupRole;
   /** Signed up as a guardian, or has added a child. */
   isGuardian: boolean;
+  publicCode: string;
   memberships: { role: Role; organization: OrgSummary }[];
 }
 
 export interface Child {
   id: string;
+  /** Short code that tells two children with the same name apart. */
+  publicCode: string;
   fullNameAr: string;
   fullNameEn: string | null;
   dateOfBirth: string;

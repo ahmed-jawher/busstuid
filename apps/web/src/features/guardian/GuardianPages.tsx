@@ -373,6 +373,9 @@ export function ChildPage() {
         <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-bold">{displayName(c)}</h1>
           <div className="mt-0.5 text-sm text-muted">{c.schoolName}</div>
+          <div className="mt-0.5 text-xs text-muted">
+            {t('guardian.childCode')}: <span dir="ltr">{c.publicCode}</span>
+          </div>
         </div>
       </div>
       <div

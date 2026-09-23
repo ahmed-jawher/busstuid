@@ -18,6 +18,7 @@ import {
   RoutineNotificationsService,
   type StatusChange,
 } from '../notifications/routine-notifications.service';
+import { studentSearchFilter } from '../students/student-search';
 import { StudentsService } from '../students/students.service';
 import { loadTripFor } from './trip-access';
 import { TripGenerationService } from './trip-generation.service';
@@ -460,27 +461,27 @@ export class TripsService {
           deletedAt: null,
           orgStudents: { some: { organizationId: ref.organizationId, status: 'active' } },
           tripStudents: { none: { tripId } },
-          ...(q
-            ? {
-                OR: [
-                  { fullNameAr: { contains: q, mode: 'insensitive' } },
-                  { fullNameEn: { contains: q, mode: 'insensitive' } },
-                ],
-              }
-            : {}),
+          ...(q ? { OR: studentSearchFilter(q) } : {}),
         },
         select: {
           id: true,
+          publicCode: true,
           fullNameAr: true,
           fullNameEn: true,
           schoolName: true,
           photoVersion: true,
+          guardians: {
+            select: { guardian: { select: { fullNameAr: true, phoneE164: true } } },
+            take: 2,
+          },
         },
         orderBy: { fullNameAr: 'asc' },
         take: 20,
       });
-      return rows.map(({ photoVersion, ...s }) => ({
+      return rows.map(({ photoVersion, guardians, ...s }) => ({
         ...s,
+        // Lets the driver see they found the right family, e.g. two brothers on one number.
+        guardianNames: guardians.map((g) => g.guardian.fullNameAr),
         photoUrl: this.students.photoUrl(s.id, photoVersion),
       }));
     });

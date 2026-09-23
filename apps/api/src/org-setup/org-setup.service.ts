@@ -204,7 +204,14 @@ export class OrgSetupService {
           role: true,
           createdAt: true,
           user: {
-            select: { id: true, email: true, fullNameAr: true, fullNameEn: true, phoneE164: true },
+            select: {
+              id: true,
+              publicCode: true,
+              email: true,
+              fullNameAr: true,
+              fullNameEn: true,
+              phoneE164: true,
+            },
           },
         },
         orderBy: { createdAt: 'asc' },

@@ -35,6 +35,7 @@ export class MeService {
           emailVerifiedAt: true,
           phoneE164: true,
           phoneVerified: true,
+          publicCode: true,
           fullNameAr: true,
           fullNameEn: true,
           preferredLocale: true,

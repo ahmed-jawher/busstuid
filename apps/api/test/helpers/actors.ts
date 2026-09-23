@@ -80,10 +80,16 @@ export async function createActiveOrg(
   admin: Actor,
   type: 'school' | 'transport_company' | 'independent_driver' = 'school',
 ): Promise<{ id: string; header: { 'X-Organization-Id': string } }> {
+  const suffix = randomBytes(3).toString('hex');
   const res = await t.http
     .post('/v1/organizations')
     .set(admin.auth)
-    .send({ type, nameAr: `منظمة ${randomBytes(3).toString('hex')}`, country: 'BH' })
+    .send({
+      type,
+      nameAr: `منظمة ${suffix}`,
+      nameEn: `Org ${suffix}`,
+      country: 'BH',
+    })
     .expect(201);
   await t.db.admin.organization.update({ where: { id: res.body.id }, data: { status: 'active' } });
   return { id: res.body.id, header: { 'X-Organization-Id': res.body.id } };

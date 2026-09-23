@@ -187,3 +187,9 @@ passes too. ✅
 - API: link-request notifications and a 10-minute undo, guardian names on requests, routes on the
   student list, alert follow-up for guardians, password change.
 - New app icon and splash screens.
+
+## Codes, search and kindergartens
+
+- Kindergarten organisations; organisation names required in both languages and unique per
+  country and type (except independent drivers).
+- Short public code for every child and account; driver search by name, code or guardian phone.

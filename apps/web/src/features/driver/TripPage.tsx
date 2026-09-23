@@ -996,7 +996,7 @@ function AddStudentSheet({
   const candidates = useQuery({
     queryKey: ['candidates', tripId, q],
     queryFn: () =>
-      api<(ManifestStudent & { id: string })[]>(
+      api<(ManifestStudent & { id: string; publicCode: string; guardianNames: string[] })[]>(
         `/trips/${tripId}/candidates?q=${encodeURIComponent(q)}`,
       ),
     enabled: open,
@@ -1011,8 +1011,8 @@ function AddStudentSheet({
       <p className="text-sm text-muted">{t('drv.addHint')}</p>
       <input
         type="search"
-        aria-label={t('driver.searchByName')}
-        placeholder={t('driver.searchByName')}
+        aria-label={t('drv.searchHint')}
+        placeholder={t('drv.searchHint')}
         value={q}
         onChange={(e) => setQ(e.target.value)}
         className={cn(inputClass, 'bg-background')}
@@ -1027,7 +1027,13 @@ function AddStudentSheet({
               className="flex min-h-15 w-full items-center gap-3 rounded-[14px] border-[1.5px] border-border px-3 py-2 text-start"
             >
               <Initial name={displayName(c)} size={44} className="rounded-xl" />
-              <span className="flex-1 text-[17px] font-semibold">{displayName(c)}</span>
+              <span className="flex-1">
+                <span className="block text-[17px] font-semibold">{displayName(c)}</span>
+                <span className="block text-xs text-muted" dir="ltr">
+                  {c.publicCode}
+                  {c.guardianNames.length > 0 && ` · ${c.guardianNames[0]}`}
+                </span>
+              </span>
               <Icon name="add_circle" size={24} className="text-primary" />
             </button>
           </li>
