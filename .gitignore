@@ -27,3 +27,6 @@ infra/backups/
 google-services.json
 GoogleService-Info.plist
 *.p8
+
+# local preview config for the Claude app
+.claude/launch.json

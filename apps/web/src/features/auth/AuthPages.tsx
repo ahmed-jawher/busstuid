@@ -95,7 +95,10 @@ export function LoginPage() {
         }}
       >
         <BackBar to="/welcome" />
-        <h1 className="text-[28px] font-bold">{t('onb.welcomeBack')}</h1>
+        <div>
+          <h1 className="text-[28px] font-bold">{t('onb.welcomeTitle')}</h1>
+          <p className="mt-1 text-sm text-muted">{t('onb.welcomeSub')}</p>
+        </div>
         <FieldLabel label={t('auth.email')}>
           <input
             type="email"
