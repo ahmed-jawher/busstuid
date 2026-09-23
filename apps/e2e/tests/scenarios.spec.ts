@@ -155,7 +155,7 @@ test('2. full morning trip: everyone boards, everyone gets off, vehicle confirme
   await tapEach(driver, 'نزل', count);
   await waitSynced(driver);
   await driver.getByRole('button', { name: 'إنهاء الرحلة' }).click();
-  await expect(driver.getByText('هل تأكدت أن الباص خالٍ تماماً')).toBeVisible();
+  await expect(driver.getByText('هل الباص خالٍ تماماً')).toBeVisible();
   await shot(driver, '06b-driver-confirm-empty');
   await holdEmpty(driver);
   await expect(driver.getByRole('heading', { name: 'انتهت الرحلة بأمان' })).toBeVisible();
