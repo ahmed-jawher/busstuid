@@ -362,3 +362,21 @@ Format: the decision, then why.
   compares the last 8 digits, so any way of typing it works, and brothers and sisters on one
   number come back together. Results show the code and the guardian's name so the driver can see
   they picked the right child.
+
+## The school list (owner's request, 2026-09-23)
+
+- **Every school, kindergarten and nursery in Bahrain ships with the app** (516 places) so a
+  guardian picks the right one instead of typing it, and every family writes the same place the
+  same way. Sources: the open data portal for public and private schools, and the ministry's
+  educational-institutions finder for kindergartens and nurseries — both bilingual, read
+  2026-09-23. `packages/shared/src/schools.ts` is generated; regenerate when the ministry
+  publishes changes.
+- **A name that is not in the list can still be typed.** New schools open, and a parent must
+  never be blocked from adding their child because a list is out of date.
+- **The list is data, not organisations.** These places have not signed up; creating accounts
+  for them would leave guardians waiting for an approval nobody can give. The child's school is
+  a name; the transport is a separate organisation the guardian links to.
+- **Search ignores how Arabic is written**: hamza forms, ta marbuta, vowel marks and word order,
+  so "روضة الإبداع", "ابداع" and "Creativity" all find the same place.
+- **Branches with the same name carry their governorate** (and block, when two share one), and
+  kindergarten names get the word "روضة"/"حضانة" that the ministry's list leaves out.

@@ -193,3 +193,8 @@ passes too. ✅
 - Kindergarten organisations; organisation names required in both languages and unique per
   country and type (except independent drivers).
 - Short public code for every child and account; driver search by name, code or guardian phone.
+
+## Bahrain school list
+
+- 516 schools, kindergartens and nurseries ship with the app; the guardian picks their school
+  from the list when adding a child, or types a name that is not listed.
