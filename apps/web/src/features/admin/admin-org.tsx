@@ -100,7 +100,7 @@ function ShellFrame({ orgs, switchOrg }: { orgs: OrgSummary[]; switchOrg(id: str
   };
   return (
     <ShellContext.Provider value={shell}>
-      <div data-shell="admin" className="min-h-dvh bg-background lg:flex">
+      <div className="min-h-dvh bg-background lg:flex">
         <Sidebar />
         <div className="flex min-h-dvh min-w-0 flex-1 flex-col">
           <Outlet />
@@ -152,6 +152,7 @@ function BottomTabs() {
   };
   return (
     <nav
+      data-tabbar="admin"
       aria-label={t('admin.menu')}
       className="sticky bottom-0 z-20 flex border-t border-border bg-surface px-1.5 pt-1.5 lg:hidden"
       style={{ paddingBottom: 'max(0.375rem, env(safe-area-inset-bottom))' }}
@@ -346,6 +347,7 @@ export function AdminScreen({
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-3.5 p-4">{children}</main>
       {footer && (
         <div
+          data-tabbar="footer"
           className="sticky bottom-0 z-20 border-t border-border bg-background px-4 pt-3"
           style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
         >
@@ -385,116 +387,14 @@ function CriticalBar() {
   );
 }
 
-// ─── Building blocks shared by the admin screens ───────────────────────────
-
-export function Panel({ className, children }: { className?: string; children: ReactNode }) {
-  return (
-    <div
-      className={cn('overflow-hidden rounded-[18px] border border-border bg-surface', className)}
-    >
-      {children}
-    </div>
-  );
-}
-
-export type Tone = 'neutral' | 'primary' | 'ok' | 'warning' | 'alert' | 'alertSolid';
-
-export const TONES: Record<Tone, string> = {
-  neutral: 'bg-surface-2 text-muted',
-  primary: 'bg-primary-soft text-primary',
-  ok: 'bg-ok-soft text-status-alighted',
-  warning: 'bg-warning-soft text-warning',
-  alert: 'bg-alert-soft text-alert',
-  alertSolid: 'bg-alert text-alert-foreground',
-};
-
-export function Pill({
-  tone,
-  icon,
-  children,
-  className,
-}: {
-  tone: Tone;
-  icon?: IconName;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold',
-        TONES[tone],
-        className,
-      )}
-    >
-      {icon && <Icon name={icon} fill size={15} />}
-      {children}
-    </span>
-  );
-}
-
-/** Tinted icon square at the start of list rows. */
-export function IconTile({
-  icon,
-  tone = 'primary',
-  size = 40,
-}: {
-  icon: IconName;
-  tone?: Tone;
-  size?: number;
-}) {
-  return (
-    <span
-      className={cn('flex shrink-0 items-center justify-center rounded-xl', TONES[tone])}
-      style={{ width: size, height: size }}
-    >
-      <Icon name={icon} fill={tone === 'alertSolid'} size={size * 0.55} />
-    </span>
-  );
-}
-
-/** Striped placeholder with the first letter, where a child's photo is not shown. */
-export function Initial({ name, size = 36 }: { name: string; size?: number }) {
-  return (
-    <span
-      aria-hidden="true"
-      className="flex shrink-0 items-center justify-center rounded-[10px] text-sm font-bold text-muted"
-      style={{
-        width: size,
-        height: size,
-        background:
-          'repeating-linear-gradient(45deg, var(--color-surface-2) 0 5px, var(--color-border) 5px 10px)',
-      }}
-    >
-      {name.trim()[0]}
-    </span>
-  );
-}
-
-/** Tappable list row (link) with a disclosure chevron. */
-export function RowLink({
-  to,
-  children,
-  className,
-}: {
-  to: string;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <Link
-      to={to}
-      className={cn(
-        'flex min-h-13.5 w-full items-center gap-3 border-b border-border px-3.5 text-start last:border-b-0 active:bg-surface-2',
-        className,
-      )}
-    >
-      {children}
-      <Icon name="chevron_right" size={20} flip="rtl" className="text-muted" />
-    </Link>
-  );
-}
-
-export function SectionTitle({ children }: { children: ReactNode }) {
-  return <h2 className="px-1 text-[13px] font-semibold text-muted">{children}</h2>;
-}
+// Building blocks now live in the shared kit.
+export {
+  IconTile,
+  Initial,
+  Panel,
+  Pill,
+  RowLink,
+  SectionTitle,
+  TONES,
+  type Tone,
+} from '@/components/ui/kit';

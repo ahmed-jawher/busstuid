@@ -22,7 +22,8 @@
     "continue": "Continue",
     "add": "Add",
     "remove": "Remove",
-    "save": "Save"
+    "save": "Save",
+    "close": "Close"
   },
   "countries": {
     "BH": "Bahrain",
@@ -55,18 +56,20 @@
   },
   "push": {
     "title": "Turn on notifications",
-    "why": "Notifications are the only way we can reach you if a child is left on the vehicle. Without them you will not be alerted.",
-    "limits": "Notifications can be delayed if the phone is off or in battery saver. Keep it charged and do not mute this app.",
+    "why": "Notifications are the only way we can reach you if a child is left on the bus. Without them you get no alert.",
+    "limits": "Notifications can be delayed in battery saver. Keep the phone charged and do not mute the app.",
     "enable": "Turn on notifications",
     "sendTestAgain": "Send a test notification",
     "testSent": "A test notification was sent. Check that it appeared on your phone.",
-    "ready": "✓ Notifications work on this device.",
-    "denied": "Notification permission was denied. Allow it in your browser or phone settings and try again.",
+    "ready": "Notifications work on this device",
+    "denied": "Permission was refused. Turn it on in Settings → Tammeni → Notifications, then try again.",
     "unsupported": "This browser does not support notifications. Use Chrome, Edge, or Safari after adding to the home screen.",
     "iosInstallTitle": "On iPhone, install the app first:",
     "iosStep1": "Tap the Share button in Safari",
     "iosStep2": "Choose “Add to Home Screen”",
-    "iosStep3": "Open the app from the home screen and come back to this page"
+    "iosStep3": "Open the app from the home screen and come back to this page",
+    "tryAgain": "Try again",
+    "later": "Later"
   },
   "status": {
     "expected": "Waiting",
@@ -509,7 +512,7 @@
     "password_unchanged": "The new password is the same as the current one."
   },
   "signup": {
-    "whoAreYou": "Create an account — who are you?",
+    "whoAreYou": "Who are you?",
     "change": "Change",
     "organization": "Organisation details",
     "managerName": "Your name (account manager)",
@@ -568,5 +571,216 @@
     "trip.start": "Started a trip",
     "vehicle.create": "Added a vehicle",
     "vehicle.update": "Changed a vehicle"
+  },
+  "onb": {
+    "welcome": {
+      "tagline": "Know when your child got on the bus, and when they arrived. No calls, no worry.",
+      "b1": "A notification at every boarding and drop-off",
+      "b2": "No trip ends with a child still on board",
+      "b3": "No continuous location tracking"
+    },
+    "step": "{{n}} of {{total}}",
+    "welcomeBack": "Welcome back",
+    "noAccount": "No account? Create one",
+    "roleIntro": "We set up the right screens for you. You can add another role later.",
+    "yourDetails": "Your details",
+    "orgName": "School or company name",
+    "phoneHint": "Only to call you in an emergency. We never send it messages.",
+    "phoneHintDriver": "Guardians link their children to you by this number.",
+    "err": {
+      "name": "Write your full name.",
+      "email": "That email address is not valid.",
+      "phone": "The mobile number has 8 digits.",
+      "password": "The password is too short (at least 8 characters).",
+      "org": "Write the school or company name."
+    },
+    "strength": {
+      "0": "Too short",
+      "1": "Weak",
+      "2": "Fair",
+      "3": "Good",
+      "4": "Strong"
+    },
+    "createAccountButton": "Create account",
+    "terms": "By creating an account you agree to the terms and the privacy policy.",
+    "checkEmail": "Check your email",
+    "codeSentTo": "We sent a 6-digit code to",
+    "codeValid": ". It is valid for 10 minutes.",
+    "noCode": "Didn't get it?",
+    "resendIn": "Resend in {{time}}",
+    "forgotIntro": "Enter your email and we will send a 6-digit code to set a new password.",
+    "ready": {
+      "title": "Your account is ready",
+      "guardianTitle": "You're all set, {{name}}",
+      "guardianBody": "Next: add your child and link them to the school or transport company. It takes two minutes.",
+      "guardianCta": "Add your first child",
+      "driverCta": "Open the driver app",
+      "independentBody": "Guardians link their children to you by your mobile number. Add your vehicle and route in the admin screens.",
+      "adminCta": "Open the admin screens",
+      "orgTitle": "Your organisation was sent for review",
+      "orgBody": "Schools and transport companies appear to guardians after the platform operator reviews them. You can set up routes and vehicles now.",
+      "copy": "Copy",
+      "copied": "Copied ✓"
+    }
+  },
+  "gd": {
+    "tabs": {
+      "home": "Home",
+      "inbox": "Notifications",
+      "services": "Services",
+      "account": "Account"
+    },
+    "morning": "Good morning",
+    "evening": "Good evening",
+    "alertBanner": "Urgent alert · {{name}}",
+    "alertLine": {
+      "student_left_onboard": "Not recorded getting off after the trip ended",
+      "trip_overdue": "The trip is late and has not ended"
+    },
+    "state": {
+      "pending": "Waiting for approval",
+      "alert": "Open alert",
+      "safe": "Confirmed safe",
+      "boarded": "On the bus",
+      "atSchool": "At school",
+      "atHome": "At home",
+      "absent": "Absent",
+      "waiting": "Waiting for the trip",
+      "noTrip": "No trips today"
+    },
+    "headline": {
+      "alert": "Not recorded getting off after the trip ended",
+      "safe": "Confirmed safe at {{time}}",
+      "waiting": "Next trip at {{time}}"
+    },
+    "trackingAfterApproval": "Tracking starts once the request is approved",
+    "busLine": "Bus {{plate}} · {{org}}",
+    "rail": {
+      "home": "Home",
+      "bus": "Bus",
+      "school": "School",
+      "now": "Now",
+      "expected": "Expected {{time}}",
+      "notOff": "Not off"
+    },
+    "viewAlert": "See the alert and call",
+    "transportBody": "Transport",
+    "history30": "Trip history · last 30 days",
+    "morningTrip": "Trip to school",
+    "returnTrip": "Trip home",
+    "ev": {
+      "absent": "Absent",
+      "boarded": "Got on the bus",
+      "notOff": "Not recorded getting off",
+      "alertRaised": "An alert went to the driver and the admins",
+      "home": "Got off at the home stop",
+      "school": "Arrived at school",
+      "arriveHome": "Arrival home",
+      "arriveSchool": "Arrival at school",
+      "waiting": "Waiting for the trip",
+      "youWillKnow": "You get a notification when they board"
+    },
+    "deleteTitle": "Delete {{name}}'s data",
+    "passwordToConfirm": "Password to confirm",
+    "svc": {
+      "search": "Search services",
+      "addDesc": "Register a new child and link them to their transport",
+      "link": "Link to a school or driver",
+      "linkTitle": "Link to a school or driver",
+      "linkDesc": "Link a registered child to another transport",
+      "history": "Trip history",
+      "historyDesc": "Every trip of the last 30 days, per child",
+      "help": "Help and emergency",
+      "helpDesc": "Emergency numbers and common questions"
+    },
+    "emergencyBh": "Emergency in Bahrain",
+    "emergencyServices": "Police, ambulance and civil defence",
+    "historyCount": "Last 30 days · {{count}} trips",
+    "completed": "Completed",
+    "faqTitle": "Common questions",
+    "support": "Support:",
+    "faq": {
+      "q1": "How do I hear about my child?",
+      "a1": "You get a notification every time the driver records them getting on or off. Keep notifications on and do not mute the app.",
+      "q2": "What happens during an alert?",
+      "a2": "If a trip ends while your child is still recorded on the bus, you get an alert at once and the driver and admins follow up until they confirm your child is safe. You do not need to do anything.",
+      "q3": "Why don't notifications reach my iPhone?",
+      "a3": "On iPhone, add the app to the home screen first: Share → “Add to Home Screen”. Or install the Tammeni app from the App Store."
+    },
+    "chooseChild": "Choose the child",
+    "chooseOrg": "Choose the transport",
+    "sendLink": "Send link request",
+    "linkSent": "Link request sent. We will tell you when it is approved.",
+    "noOrgs": "No results.",
+    "backHome": "Back to home",
+    "add": {
+      "stepOf": "Step {{n}} of 4",
+      "s1": "Details",
+      "s2": "Transport",
+      "s3": "Photo",
+      "s4": "Consent",
+      "nameAr": "Child's name in Arabic",
+      "nameArPh": "e.g. يوسف أحمد",
+      "nameEn": "Child's name in English",
+      "optional": "optional",
+      "schoolPh": "School name",
+      "whoDrives": "Who drives your child?",
+      "searchOrg": "Search by school or company name",
+      "isThisDriver": "Is this your driver?",
+      "confirmed": "Confirmed",
+      "photoTitle": "A clear face photo",
+      "photoWhy": "The driver recognises your child by this photo. The transport sees it only after accepting the request.",
+      "photoPlaceholder": "Put the face\ninside the circle",
+      "tip1": "The whole face, from the front",
+      "tip2": "Good light and a plain background",
+      "tip3": "No sunglasses or cap",
+      "privacyTitle": "Privacy and consent",
+      "p1": "We use your child's name, photo and date of birth only to record boarding and drop-off and to tell you.",
+      "p2": "A location is recorded only when the driver taps; there is no continuous tracking.",
+      "p3": "You can download or delete your child's data at any time.",
+      "err1": "Fill in the name, date of birth and school.",
+      "err2org": "Choose the transport.",
+      "err2driver": "Find the driver and confirm it is yours.",
+      "err3": "The photo is required.",
+      "err4": "Consent is required.",
+      "sentTitle": "Link request sent",
+      "sentBody": "We will tell you when {{org}} approves. Until then {{name}} shows on your home screen as “waiting for approval”."
+    },
+    "alert": {
+      "reason": "Reason:",
+      "closedBy": "Closed by:",
+      "byDriver": "the driver",
+      "byOrg": "{{org}} admins",
+      "whoIsOnIt": "Who is on it now",
+      "driver": "Driver {{name}}",
+      "notifiedAt": "Told {{time}}",
+      "org": "{{org}} admins",
+      "following": "Following now",
+      "notified": "Told",
+      "title": {
+        "student_left_onboard": "{{name}} was not recorded getting off the bus",
+        "trip_overdue": "{{name}}'s trip is late and has not ended"
+      }
+    },
+    "all": "All",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "older": "Older",
+    "noAlerts": "No alerts. We will tell you at once if anything happens.",
+    "acc": {
+      "testSent": "Test notification sent. Check that it appeared.",
+      "muteRoutine": "Mute boarding and drop-off notifications",
+      "appearance": "Appearance and language",
+      "language": "Language",
+      "currentLanguage": "English",
+      "security": "Security and data",
+      "changePassword": "Change password",
+      "on": "On",
+      "off": "Off",
+      "more": "More",
+      "currentPassword": "Current password",
+      "otherDevices": "You will be signed out on your other devices.",
+      "passwordChanged": "Password changed."
+    }
   }
 }

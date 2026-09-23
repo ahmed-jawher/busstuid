@@ -7,7 +7,8 @@ export type Scheme = 'light' | 'dark';
 
 export const prefs = {
   locale: (): Locale => (platform.preferences.get('locale') === 'en' ? 'en' : 'ar'),
-  theme: (): ThemeName => (platform.preferences.get('theme') === 'sa' ? 'sa' : 'bh'),
+  // Bahrain only (Claude Design "Tammeni Brand"): the Saudi theme is no longer offered.
+  theme: (): ThemeName => 'bh',
   // Dark by default: most use is inside the vehicle (PLAN §13).
   scheme: (): Scheme => (platform.preferences.get('scheme') === 'light' ? 'light' : 'dark'),
 };

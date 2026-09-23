@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
-import { Button } from '@/components/ui/button';
-import { Card, Notice, PageHeader } from '@/components/ui/layout';
+import { Icon } from '@/components/Icon';
+import { BackBar, bigButton, ErrorLine, IconBadge, Screen } from '@/components/ui/kit';
 import { api } from '@/lib/api';
+import { cn } from '@/lib/cn';
 import { errorMessage } from '@/lib/errors';
 import { platform } from '@/platform';
 
@@ -33,7 +34,8 @@ const isStandalone = () =>
 
 /**
  * One explanatory screen, then permission, subscription and a test notification (PLAN §5 step 2,
- * §7). Drivers cannot start a trip until the test has succeeded.
+ * §7). Drivers cannot start a trip until the test has succeeded. Styled after Claude Design
+ * "Tammeni Onboarding" (step after the email code).
  */
 export function NotificationSetupPage() {
   const { t } = useTranslation();
@@ -41,6 +43,7 @@ export function NotificationSetupPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const next = params.get('next');
+  const onboarding = params.get('onboarding') === '1';
   const ready = usePushReady();
 
   const enable = useMutation({
@@ -70,49 +73,86 @@ export function NotificationSetupPage() {
   const needsInstall = platform.kind === 'web' && isIos() && !isStandalone();
   const unsupported = !platform.push.isSupported();
   const denied = enable.error instanceof Error && enable.error.message === 'push-permission-denied';
+  const working = ready || enable.isSuccess;
 
   return (
-    <div className="mx-auto max-w-lg">
-      <PageHeader title={t('push.title')} />
-      <Card className="space-y-4">
-        <p>{t('push.why')}</p>
-        <Notice tone="warning">{t('push.limits')}</Notice>
+    <Screen className={onboarding ? 'gap-4 pt-16' : 'gap-4'}>
+      {!onboarding && <BackBar />}
+      <IconBadge icon="notifications_active" tone="warning" size={76} fill />
+      <h1 className="text-[27px] font-bold">{t('push.title')}</h1>
+      <p className="text-[16.5px] leading-relaxed">{t('push.why')}</p>
+      <div className="flex gap-2.5 rounded-2xl border border-border bg-surface px-4 py-3.5 text-sm leading-relaxed text-muted">
+        <Icon name="battery_alert" className="text-primary" />
+        {t('push.limits')}
+      </div>
 
-        {needsInstall ? (
-          <Notice tone="info">
-            <p className="mb-2 font-semibold">{t('push.iosInstallTitle')}</p>
-            <ol className="list-decimal space-y-1 ps-5">
-              <li>{t('push.iosStep1')}</li>
-              <li>{t('push.iosStep2')}</li>
-              <li>{t('push.iosStep3')}</li>
-            </ol>
-          </Notice>
-        ) : unsupported ? (
-          <Notice tone="danger">{t('push.unsupported')}</Notice>
-        ) : ready ? (
-          <Notice tone="success">{t('push.ready')}</Notice>
-        ) : null}
-
-        {denied && <Notice tone="danger">{t('push.denied')}</Notice>}
-        {enable.error && !denied && <Notice tone="danger">{errorMessage(enable.error)}</Notice>}
-        {enable.isSuccess && <Notice tone="success">{t('push.testSent')}</Notice>}
-
-        {!needsInstall && !unsupported && (
-          <Button
-            size="touch"
-            className="w-full"
-            disabled={enable.isPending}
-            onClick={() => enable.mutate()}
-          >
-            {ready ? t('push.sendTestAgain') : t('push.enable')}
-          </Button>
-        )}
-        {next && ready && (
-          <Button variant="outline" size="touch" className="w-full" onClick={() => navigate(next)}>
-            {t('common.continue')}
-          </Button>
-        )}
-      </Card>
-    </div>
+      {needsInstall && (
+        <div className="rounded-[14px] bg-primary-soft px-3.5 py-3 text-sm leading-relaxed">
+          <p className="mb-2 font-semibold">{t('push.iosInstallTitle')}</p>
+          <ol className="list-decimal space-y-1 ps-5">
+            <li>{t('push.iosStep1')}</li>
+            <li>{t('push.iosStep2')}</li>
+            <li>{t('push.iosStep3')}</li>
+          </ol>
+        </div>
+      )}
+      {!needsInstall && unsupported && (
+        <div
+          role="alert"
+          className="rounded-[14px] bg-alert-soft px-3.5 py-3 text-sm font-semibold text-alert"
+        >
+          {t('push.unsupported')}
+        </div>
+      )}
+      {denied && (
+        <div
+          role="alert"
+          className="rounded-[14px] bg-alert-soft px-3.5 py-3 text-sm leading-relaxed font-semibold text-alert"
+        >
+          {t('push.denied')}
+        </div>
+      )}
+      {enable.error && !denied && <ErrorLine>{errorMessage(enable.error)}</ErrorLine>}
+      {working && (
+        <div className="flex items-center gap-2 rounded-[14px] bg-ok-soft px-3.5 py-3 text-[15px] font-bold text-status-alighted">
+          <Icon name="check_circle" fill />
+          {enable.isSuccess ? t('push.testSent') : t('push.ready')}
+        </div>
+      )}
+      <div className="flex-1" />
+      {!needsInstall && !unsupported && (!working || !next) && (
+        <button
+          type="button"
+          disabled={enable.isPending}
+          onClick={() => enable.mutate()}
+          className={cn(
+            bigButton,
+            working
+              ? 'border-[1.5px] border-border bg-surface'
+              : 'bg-primary text-primary-foreground',
+          )}
+        >
+          {working ? t('push.sendTestAgain') : denied ? t('push.tryAgain') : t('push.enable')}
+        </button>
+      )}
+      {next && (working || needsInstall || unsupported) && (
+        <button
+          type="button"
+          onClick={() => navigate(next, { replace: true })}
+          className={cn(bigButton, 'bg-primary text-primary-foreground')}
+        >
+          {t('common.continue')}
+        </button>
+      )}
+      {next && onboarding && !working && (
+        <button
+          type="button"
+          onClick={() => navigate(next, { replace: true })}
+          className="min-h-11 text-sm font-semibold text-muted"
+        >
+          {t('push.later')}
+        </button>
+      )}
+    </Screen>
   );
 }

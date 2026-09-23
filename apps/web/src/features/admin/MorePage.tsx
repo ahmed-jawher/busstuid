@@ -174,7 +174,7 @@ export function MorePage() {
             <Icon name="notifications" className="text-muted" />
             <span className="flex-1 text-[15px]">{t('nav.inbox')}</span>
           </RowLink>
-          <RowLink to="/settings">
+          <RowLink to="/account">
             <Icon name="settings" className="text-muted" />
             <span className="flex-1 text-[15px]">{t('admin.accountSettings')}</span>
           </RowLink>

@@ -7,6 +7,7 @@
 @import '@fontsource/ibm-plex-sans-arabic/700.css';
 /* Figures (counters, stop numbers): Latin digits only, so the Latin subset is enough. */
 @import '@fontsource/readex-pro/latin-700.css';
+@import '@fontsource/readex-pro/arabic-700.css';
 
 @theme inline {
   --font-sans: var(--ws-font-sans);
@@ -31,6 +32,9 @@
   --color-warning: var(--ws-status-warning);
   --color-warning-soft: var(--ws-status-warning-soft);
   --font-figures: 'Readex Pro', var(--ws-font-sans);
+  /* Brand navy of the logo and the welcome screen; the same in light and dark. */
+  --color-brand-navy: #16215c;
+  --color-brand-yellow: #f5b82e;
   --radius-sm: var(--ws-radius-sm);
   --radius-md: var(--ws-radius-md);
   --radius-lg: var(--ws-radius-lg);
@@ -51,22 +55,17 @@ body {
   color: var(--ws-foreground);
   font-family: var(--ws-font-sans);
   -webkit-tap-highlight-color: transparent;
-  /* Notch and status bar in the wrapped app (PLAN §9.1). */
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
-    env(safe-area-inset-left);
+  /* Screens draw under the notch and home indicator themselves (PLAN §9.1); only the sides pad. */
+  padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left);
 }
 
-/* App shell (admin): the navy bar and the tab bar draw under the notch and home indicator
-   themselves, so the page does not pad for them. */
-body:has([data-shell]) {
-  padding-top: 0;
-  padding-bottom: 0;
+/* Toasts sit above a bottom tab bar or sticky action bar. */
+body:has([data-tabbar]) {
+  --toast-offset: 4.5rem;
 }
-
-/* Toasts sit above the bottom tab bar on phones. */
-@media (width < 64rem) {
-  body:has([data-shell]) {
-    --toast-offset: 4.5rem;
+@media (width >= 64rem) {
+  body:has([data-tabbar='admin']) {
+    --toast-offset: 0px;
   }
 }
 
@@ -80,8 +79,26 @@ body:has([data-shell]) {
   animation: blink 1s infinite;
 }
 
+/* Soft white ring pulsing out of alert icons (Claude Design tmPulse). */
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgb(255 255 255 / 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 18px rgb(255 255 255 / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(255 255 255 / 0);
+  }
+}
+
+@utility animate-pulse-ring {
+  animation: pulse-ring 1.6s infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-blink {
+  .animate-blink,
+  .animate-pulse-ring {
     animation: none;
   }
 }

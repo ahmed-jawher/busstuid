@@ -1,10 +1,10 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, Navigate } from 'react-router';
 import {
+  AccountPage,
   CreateOrgPage,
   HomePage,
   InboxPage,
   PlatformPage,
-  SettingsPage,
 } from '@/features/account/AccountPages';
 import { AdminLayout } from '@/features/admin/admin-org';
 import {
@@ -26,14 +26,24 @@ import { AlertPage } from '@/features/alerts/AlertPage';
 import {
   ForgotPasswordPage,
   LoginPage,
+  ReadyPage,
   RegisterPage,
   ResetPasswordPage,
   VerifyEmailPage,
+  WelcomePage,
 } from '@/features/auth/AuthPages';
 import { DriverTodayPage } from '@/features/driver/DriverTodayPage';
 import { TripPage } from '@/features/driver/TripPage';
 import { AddChildPage } from '@/features/guardian/AddChildPage';
-import { ChildPage, GuardianHomePage } from '@/features/guardian/GuardianPages';
+import {
+  ChildPage,
+  GuardianHomePage,
+  GuardianShell,
+  HelpPage,
+  HistoryPage,
+  LinkChildPage,
+  ServicesPage,
+} from '@/features/guardian/GuardianPages';
 import { NotificationSetupPage } from '@/features/push/NotificationSetupPage';
 import { RequireAuth } from './RequireAuth';
 import { RootLayout } from './RootLayout';
@@ -44,6 +54,7 @@ export const routes = [
   {
     element: <RootLayout />,
     children: [
+      { path: 'welcome', element: <WelcomePage /> },
       { path: 'login', element: <LoginPage /> },
       { path: 'register', element: <RegisterPage /> },
       { path: 'verify-email', element: <VerifyEmailPage /> },
@@ -54,15 +65,27 @@ export const routes = [
         children: [
           { index: true, element: <HomePage /> },
           { path: 'notifications/setup', element: <NotificationSetupPage /> },
-          { path: 'inbox', element: <InboxPage /> },
-          { path: 'settings', element: <SettingsPage /> },
+          { path: 'ready', element: <ReadyPage /> },
+          { path: 'settings', element: <Navigate to="/account" replace /> },
           { path: 'organizations/new', element: <CreateOrgPage /> },
           { path: 'platform', element: <PlatformPage /> },
           { path: 'driver', element: <DriverTodayPage /> },
           { path: 'trip/:id', element: <TripPage /> },
-          { path: 'guardian', element: <GuardianHomePage /> },
           { path: 'children/new', element: <AddChildPage /> },
-          { path: 'child/:id', element: <ChildPage /> },
+          {
+            // Guardian screens with the bottom tab bar (Claude Design "Tammeni Guardian").
+            element: <GuardianShell />,
+            children: [
+              { path: 'guardian', element: <GuardianHomePage /> },
+              { path: 'child/:id', element: <ChildPage /> },
+              { path: 'inbox', element: <InboxPage /> },
+              { path: 'services', element: <ServicesPage /> },
+              { path: 'history', element: <HistoryPage /> },
+              { path: 'help', element: <HelpPage /> },
+              { path: 'link', element: <LinkChildPage /> },
+              { path: 'account', element: <AccountPage /> },
+            ],
+          },
           { path: 'alert/:id', element: <AlertPage /> },
           {
             path: 'admin',
