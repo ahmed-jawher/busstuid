@@ -1,15 +1,17 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
-import { RESOLUTION_REASONS } from '@wusool/shared';
-import { Button } from '@/components/ui/button';
-import { SelectField, TextField } from '@/components/ui/form';
-import { Card, Notice, PageHeader, Spinner } from '@/components/ui/layout';
+import { Notice, PageHeader, Spinner } from '@/components/ui/layout';
 import { api, ApiError } from '@/lib/api';
 import { errorMessage } from '@/lib/errors';
 import { displayName, formatTime, orgName } from '@/lib/format';
-import type { AlertRow } from '@/lib/types';
+import {
+  AlertTimeline,
+  ResolveButton,
+  ResolveForm,
+  useAlertHandling,
+  type AlertDetail,
+} from './AlertHandling';
 
 interface GuardianAlert {
   id: string;
@@ -35,7 +37,7 @@ export function AlertPage() {
   const { t } = useTranslation();
   const crew = useQuery({
     queryKey: ['alert', id],
-    queryFn: () => api<AlertRow>(`/alerts/${id}`),
+    queryFn: () => api<AlertDetail>(`/alerts/${id}`),
     retry: false,
     refetchInterval: 15_000,
   });
@@ -99,78 +101,25 @@ function GuardianAlertView({ alert: a }: { alert: GuardianAlert }) {
   );
 }
 
-function CrewAlert({ alert: a }: { alert: AlertRow }) {
+function CrewAlert({ alert: a }: { alert: AlertDetail }) {
   const { t } = useTranslation();
-  const qc = useQueryClient();
-  const [reason, setReason] = useState<(typeof RESOLUTION_REASONS)[number]>(
-    'found_on_vehicle_and_alighted',
-  );
-  const [note, setNote] = useState('');
-  const refresh = () => qc.invalidateQueries({ queryKey: ['alert', a.id] });
-  const ack = useMutation({
-    mutationFn: () => api(`/alerts/${a.id}/acknowledge`, { method: 'POST' }),
-    onSuccess: refresh,
-  });
-  const resolve = useMutation({
-    mutationFn: () =>
-      api(`/alerts/${a.id}/resolve`, {
-        method: 'POST',
-        body: { reason, ...(note.trim() ? { note: note.trim() } : {}) },
-      }),
-    onSuccess: refresh,
-  });
-  const open = a.status !== 'resolved';
+  const h = useAlertHandling(a, [['alert', a.id]]);
   return (
     <div className="mx-auto max-w-lg space-y-4">
       <PageHeader
         title={t(`alertType.${a.type}`)}
         subtitle={`${a.trip.route?.name ?? ''} · ${a.trip.vehicle.plateNumber} · ${formatTime(a.openedAt)}`}
       />
-      <Notice tone={open ? 'danger' : 'success'}>
+      <Notice tone={h.open ? 'danger' : 'success'}>
         {t(`severity.${a.severity}`)} · {t(`alertStatus.${a.status}`)}
         {a.resolutionReason && ` · ${t(`reason.${a.resolutionReason}`)}`}
       </Notice>
-      {open && (
-        <Card className="space-y-4">
-          {a.status === 'open' && (
-            <Button
-              variant="outline"
-              className="w-full"
-              disabled={ack.isPending}
-              onClick={() => ack.mutate()}
-            >
-              {t('alert.acknowledge')}
-            </Button>
-          )}
-          <SelectField
-            label={t('alert.reason')}
-            value={reason}
-            onChange={(e) => setReason(e.target.value as typeof reason)}
-          >
-            {RESOLUTION_REASONS.map((r) => (
-              <option key={r} value={r}>
-                {t(`reason.${r}`)}
-              </option>
-            ))}
-          </SelectField>
-          <TextField
-            label={t('alert.note')}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            required={reason === 'other'}
-          />
-          {(resolve.error ?? ack.error) && (
-            <Notice tone="danger">{errorMessage(resolve.error ?? ack.error)}</Notice>
-          )}
-          <Button
-            size="touch"
-            className="w-full"
-            disabled={resolve.isPending}
-            onClick={() => resolve.mutate()}
-          >
-            {t('alert.resolve')}
-          </Button>
-        </Card>
+      <AlertTimeline alert={a} />
+      {h.open && (
+        <div className="flex flex-col gap-3.5">
+          <ResolveForm h={h} />
+          <ResolveButton h={h} />
+        </div>
       )}
     </div>
   );

@@ -84,6 +84,10 @@ test('1. guardian adds a child; the school approves it', async ({ browser }) => 
 
   await admin.goto(`${state().webUrl}/admin/students`);
   await expect(admin.locator('li', { hasText: 'يوسف الاختبار' }).locator('img')).toHaveCount(1);
+  await shot(admin, '04b-admin-students');
+  await admin.goto(`${state().webUrl}/admin`);
+  await expect(admin.getByRole('heading', { name: 'رحلات اليوم' })).toBeVisible();
+  await shot(admin, '04c-admin-live');
 
   await guardian.reload();
   await expect(guardian.getByText('بانتظار موافقة')).toHaveCount(0);
@@ -211,14 +215,20 @@ test('4. the forgotten child: forced end raises the alarm, guardian sees it, adm
   await expect(guardian.getByRole('link', { name: /اتصل بالطوارئ 999/ })).toBeVisible();
   await shot(guardian, '10-guardian-alert');
 
-  // The independent driver is also their organisation's admin: the admin bar shows the alert.
+  // The independent driver is also their organisation's admin: the critical alert is pinned
+  // under the title bar on every admin screen.
   await driver.goto(`${state().webUrl}/admin`);
-  await expect(driver.getByText(/إنذار مفتوح/)).toBeVisible();
+  await expect(driver.getByRole('alert').filter({ hasText: 'إنذار حرج' })).toBeVisible();
   await shot(driver, '11-admin-alert-bar');
-  await driver.goto(`${state().webUrl}/alert/${alertId}`);
-  await driver.getByLabel('سبب الإغلاق').selectOption({ label: 'وُجد الطالب في المركبة ونزل' });
+  await driver.getByRole('alert').getByRole('link').click();
+  await expect(driver).toHaveURL(new RegExp(`/admin/alerts/${alertId}$`));
+  await driver.getByText('وُجد الطالب في المركبة ونزل').click();
+  await shot(driver, '11b-admin-alert');
   await driver.getByRole('button', { name: 'إغلاق الإنذار' }).click();
-  await expect(driver.getByText(/مغلق/)).toBeVisible();
+  await expect(driver.getByText('مغلق', { exact: true })).toBeVisible();
+  await expect(driver.getByRole('alert').filter({ hasText: 'إنذار حرج' })).toHaveCount(0);
+  await driver.goto(`${state().webUrl}/admin/more`);
+  await shot(driver, '11c-admin-more');
 
   await guardian.reload();
   await expect(guardian.getByRole('heading', { name: /تم التأكد من السلامة/ })).toBeVisible();

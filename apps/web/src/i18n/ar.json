@@ -205,7 +205,11 @@
     "acknowledge": "أنا أتابع هذا الإنذار",
     "reason": "سبب الإغلاق",
     "note": "ملاحظة",
-    "resolve": "إغلاق الإنذار"
+    "resolve": "إغلاق الإنذار",
+    "noteRequired": "مطلوبة",
+    "noteOptional": "اختيارية",
+    "noteMissing": "اكتب ملاحظة توضح السبب.",
+    "resolvedToast": "أُغلق الإنذار"
   },
   "alertType": {
     "student_left_onboard": "طالب لم يُسجَّل نزوله",
@@ -289,7 +293,70 @@
     "stop": "المحطة",
     "notOnRoute": "ليس في هذا المسار",
     "auditIntro": "سجل غير قابل للتعديل لكل إجراء حساس، ومنه من عرض بيانات الطلاب وصورهم.",
-    "noAudit": "لا سجلات بعد."
+    "noAudit": "لا سجلات بعد.",
+    "tabs": {
+      "live": "الرحلات",
+      "alerts": "الإنذارات",
+      "requests": "الطلبات",
+      "more": "المزيد"
+    },
+    "more": {
+      "title": "المزيد",
+      "sub": "البيانات والمتابعة",
+      "data": "البيانات",
+      "followUp": "المتابعة",
+      "preferences": "التفضيلات"
+    },
+    "criticalBar": "إنذار حرج:",
+    "silenced": "الصوت مكتوم — اضغط لإعادته",
+    "kpi": {
+      "running": "رحلات جارية",
+      "onboard": "على الباصات",
+      "openAlerts": "إنذارات مفتوحة",
+      "unreachable": "لا تصلهم الإشعارات"
+    },
+    "todayTrips": "رحلات اليوم",
+    "liveNow": "مباشر",
+    "tripCounts": "على الباص {{onboard}} · نزلوا {{done}} · بانتظار {{waiting}}",
+    "missingCount": "لم ينزل {{count}}",
+    "secondsAgo": "{{count}} ث",
+    "minutesAgo": "{{count}} د",
+    "onboard": "على الباص",
+    "doneOrAbsent": "نزلوا / غياب",
+    "waiting": "بانتظار",
+    "call": "اتصال",
+    "openCount": "{{count}} مفتوحة",
+    "recentlyClosed": "أُغلقت مؤخراً",
+    "openedAt": "فُتح {{time}}",
+    "aStudent": "طالب",
+    "alertBody": {
+      "student_left_onboard": "{{student}} مسجّل على الباص {{vehicle}} ({{route}}) ولم يُسجَّل نزوله بعد انتهاء الرحلة.",
+      "trip_overdue": "رحلة الباص {{vehicle}} ({{route}}) تجاوزت وقتها ولم تُنهَ بعد.",
+      "driver_device_silent": "لم تصل إشارة من جهاز السائق على الباص {{vehicle}} ({{route}}) والرحلة جارية.",
+      "unexpected_student": "أضاف السائق {{student}} إلى رحلة الباص {{vehicle}} ({{route}}) وهو ليس في قائمة المسار."
+    },
+    "pendingCount": "{{count}} بانتظار قرارك",
+    "approvedToast": "تم القبول وأُبلغ ولي الأمر",
+    "rejectedToast": "تم رفض الطلب",
+    "studentCount": "{{count}} طالب",
+    "searchStudents": "ابحث بالاسم أو المدرسة",
+    "notifOk": "الإشعارات تصل لولي الأمر",
+    "notifOff": "لا تصل الإشعارات لولي الأمر",
+    "routeCount": "{{count}} مسار",
+    "newRoute": "مسار جديد",
+    "editAssignments": "توزيع الطلاب على المحطات",
+    "routeMeta": "الباص {{plate}} · السائق {{driver}} · {{start}} – {{end}}",
+    "activeCount": "{{count}} مفعّلة",
+    "seats": "{{count}} مقعداً",
+    "newVehicle": "مركبة جديدة",
+    "memberCount": "{{count}} عضو",
+    "newMember": "إضافة عضو",
+    "unreachableCount": "{{count}} ولي أمر",
+    "guardianOf": "ولي أمر {{names}}",
+    "auditSub": "غير قابل للتعديل",
+    "system": "النظام",
+    "darkMode": "الوضع الداكن",
+    "accountSettings": "حسابي والإعدادات"
   },
   "orgType": {
     "school": "مدرسة",
@@ -460,5 +527,42 @@
       "organization": "أدير حافلات وسائقين وطلاباً",
       "staff_driver": "تضيفني إدارتي بعد إنشاء الحساب"
     }
+  },
+  "directionShort": {
+    "to_school": "ذهاب",
+    "to_home": "عودة"
+  },
+  "alertEvent": {
+    "opened": "فُتح الإنذار",
+    "notified": "أُبلغ السائق وولي الأمر والإدارة",
+    "escalated": "تصعيد: تذكير للجميع (المستوى {{level}})",
+    "acknowledged": "بدأت المتابعة",
+    "acknowledgedBy": "{{name}} يتابع الإنذار",
+    "resolved": "أُغلق: {{reason}}"
+  },
+  "auditAction": {
+    "account.delete": "حذف حساب",
+    "alert.acknowledge": "تابع إنذاراً",
+    "alert.resolve": "أغلق إنذاراً",
+    "child.delete": "حذف طفل",
+    "child.export": "صدّر بيانات طفل",
+    "enrollment.approve": "قبل طلب ربط",
+    "enrollment.reject": "رفض طلب ربط",
+    "member.add": "أضاف عضواً",
+    "member.remove": "أزال عضواً",
+    "organization.approve": "اعتمد منظمة",
+    "organization.create": "أنشأ منظمة",
+    "organization.suspend": "أوقف منظمة",
+    "route.assign_students": "وزّع الطلاب على مسار",
+    "route.create": "أنشأ مساراً",
+    "route.update": "عدّل مساراً",
+    "students.view_list": "عرض قائمة الطلاب وصورهم",
+    "totp.disable": "أوقف التحقق بخطوتين",
+    "totp.enable": "فعّل التحقق بخطوتين",
+    "trip.add_unexpected_student": "أضاف طالباً غير متوقع",
+    "trip.end": "أنهى رحلة",
+    "trip.start": "بدأ رحلة",
+    "vehicle.create": "أضاف مركبة",
+    "vehicle.update": "عدّل مركبة"
   }
 }

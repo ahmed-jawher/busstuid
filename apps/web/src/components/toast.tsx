@@ -32,7 +32,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       <div
         aria-live="polite"
         className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-2 p-4"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}
+        style={{
+          paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem + var(--toast-offset, 0px))',
+        }}
       >
         {toasts.map((t) => (
           <ToastItem key={t.id} toast={t} onDone={() => dismiss(t.id)} />

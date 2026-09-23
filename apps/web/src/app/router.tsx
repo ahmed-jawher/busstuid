@@ -8,7 +8,9 @@ import {
 } from '@/features/account/AccountPages';
 import { AdminLayout } from '@/features/admin/admin-org';
 import {
+  AdminAlertPage,
   AdminAlertsPage,
+  AdminTripPage,
   AuditPage,
   EnrollmentsPage,
   LiveTripsPage,
@@ -19,6 +21,7 @@ import {
   UnreachablePage,
   VehiclesPage,
 } from '@/features/admin/AdminPages';
+import { MorePage } from '@/features/admin/MorePage';
 import { AlertPage } from '@/features/alerts/AlertPage';
 import {
   ForgotPasswordPage,
@@ -66,7 +69,10 @@ export const routes = [
             element: <AdminLayout />,
             children: [
               { index: true, element: <LiveTripsPage /> },
+              { path: 'trips/:id', element: <AdminTripPage /> },
               { path: 'alerts', element: <AdminAlertsPage /> },
+              { path: 'alerts/:id', element: <AdminAlertPage /> },
+              { path: 'more', element: <MorePage /> },
               { path: 'enrollments', element: <EnrollmentsPage /> },
               { path: 'students', element: <StudentsPage /> },
               { path: 'routes', element: <RoutesPage /> },

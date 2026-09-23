@@ -25,6 +25,12 @@ interface SchemeColors {
   foreground: string;
   muted: string;
   border: string;
+  /** Secondary surface: chips, progress tracks, placeholders. */
+  surface2: string;
+  /** Tinted primary background for icons and selected items. */
+  primarySoft: string;
+  /** App bar behind the status bar. */
+  navy: string;
 }
 
 // TODO: verify against official guideline — placeholder values until checked
@@ -39,6 +45,9 @@ export const themes: Record<ThemeName, Record<ColorScheme, SchemeColors>> = {
       foreground: '#161616',
       muted: '#5b6660',
       border: '#d2d6d4',
+      surface2: '#eef1ef',
+      primarySoft: '#e3f1ea',
+      navy: '#12291e',
     },
     dark: {
       primary: '#3fae7a',
@@ -48,50 +57,66 @@ export const themes: Record<ThemeName, Record<ColorScheme, SchemeColors>> = {
       foreground: '#eef2f0',
       muted: '#a3ada8',
       border: '#2c3631',
+      surface2: '#202a25',
+      primarySoft: '#1c3328',
+      navy: '#0a0f0d',
     },
   },
+  // Tammeni brand (Claude Design "Tammeni Brand"): indigo and navy, with red kept for alerts only.
   bh: {
     light: {
-      primary: '#ce1126',
+      primary: '#3346c8',
       primaryForeground: '#ffffff',
-      background: '#f8f7f7',
+      background: '#f4f6fb',
       surface: '#ffffff',
-      foreground: '#171515',
-      muted: '#625b5c',
-      border: '#d8d2d3',
+      foreground: '#111833',
+      muted: '#5b6480',
+      border: '#e1e5ef',
+      surface2: '#eef1f8',
+      primarySoft: '#e8ebfb',
+      navy: '#111833',
     },
     dark: {
-      primary: '#ef5a6a',
-      primaryForeground: '#1a0b0d',
-      background: '#141011',
-      surface: '#1f191a',
-      foreground: '#f3eeef',
-      muted: '#b0a6a8',
-      border: '#382e30',
+      primary: '#8e9cff',
+      primaryForeground: '#0b1022',
+      background: '#0b1022',
+      surface: '#141a33',
+      foreground: '#eef1fa',
+      muted: '#a1a9c4',
+      border: '#28315a',
+      surface2: '#1c2444',
+      primarySoft: '#1f2858',
+      navy: '#070b18',
     },
   },
 };
 
 // Trip/alert status colours are fixed across themes and always paired with an icon + text
-// (PLAN §15). The alert red is intentionally darker than the Bahrain identity red.
+// (PLAN §15). Red is reserved for alerts; the `*Soft` shades are pill and banner backgrounds.
 export const statusColors: Record<ColorScheme, Record<string, string>> = {
   light: {
     expected: '#6b7280',
     boarded: '#1d4ed8',
     alighted: '#15803d',
+    alightedSoft: '#e3f4e8',
     absent: '#9ca3af',
-    alert: '#8b0000',
+    alert: '#a3111b',
+    alertSoft: '#fce8e9',
     alertForeground: '#ffffff',
     warning: '#b45309',
+    warningSoft: '#fdf1e3',
   },
   dark: {
     expected: '#9ca3af',
     boarded: '#60a5fa',
     alighted: '#4ade80',
+    alightedSoft: '#11301f',
     absent: '#6b7280',
-    alert: '#dc2626',
+    alert: '#e5484d',
+    alertSoft: '#3a1419',
     alertForeground: '#ffffff',
     warning: '#f59e0b',
+    warningSoft: '#33250c',
   },
 };
 

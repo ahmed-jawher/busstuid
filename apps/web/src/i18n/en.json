@@ -205,7 +205,11 @@
     "acknowledge": "I am handling this alert",
     "reason": "Reason for closing",
     "note": "Note",
-    "resolve": "Close alert"
+    "resolve": "Close alert",
+    "noteRequired": "required",
+    "noteOptional": "optional",
+    "noteMissing": "Write a note explaining the reason.",
+    "resolvedToast": "Alert closed"
   },
   "alertType": {
     "student_left_onboard": "Child not recorded getting off",
@@ -289,7 +293,70 @@
     "stop": "Stop",
     "notOnRoute": "Not on this route",
     "auditIntro": "An unchangeable record of every sensitive action, including who viewed students' data and photos.",
-    "noAudit": "No entries yet."
+    "noAudit": "No entries yet.",
+    "tabs": {
+      "live": "Trips",
+      "alerts": "Alerts",
+      "requests": "Requests",
+      "more": "More"
+    },
+    "more": {
+      "title": "More",
+      "sub": "Data and follow-up",
+      "data": "Data",
+      "followUp": "Follow-up",
+      "preferences": "Preferences"
+    },
+    "criticalBar": "Critical alert:",
+    "silenced": "Sound off — tap to turn it back on",
+    "kpi": {
+      "running": "Trips running",
+      "onboard": "On the buses",
+      "openAlerts": "Open alerts",
+      "unreachable": "Not getting notifications"
+    },
+    "todayTrips": "Today's trips",
+    "liveNow": "Live",
+    "tripCounts": "On board {{onboard}} · got off {{done}} · waiting {{waiting}}",
+    "missingCount": "{{count}} not off",
+    "secondsAgo": "{{count}} s",
+    "minutesAgo": "{{count}} min",
+    "onboard": "On board",
+    "doneOrAbsent": "Off / absent",
+    "waiting": "Waiting",
+    "call": "Call",
+    "openCount": "{{count}} open",
+    "recentlyClosed": "Recently closed",
+    "openedAt": "Opened {{time}}",
+    "aStudent": "A student",
+    "alertBody": {
+      "student_left_onboard": "{{student}} is recorded on bus {{vehicle}} ({{route}}) and was not recorded getting off after the trip ended.",
+      "trip_overdue": "The trip on bus {{vehicle}} ({{route}}) is past its time and has not ended.",
+      "driver_device_silent": "No signal from the driver's phone on bus {{vehicle}} ({{route}}) while the trip is running.",
+      "unexpected_student": "The driver added {{student}} to the trip on bus {{vehicle}} ({{route}}), but they are not on the route list."
+    },
+    "pendingCount": "{{count}} waiting for you",
+    "approvedToast": "Approved — the guardian has been told",
+    "rejectedToast": "Request rejected",
+    "studentCount": "{{count}} students",
+    "searchStudents": "Search by name or school",
+    "notifOk": "The guardian gets notifications",
+    "notifOff": "The guardian does not get notifications",
+    "routeCount": "{{count}} routes",
+    "newRoute": "New route",
+    "editAssignments": "Assign students to stops",
+    "routeMeta": "Bus {{plate}} · Driver {{driver}} · {{start}} – {{end}}",
+    "activeCount": "{{count}} active",
+    "seats": "{{count}} seats",
+    "newVehicle": "New vehicle",
+    "memberCount": "{{count}} members",
+    "newMember": "Add a member",
+    "unreachableCount": "{{count}} guardians",
+    "guardianOf": "Guardian of {{names}}",
+    "auditSub": "Cannot be edited",
+    "system": "System",
+    "darkMode": "Dark mode",
+    "accountSettings": "My account and settings"
   },
   "orgType": {
     "school": "School",
@@ -460,5 +527,42 @@
       "organization": "I manage buses, drivers and students",
       "staff_driver": "My employer adds me after I sign up"
     }
+  },
+  "directionShort": {
+    "to_school": "to school",
+    "to_home": "home"
+  },
+  "alertEvent": {
+    "opened": "Alert opened",
+    "notified": "Driver, guardian and admins notified",
+    "escalated": "Escalated: reminder to everyone (level {{level}})",
+    "acknowledged": "Someone is on it",
+    "acknowledgedBy": "{{name}} is on it",
+    "resolved": "Closed: {{reason}}"
+  },
+  "auditAction": {
+    "account.delete": "Deleted an account",
+    "alert.acknowledge": "Took an alert",
+    "alert.resolve": "Closed an alert",
+    "child.delete": "Deleted a child",
+    "child.export": "Exported a child's data",
+    "enrollment.approve": "Approved a link request",
+    "enrollment.reject": "Rejected a link request",
+    "member.add": "Added a member",
+    "member.remove": "Removed a member",
+    "organization.approve": "Approved an organisation",
+    "organization.create": "Created an organisation",
+    "organization.suspend": "Suspended an organisation",
+    "route.assign_students": "Assigned students to a route",
+    "route.create": "Created a route",
+    "route.update": "Changed a route",
+    "students.view_list": "Viewed the student list and photos",
+    "totp.disable": "Turned off two-step sign-in",
+    "totp.enable": "Turned on two-step sign-in",
+    "trip.add_unexpected_student": "Added an unexpected student",
+    "trip.end": "Ended a trip",
+    "trip.start": "Started a trip",
+    "vehicle.create": "Added a vehicle",
+    "vehicle.update": "Changed a vehicle"
   }
 }

@@ -304,3 +304,20 @@ Format: the decision, then why.
   history.
 - **Rollback is a manual "Run workflow" with a commit SHA,** reusing that commit's images.
 - **This change was committed straight to `main`** at the owner's request, instead of a PR.
+
+## Admin redesign from Claude Design (owner's request, 2026-09-23)
+
+- **Source:** Claude Design project "Tammeni", screen `Tammeni Admin Mobile.dc.html`. Work is on
+  the `new-design` branch; guardian, driver and onboarding screens follow separately.
+- **Brand colours applied to the `bh` theme** (indigo and navy, red kept for alerts), because the
+  admin screens depend on them. This recolours the whole app. The `sa` theme only gets the new
+  token names.
+- **Fonts and icons are bundled, not loaded from Google Fonts:** Readex Pro (Latin figures only)
+  from `@fontsource`, Material Symbols as individual SVGs from `@material-symbols/svg-400`, so
+  only the icons in use are shipped and everything works offline (PLAN §9.1).
+- **Admin shell:** four bottom tabs on phones (trips, alerts, requests, more) and a grouped
+  sidebar from 1024 px. The critical alert stays pinned under the title bar with its mute button.
+- **Things the design showed that the API cannot do yet were left out:** undoing an enrollment
+  decision, a student's route in the student list, and the guardian's name on link requests.
+- **Alert closing is shared with the driver's alert page:** reasons are a tap list instead of a
+  dropdown, and "other" still requires a note.

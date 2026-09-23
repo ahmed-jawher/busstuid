@@ -163,3 +163,11 @@ passes too. ✅
 - Renamed everywhere users see it (app, emails, notifications, stores, authenticator issuer);
   app id `com.tammeni.app`.
 - Removed the pilot-version banner at the owner's request.
+
+## Admin redesign (branch `new-design`)
+
+- New admin app shell from Claude Design: navy title bar, pinned critical alert with mute, bottom
+  tabs on phones and a sidebar on desktop.
+- New screens: trip detail with the passenger list, alert detail with a timeline and a sticky
+  close button, and "More" (data, follow-up, dark mode, language, account).
+- Tammeni brand colours, Readex Pro figures and bundled Material Symbols icons.
