@@ -436,7 +436,16 @@ export function RegisterPage() {
         >
           {t('onb.createAccountButton')}
         </button>
-        <p className="text-center text-[12.5px] leading-relaxed text-muted">{t('onb.terms')}</p>
+        <p className="text-center text-[12.5px] leading-relaxed text-muted">
+          {t('onb.terms')}{' '}
+          <Link to="/terms" className="font-semibold text-primary">
+            {t('legal.terms')}
+          </Link>
+          {' · '}
+          <Link to="/privacy" className="font-semibold text-primary">
+            {t('legal.privacy')}
+          </Link>
+        </p>
       </form>
     </Screen>
   );

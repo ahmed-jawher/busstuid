@@ -143,9 +143,19 @@ jobs:
       - name: Build shared packages
         run: pnpm exec turbo run build --filter=./packages/*
 
+      # Without the Firebase file the app still builds and runs; only push stops working.
+      - name: Firebase configuration
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        if: env.GOOGLE_SERVICES_JSON != ''
+        run: |
+          printf '%s' "$GOOGLE_SERVICES_JSON" | tr -d '\r\n' | base64 -d > apps/web/android/app/google-services.json
+          node -e "JSON.parse(require('fs').readFileSync('apps/web/android/app/google-services.json','utf8'))"
+
       - name: Build the web app into the Android project
         env:
-          VITE_API_URL: https://api.example.invalid/v1
+          # The deployed server, so the APK is installable and usable as it is.
+          VITE_API_URL: ${{ vars.DEPLOY_URL != '' && format('{0}/v1', vars.DEPLOY_URL) || 'https://api.example.invalid/v1' }}
         run: pnpm --filter @wusool/web native:sync
 
       - name: Build debug APK
@@ -154,6 +164,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: wusool-safe-debug-apk
+          name: tammeni-debug-apk
           path: apps/web/android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14

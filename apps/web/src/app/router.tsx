@@ -44,6 +44,7 @@ import {
   LinkChildPage,
   ServicesPage,
 } from '@/features/guardian/GuardianPages';
+import { PrivacyPage, TermsPage } from '@/features/legal/LegalPages';
 import { NotificationSetupPage } from '@/features/push/NotificationSetupPage';
 import { RequireAuth } from './RequireAuth';
 import { RootLayout } from './RootLayout';
@@ -56,6 +57,8 @@ export const routes = [
     children: [
       { path: 'welcome', element: <WelcomePage /> },
       { path: 'login', element: <LoginPage /> },
+      { path: 'privacy', element: <PrivacyPage /> },
+      { path: 'terms', element: <TermsPage /> },
       { path: 'register', element: <RegisterPage /> },
       { path: 'verify-email', element: <VerifyEmailPage /> },
       { path: 'forgot-password', element: <ForgotPasswordPage /> },
