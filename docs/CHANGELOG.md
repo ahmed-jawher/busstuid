@@ -163,3 +163,27 @@ passes too. ✅
 - Renamed everywhere users see it (app, emails, notifications, stores, authenticator issuer);
   app id `com.tammeni.app`.
 - Removed the pilot-version banner at the owner's request.
+
+## Admin redesign (branch `new-design`)
+
+- New admin app shell from Claude Design: navy title bar, pinned critical alert with mute, bottom
+  tabs on phones and a sidebar on desktop.
+- New screens: trip detail with the passenger list, alert detail with a timeline and a sticky
+  close button, and "More" (data, follow-up, dark mode, language, account).
+- Tammeni brand colours, Readex Pro figures and bundled Material Symbols icons.
+
+## Full redesign (branch `new-design`)
+
+- Onboarding: welcome, sign in, three-step sign-up with a +973 phone and password meter, six-box
+  email code, notifications step, and a ready screen per account type.
+- Guardian app with four tabs, child cards (home → bus → school), child timeline, full-screen
+  alert with who is following, notifications, services, history, help, and a four-step add-child
+  wizard; one account screen for every role (password change, two-step sign-in, dark mode).
+- Driver app: day view with one big action per trip, the list grouped by stop, sync pill, and
+  the staged end (red screen with alarm, undecided children, press-and-hold, forced end, summary).
+- Admin on the web: navy sidebar with the organisation switcher, page headers with actions, side
+  panels for trips, alerts and routes, tables for students and the audit log, dialogs to add
+  routes and vehicles.
+- API: link-request notifications and a 10-minute undo, guardian names on requests, routes on the
+  student list, alert follow-up for guardians, password change.
+- New app icon and splash screens.

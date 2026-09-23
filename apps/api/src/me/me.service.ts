@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { Locale } from '@wusool/shared';
 import { EmailCodesService } from '../auth/email-codes.service';
-import { verifyPassword } from '../auth/passwords';
+import { checkPasswordPolicy, hashPassword, verifyPassword } from '../auth/passwords';
 import {
   decryptField,
   encryptField,
@@ -210,6 +210,32 @@ export class MeService {
       data: { totpEnabledAt: null, totpSecretEncrypted: null },
     });
     return { totpEnabled: false };
+  }
+
+  /**
+   * Changes the password with the current one as proof. Every other session is signed out; this
+   * device gets a fresh session so the user stays signed in here.
+   */
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+    deviceInfo?: string | null,
+  ) {
+    const user = await this.requirePassword(userId, currentPassword);
+    const weak = checkPasswordPolicy(newPassword, {
+      email: user.email,
+      names: [user.fullNameAr, user.fullNameEn],
+    });
+    if (weak) throw Errors.badRequest(weak);
+    if (await verifyPassword(user.passwordHash, newPassword))
+      throw Errors.badRequest('password_unchanged');
+    const passwordHash = await hashPassword(newPassword);
+    return this.prisma.systemTx(async (tx) => {
+      await tx.user.update({ where: { id: userId }, data: { passwordHash } });
+      await this.tokens.revokeAllForUser(tx, userId);
+      return this.tokens.issue(tx, user, deviceInfo);
+    });
   }
 
   private async requirePassword(userId: string, password: string) {

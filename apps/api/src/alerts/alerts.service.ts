@@ -106,6 +106,9 @@ export class AlertsService {
           escalationLevel: true,
           studentId: true,
           tripId: true,
+          acknowledgedAt: true,
+          resolutionReason: true,
+          resolvedBy: true,
         },
       }),
     );
@@ -118,7 +121,7 @@ export class AlertsService {
         driverId: true,
       },
     });
-    const [driver, student] = await Promise.all([
+    const [driver, student, firstNotice] = await Promise.all([
       this.prisma.system.user.findUnique({
         where: { id: info.driverId },
         select: { fullNameAr: true, fullNameEn: true, phoneE164: true },
@@ -127,9 +130,23 @@ export class AlertsService {
         where: { id: alert.studentId },
         select: { fullNameAr: true, fullNameEn: true },
       }),
+      this.prisma.system.alertEvent.findFirst({
+        where: { alertId: alert.id, action: 'notified' },
+        orderBy: { createdAt: 'asc' },
+        select: { createdAt: true },
+      }),
     ]);
+    // "Who is on it now" for the guardian: when the driver was told, whether the organisation
+    // took it, and who closed it — roles only, never staff names (PLAN §13).
+    const { resolvedBy, ...rest } = alert;
     return {
-      ...alert,
+      ...rest,
+      notifiedAt: firstNotice?.createdAt ?? null,
+      resolvedByRole: resolvedBy
+        ? resolvedBy === info.driverId
+          ? 'driver'
+          : 'organization'
+        : null,
       student,
       vehicle: info.vehicle,
       organization: { nameAr: info.organization.nameAr, nameEn: info.organization.nameEn },

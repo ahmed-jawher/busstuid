@@ -375,7 +375,26 @@ describe('guardian alert screen and driver candidates', () => {
       student: { fullNameAr: 'طفل 1' },
       emergencyNumber: '999',
       driver: { fullNameAr: 'سائق الاختبار', phoneVerified: false },
+      acknowledgedAt: null,
+      resolvedByRole: null,
     });
+    await t.drain();
+    await t.http.post(`/v1/alerts/${alert.id}/acknowledge`).set(f.admin.auth).expect(200);
+    await t.http
+      .post(`/v1/alerts/${alert.id}/resolve`)
+      .set(f.admin.auth)
+      .send({ reason: 'picked_up_by_guardian' })
+      .expect(200);
+    // Who is on it, by role only: the guardian never sees staff names or ids.
+    const after = await t.http.get(`/v1/me/alerts/${alert.id}`).set(f.guardian.auth).expect(200);
+    expect(after.body).toMatchObject({
+      status: 'resolved',
+      resolutionReason: 'picked_up_by_guardian',
+      resolvedByRole: 'organization',
+    });
+    expect(after.body.acknowledgedAt).not.toBeNull();
+    expect(after.body.notifiedAt).not.toBeNull();
+    expect(after.body).not.toHaveProperty('resolvedBy');
     const other = await buildFleet(t, 1);
     await t.http.get(`/v1/me/alerts/${alert.id}`).set(other.guardian.auth).expect(404);
   });

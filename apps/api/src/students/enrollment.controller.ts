@@ -59,6 +59,13 @@ export class EnrollmentController {
     return this.enrollment.decide(org.id, auth.userId, id, 'rejected', body.note);
   }
 
+  @Post('enrollment-requests/:id/undo')
+  @Audit('enrollment.undo', 'enrollment_request', { idParam: 'id' })
+  @HttpCode(HttpStatus.OK)
+  undo(@Org() org: OrgContext, @Auth() auth: AuthContext, @Param('id', ParseUUIDPipe) id: string) {
+    return this.enrollment.undo(org.id, auth.userId, id);
+  }
+
   @Get('students')
   @Audit('students.view_list', 'student')
   students(@Org() org: OrgContext, @Auth() auth: AuthContext) {

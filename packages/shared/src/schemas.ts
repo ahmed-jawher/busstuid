@@ -119,6 +119,10 @@ export const notificationSettingsSchema = z.object({ muteRoutineNotifications: z
 export const changeEmailSchema = z.object({ newEmail: emailSchema, password: z.string().max(128) });
 export const confirmEmailChangeSchema = z.object({ code: codeSchema });
 export const deleteAccountSchema = z.object({ password: z.string().max(128) });
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().max(128),
+  newPassword: passwordSchema,
+});
 
 export const createOrganizationSchema = z.object({
   type: z.enum(ORGANIZATION_TYPES),

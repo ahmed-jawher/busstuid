@@ -31,8 +31,8 @@ export default defineConfig({
         dir: 'rtl',
         start_url: '/',
         display: 'standalone',
-        background_color: '#f8f7f7',
-        theme_color: '#ce1126',
+        background_color: '#16215C',
+        theme_color: '#16215C',
         icons: [{ src: 'icons/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
       },
       injectManifest: {

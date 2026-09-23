@@ -10,7 +10,16 @@ export function RequireAuth() {
   const location = useLocation();
   if (loading) return <Spinner label={t('common.loading')} />;
   if (!signedIn)
-    return <Navigate to={`/login?next=${encodeURIComponent(location.pathname)}`} replace />;
+    return (
+      <Navigate
+        to={
+          location.pathname === '/'
+            ? '/welcome'
+            : `/login?next=${encodeURIComponent(location.pathname)}`
+        }
+        replace
+      />
+    );
   if (me && !me.emailVerified)
     return <Navigate to={`/verify-email?email=${encodeURIComponent(me.email)}`} replace />;
   return <Outlet />;
