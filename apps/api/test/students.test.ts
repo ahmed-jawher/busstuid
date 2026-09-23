@@ -151,6 +151,106 @@ describe('guardians, children and enrollment', () => {
     expect(mine.enrollmentRequests[0]).toMatchObject({ status: 'approved' });
   });
 
+  it('names the requesting guardian, tells them the decision, and allows a short undo', async () => {
+    const child = await addChild(t, guardianB, school.id, 'راشد');
+    const list = await t.http
+      .get('/v1/org/enrollment-requests')
+      .set(schoolAdmin.auth)
+      .set(school.header)
+      .expect(200);
+    const request = list.body.find((r: { student: { id: string } }) => r.student.id === child.id);
+    expect(request.guardian).toMatchObject({ relationship: expect.any(String) });
+    expect(request.guardian.fullNameAr).toBeTruthy();
+
+    const inbox = async () =>
+      (await t.http.get('/v1/me/notifications').set(guardianB.auth).expect(200)).body as {
+        template: string;
+        body: string;
+      }[];
+    const url = `/v1/org/enrollment-requests/${request.id}`;
+    await t.http.post(`${url}/undo`).set(schoolAdmin.auth).set(school.header).expect(409);
+    await t.http.post(`${url}/approve`).set(schoolAdmin.auth).set(school.header).expect(200);
+    await t.drain();
+    expect((await inbox())[0]).toMatchObject({ template: 'enrollment_approved' });
+
+    // Undo within the window: back to pending, the link it made is taken back, guardian told.
+    await t.http.post(`${url}/undo`).set(schoolAdmin.auth).set(school.header).expect(200);
+    await t.drain();
+    expect((await inbox())[0]).toMatchObject({ template: 'enrollment_reopened' });
+    const students = await t.http
+      .get('/v1/org/students')
+      .set(schoolAdmin.auth)
+      .set(school.header)
+      .expect(200);
+    expect(students.body.map((s: { id: string }) => s.id)).not.toContain(child.id);
+    const req = await t.db.admin.enrollmentRequest.findUniqueOrThrow({ where: { id: request.id } });
+    expect(req).toMatchObject({ status: 'pending', decidedAt: null, decidedBy: null });
+
+    // Rejected, then the window passes: no more undo.
+    await t.http
+      .post(`${url}/reject`)
+      .set(schoolAdmin.auth)
+      .set(school.header)
+      .send({})
+      .expect(200);
+    await t.db.admin.enrollmentRequest.update({
+      where: { id: request.id },
+      data: { decidedAt: new Date(Date.now() - 11 * 60_000) },
+    });
+    const late = await t.http.post(`${url}/undo`).set(schoolAdmin.auth).set(school.header);
+    expect(late.status).toBe(409);
+    expect(late.body.error.code).toBe('undo_window_passed');
+  });
+
+  it('will not undo an approval once the child is on a route', async () => {
+    const child = await addChild(t, guardianA, school.id, 'جود');
+    const req = await t.db.admin.enrollmentRequest.findFirstOrThrow({
+      where: { studentId: child.id },
+    });
+    const h = { ...schoolAdmin.auth, ...school.header };
+    await t.http.post(`/v1/org/enrollment-requests/${req.id}/approve`).set(h).expect(200);
+    const driver = await registerVerified(t, { prefix: 'route-driver' });
+    await t.http.post('/v1/org/members').set(h).send({ email: driver.email, role: 'driver' });
+    const vehicle = await t.http
+      .post('/v1/org/vehicles')
+      .set(h)
+      .send({ plateNumber: `U ${uniquePhone().slice(-5)}`, type: 'bus', capacity: 20 })
+      .expect(201);
+    const route = await t.http
+      .post('/v1/org/routes')
+      .set(h)
+      .send({
+        name: 'مسار التراجع',
+        direction: 'to_school',
+        defaultVehicleId: vehicle.body.id,
+        defaultDriverId: driver.id,
+        plannedStart: '06:30',
+        plannedEnd: '07:15',
+        daysOfWeek: [1, 2, 3],
+        stops: [{ name: 'محطة 1' }],
+      })
+      .expect(201);
+    await t.http
+      .put(`/v1/org/routes/${route.body.id}/students`)
+      .set(h)
+      .send({ assignments: [{ studentId: child.id, stopId: route.body.stops[0].id }] })
+      .expect(200);
+
+    const students = await t.http.get('/v1/org/students').set(h).expect(200);
+    expect(students.body.find((s: { id: string }) => s.id === child.id).routes).toEqual([
+      {
+        routeId: route.body.id,
+        routeName: 'مسار التراجع',
+        direction: 'to_school',
+        stopName: 'محطة 1',
+        stopSequence: 1,
+      },
+    ]);
+    const res = await t.http.post(`/v1/org/enrollment-requests/${req.id}/undo`).set(h);
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe('student_on_route');
+  });
+
   it("does not let one organisation act on another's requests or members", async () => {
     const child = await addChild(t, guardianB, school.id, 'حمد');
     const req = await t.db.admin.enrollmentRequest.findFirstOrThrow({

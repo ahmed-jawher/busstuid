@@ -11,6 +11,9 @@ export const NOTIFICATION_TEMPLATES = [
   'driver_device_silent',
   'unexpected_student',
   'resolved',
+  'enrollment_approved',
+  'enrollment_rejected',
+  'enrollment_reopened',
 ] as const;
 export type NotificationTemplate = (typeof NOTIFICATION_TEMPLATES)[number];
 
@@ -27,6 +30,8 @@ export interface TemplateData {
   minutesLate?: number;
   /** Set from escalation level 2 on (PLAN §7: minute 10). */
   emergencyNumber?: string;
+  /** School, company or independent driver (link-request decisions). */
+  organization?: string;
 }
 
 type Render = (d: TemplateData) => { title: string; body: string };
@@ -106,6 +111,33 @@ const TEMPLATES: Record<NotificationTemplate, Record<Locale, Render>> = {
   resolved: {
     ar: (d) => ({ title: 'طمّني', body: `✔️ تم التأكد من سلامة ${d.student}` }),
     en: (d) => ({ title: 'Tammeni', body: `✔️ ${d.student} has been confirmed safe` }),
+  },
+  enrollment_approved: {
+    ar: (d) => ({
+      title: 'طمّني',
+      body: `🔗 قبلت ${d.organization} طلب ربط ${d.student}. ستصلك إشعارات رحلاته من الآن.`,
+    }),
+    en: (d) => ({
+      title: 'Tammeni',
+      body: `🔗 ${d.organization} accepted ${d.student}'s link request. You will get trip notifications from now on.`,
+    }),
+  },
+  enrollment_rejected: {
+    ar: (d) => ({ title: 'طمّني', body: `رفضت ${d.organization} طلب ربط ${d.student}.` }),
+    en: (d) => ({
+      title: 'Tammeni',
+      body: `${d.organization} declined ${d.student}'s link request.`,
+    }),
+  },
+  enrollment_reopened: {
+    ar: (d) => ({
+      title: 'طمّني',
+      body: `⚠️ تراجعت ${d.organization} عن قرارها في طلب ربط ${d.student}. الطلب بانتظار الموافقة مجدداً ولن تصلك إشعارات الرحلات حتى الموافقة.`,
+    }),
+    en: (d) => ({
+      title: 'Tammeni',
+      body: `⚠️ ${d.organization} reversed its decision on ${d.student}'s link request. It is waiting for approval again, and trip notifications stop until then.`,
+    }),
   },
 };
 

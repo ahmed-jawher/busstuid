@@ -502,7 +502,11 @@
     "wrong_provider": "تعذّر إرسال الإشعار إلى هذا الجهاز.",
     "apns_not_configured": "إشعارات iPhone غير مفعّلة على الخادم بعد.",
     "fcm_not_configured": "إشعارات Android غير مفعّلة على الخادم بعد.",
-    "organization_required": "اكتب اسم المدرسة أو الشركة."
+    "organization_required": "اكتب اسم المدرسة أو الشركة.",
+    "request_not_decided": "لم يُتّخذ قرار في هذا الطلب بعد.",
+    "undo_window_passed": "انتهت مهلة التراجع (10 دقائق).",
+    "student_on_route": "لا يمكن التراجع: الطالب موزّع على مسار. أزله من المسار أولاً.",
+    "password_unchanged": "كلمة المرور الجديدة مطابقة للحالية."
   },
   "signup": {
     "whoAreYou": "إنشاء حساب — من أنت؟",

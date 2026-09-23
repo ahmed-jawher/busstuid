@@ -13,8 +13,9 @@ import { PUSH_PROVIDER, toPushTarget, type PushProvider } from '../push/push.pro
 export type Priority = 'normal' | 'high' | 'critical';
 
 /** Names are stored in both languages; the recipient's language is chosen at send time. */
-export interface NotificationPayload extends Omit<TemplateData, 'student'> {
+export interface NotificationPayload extends Omit<TemplateData, 'student' | 'organization'> {
   student?: { ar: string; en: string | null };
+  organization?: { ar: string; en: string | null };
   url?: string;
   tag?: string;
 }
@@ -36,12 +37,13 @@ export function renderFor(
   payload: NotificationPayload,
   locale: Locale,
 ) {
-  const student = payload.student
-    ? locale === 'en' && payload.student.en
-      ? payload.student.en
-      : payload.student.ar
-    : undefined;
-  return renderNotification(template, { ...payload, student }, locale);
+  const pick = (v?: { ar: string; en: string | null }) =>
+    v ? (locale === 'en' && v.en ? v.en : v.ar) : undefined;
+  return renderNotification(
+    template,
+    { ...payload, student: pick(payload.student), organization: pick(payload.organization) },
+    locale,
+  );
 }
 
 /**

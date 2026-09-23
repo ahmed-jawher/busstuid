@@ -15,6 +15,7 @@ describe('renderNotification', () => {
             tripName: 'T',
             driverPhone: '+97336000000',
             minutesLate: 20,
+            organization: 'O',
           },
           locale,
         );

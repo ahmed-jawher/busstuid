@@ -1,7 +1,18 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   changeEmailSchema,
+  changePasswordSchema,
   confirmEmailChangeSchema,
   deleteAccountSchema,
   notificationSettingsSchema,
@@ -43,6 +54,23 @@ export class MeController {
     @Body(zod(notificationSettingsSchema)) body: z.output<typeof notificationSettingsSchema>,
   ) {
     return this.me.setNotificationSettings(auth.userId, body.muteRoutineNotifications);
+  }
+
+  @Post('password')
+  @Audit('account.change_password', 'user')
+  @HttpCode(HttpStatus.OK)
+  @ApiZodBody(changePasswordSchema)
+  changePassword(
+    @Auth() auth: AuthContext,
+    @Body(zod(changePasswordSchema)) body: z.output<typeof changePasswordSchema>,
+    @Headers('user-agent') userAgent?: string,
+  ) {
+    return this.me.changePassword(
+      auth.userId,
+      body.currentPassword,
+      body.newPassword,
+      userAgent?.slice(0, 200),
+    );
   }
 
   @Post('email-change')

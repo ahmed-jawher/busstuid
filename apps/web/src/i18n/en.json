@@ -502,7 +502,11 @@
     "wrong_provider": "The notification could not be sent to this device.",
     "apns_not_configured": "iPhone notifications are not set up on the server yet.",
     "fcm_not_configured": "Android notifications are not set up on the server yet.",
-    "organization_required": "Enter the school or company name."
+    "organization_required": "Enter the school or company name.",
+    "request_not_decided": "This request has not been decided yet.",
+    "undo_window_passed": "The 10-minute undo window has passed.",
+    "student_on_route": "Cannot undo: the student is assigned to a route. Remove them from it first.",
+    "password_unchanged": "The new password is the same as the current one."
   },
   "signup": {
     "whoAreYou": "Create an account — who are you?",

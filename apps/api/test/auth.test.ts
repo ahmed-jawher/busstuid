@@ -213,6 +213,45 @@ describe('accounts and email verification', () => {
       .expect(200);
   });
 
+  it('changes the password with the current one and signs out other sessions', async () => {
+    const user = await registerVerified(t, { prefix: 'change-pw' });
+    const other = await t.http
+      .post('/v1/auth/login')
+      .send({ email: user.email, password: PASSWORD })
+      .expect(200);
+    const wrong = await t.http
+      .post('/v1/me/password')
+      .set(user.auth)
+      .send({ currentPassword: 'not-it-at-all', newPassword: 'Silver-Kite-Meadow-77' });
+    expect(wrong.status).toBe(403);
+    expect(wrong.body.error.code).toBe('password_incorrect');
+    const same = await t.http
+      .post('/v1/me/password')
+      .set(user.auth)
+      .send({ currentPassword: PASSWORD, newPassword: PASSWORD });
+    expect(same.body.error.code).toBe('password_unchanged');
+
+    const ok = await t.http
+      .post('/v1/me/password')
+      .set(user.auth)
+      .send({ currentPassword: PASSWORD, newPassword: 'Silver-Kite-Meadow-77' })
+      .expect(200);
+    expect(ok.body.refreshToken).toBeTruthy();
+    await t.http
+      .post('/v1/auth/refresh')
+      .send({ refreshToken: other.body.refreshToken })
+      .expect(401);
+    await t.http.post('/v1/auth/refresh').send({ refreshToken: ok.body.refreshToken }).expect(200);
+    await t.http
+      .post('/v1/auth/login')
+      .send({ email: user.email, password: 'Silver-Kite-Meadow-77' })
+      .expect(200);
+    const audit = await t.db.admin.auditLog.findFirst({
+      where: { action: 'account.change_password', actorUserId: user.id },
+    });
+    expect(audit).not.toBeNull();
+  });
+
   it('forgot-password does not reveal whether an account exists', async () => {
     const res = await t.http
       .post('/v1/auth/forgot-password')
