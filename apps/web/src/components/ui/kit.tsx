@@ -495,7 +495,9 @@ export function Screen({
     <div
       data-screen={tone}
       className={cn(
-        'flex min-h-dvh flex-col',
+        'flex flex-col',
+        // Inside a tab shell the screen fills what the tab bar leaves; otherwise the viewport.
+        tabs ? 'flex-1' : 'min-h-dvh',
         tone === 'navy' && 'bg-brand-navy text-white',
         tone === 'alert' && 'bg-alert text-alert-foreground',
       )}

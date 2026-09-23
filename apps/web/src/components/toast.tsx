@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { Button } from './ui/button';
+import { Icon } from './Icon';
 
 interface Toast {
   id: number;
@@ -14,7 +14,7 @@ type Show = (
   t: Omit<Toast, 'id' | 'duration' | 'tone'> & Partial<Pick<Toast, 'duration' | 'tone'>>,
 ) => void;
 
-const ToastContext = createContext<Show | null>(null);
+const ToastContext = createContext<{ show: Show; clearActions: () => void } | null>(null);
 let seq = 0;
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -24,10 +24,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     // One undo at a time: the newest replaces the previous action toast.
     setToasts((all) => [...all.filter((x) => !(x.action && toast.action)), toast].slice(-3));
   }, []);
-  const dismiss = (id: number) => setToasts((all) => all.filter((t) => t.id !== id));
+  const clearActions = useCallback(() => setToasts((all) => all.filter((t) => !t.action)), []);
+  const dismiss = useCallback(
+    (id: number) => setToasts((all) => all.filter((t) => t.id !== id)),
+    [],
+  );
 
   return (
-    <ToastContext.Provider value={show}>
+    <ToastContext.Provider value={{ show, clearActions }}>
       {children}
       <div
         aria-live="polite"
@@ -44,33 +48,37 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/** Dark card with a status icon and an optional undo (Claude Design "Tammeni Driver"). */
 function ToastItem({ toast, onDone }: { toast: Toast; onDone: () => void }) {
   useEffect(() => {
     const timer = setTimeout(onDone, toast.duration);
     return () => clearTimeout(timer);
   }, [toast.duration, onDone]);
-  const tone = {
-    info: 'bg-foreground text-background',
-    error: 'bg-alert text-alert-foreground',
-    success: 'bg-status-alighted text-white',
-  }[toast.tone];
   return (
     <div
       role="status"
-      className={`pointer-events-auto flex w-full max-w-md items-center justify-between gap-3 rounded-lg px-4 py-3 shadow-lg ${tone}`}
+      className="pointer-events-auto flex w-full max-w-md items-center gap-2.5 rounded-2xl bg-[#0A0F24] py-2.5 ps-4 pe-2.5 text-white shadow-[0_12px_30px_rgba(0,0,0,.3)]"
     >
-      <span className="font-semibold">{toast.message}</span>
+      <Icon
+        name={toast.tone === 'error' ? 'error' : 'check_circle'}
+        fill
+        size={24}
+        className={toast.tone === 'error' ? 'text-[#FF8A8F]' : 'text-[#7EE2A0]'}
+      />
+      <span className="min-h-11 flex-1 content-center py-1 text-[15px] font-semibold">
+        {toast.message}
+      </span>
       {toast.action && (
-        <Button
-          variant="outline"
-          className="shrink-0 border-current bg-transparent text-current"
+        <button
+          type="button"
+          className="min-h-11 shrink-0 rounded-xl bg-white/14 px-4 text-[15px] font-bold"
           onClick={() => {
             toast.action!.run();
             onDone();
           }}
         >
           {toast.action.label}
-        </Button>
+        </button>
       )}
     </div>
   );
@@ -79,5 +87,12 @@ function ToastItem({ toast, onDone }: { toast: Toast; onDone: () => void }) {
 export function useToast(): Show {
   const ctx = useContext(ToastContext);
   if (!ctx) throw new Error('useToast outside ToastProvider');
-  return ctx;
+  return ctx.show;
+}
+
+/** Removes undo toasts, e.g. when a full-screen step would sit under them. */
+export function useClearActionToasts(): () => void {
+  const ctx = useContext(ToastContext);
+  if (!ctx) throw new Error('useClearActionToasts outside ToastProvider');
+  return ctx.clearActions;
 }

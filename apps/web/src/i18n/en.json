@@ -308,7 +308,8 @@
       "sub": "Data and follow-up",
       "data": "Data",
       "followUp": "Follow-up",
-      "preferences": "Preferences"
+      "preferences": "Preferences",
+      "operations": "Operations"
     },
     "criticalBar": "Critical alert:",
     "silenced": "Sound off — tap to turn it back on",
@@ -316,7 +317,12 @@
       "running": "Trips running",
       "onboard": "On the buses",
       "openAlerts": "Open alerts",
-      "unreachable": "Not getting notifications"
+      "unreachable": "Not getting notifications",
+      "critical": "{{count}} critical",
+      "guardians": "guardians",
+      "noCritical": "No critical alert",
+      "now": "now",
+      "ofToday": "of {{count}} trips today"
     },
     "todayTrips": "Today's trips",
     "liveNow": "Live",
@@ -359,7 +365,36 @@
     "auditSub": "Cannot be edited",
     "system": "System",
     "darkMode": "Dark mode",
-    "accountSettings": "My account and settings"
+    "accountSettings": "My account and settings",
+    "addRouteAction": "Add route",
+    "addVehicleAction": "Add vehicle",
+    "alertsSub": "An alert closes only through a recorded action with a reason",
+    "approvedDone": "Approved · guardian told",
+    "col": {
+      "action": "Action",
+      "notifications": "Guardian notifications",
+      "route": "Route · stop",
+      "school": "School",
+      "student": "Student",
+      "time": "Time",
+      "user": "User"
+    },
+    "endedAt": "Ended {{time}}",
+    "handleAlert": "Handle the alert",
+    "membersSub": "Admins, drivers and attendants",
+    "minutesSince": "{{count}} min ago",
+    "noRoute": "No route",
+    "noRoutes": "No routes yet.",
+    "noVehicles": "No vehicles yet.",
+    "notifOffShort": "Not reaching",
+    "notifOkShort": "Working",
+    "panel": "Admin",
+    "routeNamePh": "e.g. A'ali route",
+    "silencedShort": "Sound off",
+    "stopN": "stop {{n}}",
+    "studentsSub": "Approved students in {{org}}",
+    "tripsToday": "{{count}} trips today",
+    "unreachableSub": "Check daily before trips start"
   },
   "orgType": {
     "school": "School",
@@ -782,5 +817,35 @@
       "otherDevices": "You will be signed out on your other devices.",
       "passwordChanged": "Password changed."
     }
+  },
+  "drv": {
+    "pushOn": "Notifications on",
+    "pushOff": "Turn on notifications",
+    "next": "Next",
+    "counts": "On board {{onboard}} · off {{done}} · waiting {{waiting}}",
+    "meta": "Bus {{plate}} · {{count}} students",
+    "continue": "Continue the trip",
+    "summary": "See the summary",
+    "startsAt": "Starts at {{time}}",
+    "bus": "Bus {{plate}}",
+    "left": "{{count}} left",
+    "stopDone": "Done",
+    "seconds": "{{count}}s",
+    "alarmOn": "Alarm sounding",
+    "backToList": "Back to the list",
+    "confirmBody": "Walk to the last seat. Have you checked the bus is completely empty, back seats included?",
+    "gotOff": "Got off",
+    "absentMany": "Absent",
+    "students": "Students",
+    "syncFirst": "Pending taps must be sent first. Check the connection.",
+    "holdEmpty": "Press and hold: the bus is empty",
+    "holdWhy": "Holding stops an accidental confirmation",
+    "forcePlaceholder": "e.g. the child left with their guardian at the gate",
+    "min5": "At least 5 characters",
+    "doneTitle": "Trip ended safely",
+    "doneBody": "You checked the bus is empty. Thank you.",
+    "doneAlertTitle": "Trip ended with an alert",
+    "doneAlertBody": "The guardian and the admins were told. Follow up with the admins until the alert is closed.",
+    "addHint": "Added as “unexpected”; their guardian and the admins are told."
   }
 }

@@ -44,8 +44,12 @@ export interface OrgTrip {
 
 export interface EnrollmentRequest {
   id: string;
+  status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
+  decidedAt: string | null;
   student: { id: string; fullNameAr: string; fullNameEn: string | null; schoolName: string };
+  /** The guardian who asked, so the admin can recognise the family. */
+  guardian: { fullNameAr: string; fullNameEn: string | null; relationship: string } | null;
 }
 
 export interface OrgStudent {
@@ -54,6 +58,13 @@ export interface OrgStudent {
   fullNameEn: string | null;
   schoolName: string;
   photoUrl: string | null;
+  routes: {
+    routeId: string;
+    routeName: string;
+    direction: TripDirection;
+    stopName: string;
+    stopSequence: number;
+  }[];
 }
 
 export interface Vehicle {

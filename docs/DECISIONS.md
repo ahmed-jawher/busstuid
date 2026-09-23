@@ -321,3 +321,27 @@ Format: the decision, then why.
   decision, a student's route in the student list, and the guardian's name on link requests.
 - **Alert closing is shared with the driver's alert page:** reasons are a tap list instead of a
   dropdown, and "other" still requires a note.
+
+## Full redesign from Claude Design (owner's request, 2026-09-23)
+
+- **Every screen follows the Claude Design project "Tammeni"**: onboarding, the guardian app
+  (four tabs), the driver app, admin on phones and on the web, and the brand (logo, app icon,
+  splash, indigo and navy colours).
+- **Bahrain only:** the Saudi theme switch and the country fields are gone from the screens;
+  phone fields show +973 and take 8 digits. The API keeps its multi-country support.
+- **Backend additions the design needed:** guardians are notified when a link request is accepted
+  or rejected; an admin can undo that decision for 10 minutes, but never once the child is on a
+  route (so no trip loses a child silently), and the guardian is told the request is pending
+  again. Link requests show the asking guardian's name and relationship; the student list shows
+  each student's route and stop; the guardian alert screen shows when the driver was told,
+  whether the organisation took the alert, and who closed it by role only (never staff names);
+  `POST /me/password` changes the password and signs out other devices.
+- **Driver end of trip:** "the bus is empty" is a press-and-hold (1.2 s; keyboard: hold Enter or
+  Space) so a stray tap cannot confirm it. The 60-second undo toast is cleared when the red
+  screen or the confirmation opens, because it covered their buttons; undo stays on each card.
+- **Kept although the design leaves them out:** the organisation type when an organisation signs
+  up (school or transport company), the two-step sign-in code, and removing members. Links to
+  terms and privacy are plain text until those pages exist. The design's support address
+  (help@tammeni.app) does not exist yet, so Help shows support.tammeni@gmail.com.
+- **Not possible yet:** the organisation "area" line in the design's directory has no data behind
+  it, so the directory shows the type only.

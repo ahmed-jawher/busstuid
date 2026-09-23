@@ -5,10 +5,11 @@ import { Icon, type IconName } from '@/components/Icon';
 import { Logo } from '@/components/Logo';
 import { EmptyState } from '@/components/ui/layout';
 import { cn } from '@/lib/cn';
-import { orgName } from '@/lib/format';
+import { displayName, orgName } from '@/lib/format';
 import { useSession } from '@/lib/session';
 import type { AlertRow, OrgSummary } from '@/lib/types';
 import { platform } from '@/platform';
+import { setAppearance, useAppearance } from '@/app/preferences';
 import {
   OrgContext,
   useAdminOrg,
@@ -222,7 +223,6 @@ const SIDEBAR: {
     items: [
       ['/admin/unreachable', 'notifications_off', 'admin.nav.unreachable', 'unreachable'],
       ['/admin/audit', 'fact_check', 'admin.nav.audit', null],
-      ['/admin/more', 'settings', 'nav.settings', null],
     ],
   },
 ];
@@ -230,25 +230,54 @@ const SIDEBAR: {
 function Sidebar() {
   const { t } = useTranslation();
   const org = useAdminOrg();
+  const { me } = useSession();
+  const { orgs, switchOrg } = useShell();
+  const { theme, scheme } = useAppearance();
   const badges = useBadges();
   return (
     <aside
-      className="sticky top-0 hidden h-dvh w-68 shrink-0 flex-col gap-5 overflow-y-auto border-e border-border bg-surface p-4 lg:flex"
-      style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}
+      className="sticky top-0 hidden h-dvh w-66 shrink-0 flex-col gap-4.5 overflow-y-auto bg-navy px-3.5 pb-5 text-white lg:flex"
+      style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top))' }}
     >
-      <Link to="/admin" className="flex items-center gap-2.5 px-2">
+      <Link to="/admin" className="flex items-center gap-2.5 px-1.5">
         <Logo size={36} />
-        <span className="min-w-0">
-          <span className="block text-lg font-bold">{t('app.name')}</span>
-          <span className="block truncate text-xs text-muted">{orgName(org)}</span>
+        <span>
+          <span className="block font-figures text-xl leading-none font-bold">{t('app.name')}</span>
+          <span className="mt-0.75 block text-xs opacity-70">{t('admin.panel')}</span>
         </span>
       </Link>
+      <label className="relative flex items-center gap-2.5 rounded-xl border border-white/14 bg-white/6 px-3 py-2.5">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-[9px] bg-brand-yellow font-bold text-[#111833]">
+          {orgName(org).trim()[0]}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-semibold">{orgName(org)}</span>
+          <span className="block text-xs opacity-70">{t(`orgType.${org.type}`)}</span>
+        </span>
+        {orgs.length > 1 && (
+          <>
+            <Icon name="unfold_more" size={20} className="opacity-70" />
+            <select
+              aria-label={t('admin.organization')}
+              value={org.id}
+              onChange={(e) => switchOrg(e.target.value)}
+              className="absolute inset-0 cursor-pointer opacity-0"
+            >
+              {orgs.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {orgName(o)}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
+      </label>
       <nav aria-label={t('admin.menu')} className="flex flex-col gap-4">
         {SIDEBAR.map((group, i) => (
           <div key={i} className="flex flex-col gap-0.5">
-            {group.title && (
-              <div className="px-3 pb-1 text-xs font-semibold text-muted">{t(group.title)}</div>
-            )}
+            <div className="px-2.5 pb-1.5 text-[11.5px] font-semibold opacity-55">
+              {t(group.title ?? 'admin.more.operations')}
+            </div>
             {group.items.map(([to, icon, label, badge]) => {
               const n = badge ? badges[badge] : 0;
               return (
@@ -258,10 +287,10 @@ function Sidebar() {
                   end={to === '/admin'}
                   className={({ isActive }) =>
                     cn(
-                      'flex min-h-11 items-center gap-3 rounded-md px-3 text-[15px] font-semibold',
+                      'group flex min-h-10.5 items-center gap-2.5 rounded-[10px] px-2.5 text-[14.5px]',
                       isActive
-                        ? 'bg-primary-soft text-primary'
-                        : 'text-foreground hover:bg-surface-2',
+                        ? 'bg-white/12 font-bold text-white'
+                        : 'font-medium text-white/78 hover:bg-white/6',
                     )
                   }
                 >
@@ -271,9 +300,9 @@ function Sidebar() {
                     <span
                       className={cn(
                         'flex h-5.5 min-w-5.5 items-center justify-center rounded-full px-1.5 text-xs font-bold',
-                        badge === 'alerts' && 'bg-alert text-alert-foreground',
-                        badge === 'requests' && 'bg-primary text-primary-foreground',
-                        badge === 'unreachable' && 'bg-warning-soft text-warning',
+                        badge === 'alerts' && 'bg-[#E5484D] text-white',
+                        badge === 'requests' && 'bg-brand-yellow text-[#111833]',
+                        badge === 'unreachable' && 'bg-[#F59E0B] text-[#111833]',
                       )}
                     >
                       {n}
@@ -285,6 +314,29 @@ function Sidebar() {
           </div>
         ))}
       </nav>
+      <div className="flex-1" />
+      <div className="flex items-center gap-2.5 border-t border-white/10 px-1.5 pt-2.5">
+        <Link
+          to="/account"
+          className="flex size-8.5 shrink-0 items-center justify-center rounded-full bg-white/14 font-bold"
+          aria-label={t('gd.tabs.account')}
+        >
+          {me ? displayName(me).trim()[0] : ''}
+        </Link>
+        <Link to="/account" className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-semibold">{me ? displayName(me) : ''}</span>
+          <span className="block text-xs opacity-70">{t('role.org_admin')}</span>
+        </Link>
+        <button
+          type="button"
+          aria-label={t('admin.darkMode')}
+          aria-pressed={scheme === 'dark'}
+          onClick={() => setAppearance(theme, scheme === 'dark' ? 'light' : 'dark')}
+          className="flex size-9 items-center justify-center rounded-[10px] bg-white/10"
+        >
+          <Icon name={scheme === 'dark' ? 'light_mode' : 'dark_mode'} size={20} />
+        </button>
+      </div>
     </aside>
   );
 }
@@ -300,6 +352,8 @@ export function AdminScreen({
   sub,
   back,
   footer,
+  action,
+  wide = false,
   hideAlertBar = false,
   children,
 }: {
@@ -308,6 +362,10 @@ export function AdminScreen({
   /** Parent screen; inner screens show a back arrow to it. */
   back?: string;
   footer?: ReactNode;
+  /** Main action of the page ("add route"), in the page header. */
+  action?: { label: string; onClick: () => void };
+  /** Uses the full width on desktop (lists with a side panel, tables). */
+  wide?: boolean;
   hideAlertBar?: boolean;
   children: ReactNode;
 }) {
@@ -323,7 +381,7 @@ export function AdminScreen({
     <>
       <div className="sticky top-0 z-20">
         <header
-          className="flex items-center gap-2 bg-navy px-3 pb-3 text-white"
+          className="flex items-center gap-2 bg-navy px-3 pb-3 text-white lg:hidden"
           style={{ paddingTop: 'max(0.75rem, calc(env(safe-area-inset-top) + 0.5rem))' }}
         >
           {back ? (
@@ -344,14 +402,48 @@ export function AdminScreen({
         </header>
         {!hideAlertBar && <CriticalBar />}
       </div>
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-3.5 p-4">{children}</main>
+      <main
+        className={cn(
+          'flex w-full flex-1 flex-col gap-3.5 p-4 lg:gap-5 lg:p-7',
+          wide ? 'lg:max-w-[1280px]' : 'mx-auto max-w-3xl lg:mx-0 lg:max-w-[1280px]',
+        )}
+      >
+        {/* Desktop page header (Claude Design "Tammeni Admin"); phones use the navy bar. */}
+        <div className="hidden flex-wrap items-end gap-4 lg:flex">
+          <div className="min-w-55 flex-1">
+            <h1 className="text-[26px] font-bold">{title}</h1>
+            {sub && <div className="mt-1 text-sm text-muted">{sub}</div>}
+          </div>
+          {action && (
+            <button
+              type="button"
+              onClick={action.onClick}
+              className="flex min-h-10.5 items-center gap-1.5 rounded-xl bg-primary px-4.5 text-[14.5px] font-bold text-primary-foreground"
+            >
+              <Icon name="add" size={20} />
+              {action.label}
+            </button>
+          )}
+        </div>
+        {action && (
+          <button
+            type="button"
+            onClick={action.onClick}
+            className="flex min-h-12 items-center justify-center gap-1.5 rounded-[14px] border-[1.5px] border-dashed border-primary text-[15px] font-bold text-primary lg:hidden"
+          >
+            <Icon name="add" size={20} />
+            {action.label}
+          </button>
+        )}
+        {children}
+      </main>
       {footer && (
         <div
           data-tabbar="footer"
-          className="sticky bottom-0 z-20 border-t border-border bg-background px-4 pt-3"
+          className="sticky bottom-0 z-20 border-t border-border bg-background px-4 pt-3 lg:static lg:border-0 lg:bg-transparent lg:px-7"
           style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
         >
-          <div className="mx-auto max-w-3xl">{footer}</div>
+          <div className="mx-auto max-w-3xl lg:mx-0">{footer}</div>
         </div>
       )}
     </>
@@ -361,30 +453,67 @@ export function AdminScreen({
 function CriticalBar() {
   const { t } = useTranslation();
   const { critical, sounding, toggleSound } = useShell();
+  const now = useMinute();
   const first = critical[0];
   if (!first) return null;
+  const minutes = Math.max(0, Math.round((now - new Date(first.openedAt).getTime()) / 60_000));
   return (
     <div
       role="alert"
-      className="flex items-center gap-2.5 bg-alert px-3.5 py-2.5 text-alert-foreground"
+      className="flex items-center gap-2.5 bg-alert px-3.5 py-2.5 text-alert-foreground lg:flex-wrap lg:gap-3.5 lg:px-7 lg:py-3"
     >
-      <Icon name="warning" fill className={sounding ? 'animate-blink' : undefined} />
-      <Link to={`/admin/alerts/${first.id}`} className="min-w-0 flex-1 text-sm leading-snug">
+      <Icon name="warning" fill size={24} className={sounding ? 'animate-blink' : undefined} />
+      <Link
+        to={`/admin/alerts/${first.id}`}
+        className="min-w-0 flex-1 text-sm leading-snug lg:min-w-55 lg:text-[15px]"
+      >
         <b>{t('admin.criticalBar')}</b> {t(`alertType.${first.type}`)} ·{' '}
         <span dir="ltr">{first.trip.vehicle.plateNumber}</span>
+        <span className="hidden lg:inline"> · {t('admin.minutesSince', { count: minutes })}</span>
         {critical.length > 1 && ` (+${critical.length - 1})`}
+      </Link>
+      <Link
+        to={`/admin/alerts/${first.id}`}
+        className="hidden min-h-9.5 items-center rounded-[10px] bg-white px-4 text-sm font-bold text-alert lg:flex"
+      >
+        {t('admin.handleAlert')}
       </Link>
       <button
         type="button"
         onClick={toggleSound}
         aria-label={sounding ? t('admin.silence') : t('admin.silenced')}
         aria-pressed={!sounding}
-        className="flex size-10 shrink-0 items-center justify-center rounded-md border-[1.5px] border-white/60"
+        className="flex size-10 shrink-0 items-center justify-center gap-1.5 rounded-[10px] border-[1.5px] border-white/60 lg:h-9.5 lg:w-auto lg:px-3.5"
       >
         <Icon name={sounding ? 'volume_up' : 'volume_off'} size={20} />
+        <span className="hidden text-sm font-semibold lg:inline">
+          {sounding ? t('admin.silence') : t('admin.silencedShort')}
+        </span>
       </button>
     </div>
   );
+}
+
+function useMinute() {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+  return now;
+}
+
+/** True from 1024px: side panels instead of separate screens (Claude Design "Tammeni Admin"). */
+export function useWide() {
+  const query = '(min-width: 64rem)';
+  const [wide, setWide] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const m = window.matchMedia(query);
+    const on = () => setWide(m.matches);
+    m.addEventListener('change', on);
+    return () => m.removeEventListener('change', on);
+  }, []);
+  return wide;
 }
 
 // Building blocks now live in the shared kit.
