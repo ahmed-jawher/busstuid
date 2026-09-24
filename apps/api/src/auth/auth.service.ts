@@ -1,7 +1,9 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { LEGAL_VERSION } from '@wusool/shared';
 import type { Country, EnrollableOrgType, Locale, SignupRole } from '@wusool/shared';
 import { AuditService } from '../audit/audit';
+import { LegalService } from '../legal/legal.service';
 import { ApiError, Errors } from '../common/api-error';
 import { APP_CONFIG, type AppConfig } from '../config/env';
 import { PrismaService } from '../database/prisma.service';
@@ -22,6 +24,9 @@ export interface RegisterData {
   fullNameEn?: string;
   phone: string;
   country: Country;
+  /** The person ticked the box; the version is recorded with the account. */
+  acceptTerms?: true;
+  userAgent?: string;
   locale: Locale;
   signupRole?: SignupRole;
   organization?: { type: EnrollableOrgType; nameAr: string; nameEn: string };
@@ -103,6 +108,13 @@ export class AuthService {
           : Prisma.DbNull,
       },
     });
+    // Evidence of the agreement, stored with the account from the first moment (PLAN §14).
+    await this.prisma.systemTx((tx) =>
+      LegalService.recordInTx(tx, user.id, ['terms', 'privacy'], LEGAL_VERSION, {
+        ip,
+        userAgent: input.userAgent,
+      }),
+    );
     await this.codes.issue({
       userId: user.id,
       purpose: 'verify_email',

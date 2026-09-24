@@ -22,6 +22,7 @@ describe('sign-up by account type', () => {
         fullNameEn: `Ahmed Driver ${suffix}`,
         phone,
         country: 'BH',
+        acceptTerms: true,
         ...extra,
       })
       .expect(202);
@@ -94,6 +95,7 @@ describe('sign-up by account type', () => {
         fullNameAr: 'مدير',
         phone: uniquePhone(),
         country: 'BH',
+        acceptTerms: true,
         signupRole: 'organization',
       })
       .expect(400);
@@ -117,6 +119,7 @@ describe('sign-up by account type', () => {
         fullNameEn: 'Another Driver',
         phone,
         country: 'BH',
+        acceptTerms: true,
         signupRole: 'independent_driver',
       })
       .expect(409);
@@ -135,6 +138,7 @@ describe('sign-up by account type', () => {
         fullNameEn: 'Driver',
         phone,
         country: 'BH',
+        acceptTerms: true,
         signupRole: 'independent_driver',
       })
       .expect(202);

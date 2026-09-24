@@ -291,6 +291,7 @@ export function RegisterPage() {
     nameEn: '',
   });
   const [tried, setTried] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const set = (k: keyof typeof form) => (v: string) => setForm({ ...form, [k]: v });
   const register = useMutation({
     mutationFn: () =>
@@ -298,6 +299,7 @@ export function RegisterPage() {
         method: 'POST',
         body: {
           ...form,
+          acceptTerms,
           phone: form.phone.replace(/\D/g, ''),
           // Bahrain only (Claude Design "Tammeni Brand").
           country: 'BH',
@@ -429,23 +431,32 @@ export function RegisterPage() {
           <ErrorLine>{errorMessage(register.error)}</ErrorLine>
         )}
         <div className="flex-1" />
+        <label className="flex items-start gap-3 rounded-[14px] border border-border bg-surface p-3.5 text-[13.5px] leading-relaxed">
+          <input
+            type="checkbox"
+            checked={acceptTerms}
+            onChange={(e) => setAcceptTerms(e.target.checked)}
+            className="mt-0.5 size-5 shrink-0 accent-primary"
+          />
+          <span>
+            {t('legal.acceptLine')}{' '}
+            <Link to="/terms" target="_blank" className="font-semibold text-primary underline">
+              {t('legal.terms')}
+            </Link>{' '}
+            {t('common.and')}{' '}
+            <Link to="/privacy" target="_blank" className="font-semibold text-primary underline">
+              {t('legal.privacy')}
+            </Link>
+            .
+          </span>
+        </label>
         <button
           type="submit"
-          disabled={register.isPending}
-          className={cn(bigButton, 'bg-primary text-primary-foreground')}
+          disabled={register.isPending || !acceptTerms}
+          className={cn(bigButton, 'bg-primary text-primary-foreground disabled:opacity-50')}
         >
           {t('onb.createAccountButton')}
         </button>
-        <p className="text-center text-[12.5px] leading-relaxed text-muted">
-          {t('onb.terms')}{' '}
-          <Link to="/terms" className="font-semibold text-primary">
-            {t('legal.terms')}
-          </Link>
-          {' · '}
-          <Link to="/privacy" className="font-semibold text-primary">
-            {t('legal.privacy')}
-          </Link>
-        </p>
       </form>
     </Screen>
   );

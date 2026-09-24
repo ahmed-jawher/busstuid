@@ -27,6 +27,11 @@ export const SIGNUP_ROLES = values(
 );
 export type SignupRole = (typeof SIGNUP_ROLES)[number];
 
+/** The documents a person agrees to: the terms, the privacy policy, and — for a driver — the
+ *  acknowledgement that the app helps but never replaces checking the vehicle. */
+export const LEGAL_DOCUMENTS = values('terms', 'privacy', 'driver_safety');
+export type LegalDocumentKind = (typeof LEGAL_DOCUMENTS)[number];
+
 export const COUNTRIES = values('BH', 'SA');
 export type Country = (typeof COUNTRIES)[number];
 

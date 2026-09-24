@@ -203,3 +203,8 @@ passes too. ✅
 
 - Public /privacy and /terms pages in both languages, linked from sign-up, describing the data
   the app really stores. Drafts pending a lawyer review.
+
+## Explicit consent
+
+- A deliberate tick at sign-up, refused on the server when missing, recorded with version, time,
+  address and device in an append-only table, and shown back in Settings.

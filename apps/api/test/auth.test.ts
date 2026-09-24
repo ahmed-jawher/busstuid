@@ -16,6 +16,7 @@ describe('accounts and email verification', () => {
       fullNameAr: 'ولي أمر',
       phone: '36001234',
       country: 'BH',
+      acceptTerms: true,
       ...extra,
     });
 

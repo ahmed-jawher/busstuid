@@ -395,3 +395,21 @@ Format: the decision, then why.
   server is currently in Germany (transfer outside the country).
 - **The owner's legal name is a placeholder** in `legal-content.ts` until they confirm the exact
   name that will appear in the stores.
+
+## Explicit consent, recorded as evidence (owner's request, 2026-09-24)
+
+- **Agreement is a deliberate tick**, never pre-ticked and never implied by pressing a button.
+  The sign-up form disables the button until it is ticked, and the **server refuses** a sign-up
+  without `acceptTerms: true` — a client cannot skip it.
+- **Every acceptance is kept as evidence** in `legal_acceptances`: the account, the document, the
+  version, the time, the IP address and the device string. The table is append-only like the
+  trip and alert records: an acceptance cannot be edited or deleted, by anyone, which is what
+  makes it worth anything in a dispute.
+- **One version for both documents** (`LEGAL_VERSION`). Raising it asks every account to agree
+  again; `/me` reports `mustAcceptTerms` so the app can require it before anything else.
+- **A driver's safety acknowledgement is a separate document** (`driver_safety`), so a school can
+  show that a specific driver accepted the rule that the app never replaces checking the vehicle.
+- **Settings shows what you agreed to and when**, because a person has the right to see the
+  agreement they are held to.
+- This is a consent mechanism, not legal advice. No wording removes responsibility for a child's
+  safety; a lawyer must review both documents before a real school uses Tammeni.
