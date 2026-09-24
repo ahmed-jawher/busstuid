@@ -208,3 +208,8 @@ passes too. ✅
 
 - A deliberate tick at sign-up, refused on the server when missing, recorded with version, time,
   address and device in an append-only table, and shown back in Settings.
+
+## Demo data
+
+- `cli.js demo` fills a demonstration server with one account per situation, with trips, alerts
+  and notifications ready (docs/DEMO.md). Never for a server with real data.
