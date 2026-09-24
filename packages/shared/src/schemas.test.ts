@@ -21,6 +21,7 @@ describe('registerSchema', () => {
     fullNameAr: 'فاطمة علي',
     phone: '36001234',
     country: 'BH',
+    acceptTerms: true,
   };
 
   it('normalises email and phone', () => {
@@ -34,6 +35,14 @@ describe('registerSchema', () => {
     const res = registerSchema.safeParse({ ...valid, phone: '12345' });
     expect(res.success).toBe(false);
     expect(res.error?.issues[0]?.message).toBe('phone_invalid');
+  });
+
+  it('refuses a sign-up that does not agree to the terms', () => {
+    for (const acceptTerms of [undefined, false, 'true']) {
+      const res = registerSchema.safeParse({ ...valid, acceptTerms });
+      expect(res.success).toBe(false);
+      expect(JSON.stringify(res.error?.issues)).toContain('terms_not_accepted');
+    }
   });
 });
 
