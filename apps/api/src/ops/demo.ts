@@ -34,6 +34,23 @@ function todayAt(hour: number, minute: number, dayOffset = 0): Date {
   return d;
 }
 
+/**
+ * What each demo account said it was when signing up. It decides which screens they land on:
+ * a school admin should not be shown an empty "my children" tab.
+ */
+const SIGNUP_ROLE_OF: Record<
+  string,
+  'guardian' | 'independent_driver' | 'organization' | 'staff_driver'
+> = {
+  'platform.admin': 'organization',
+  'school.admin': 'organization',
+  'kindergarten.admin': 'organization',
+  'driver.bus': 'staff_driver',
+  'driver.active': 'staff_driver',
+  'driver.waiting': 'staff_driver',
+  'driver.independent': 'independent_driver',
+};
+
 export interface DemoAccount {
   email: string;
   role: string;
@@ -57,6 +74,7 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
     scenario: string,
     extra: Prisma.UserUncheckedCreateInput | object = {},
   ) => {
+    const signupRole = SIGNUP_ROLE_OF[local] ?? 'guardian';
     const email = `${local}@${DEMO_DOMAIN}`;
     const created = await db.user.create({
       data: {
@@ -66,6 +84,7 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
         phoneE164: `+973${phoneCounter++}`,
         passwordHash,
         emailVerifiedAt: now,
+        signupRole,
         termsVersion: LEGAL_VERSION,
         termsAcceptedAt: now,
         legalAcceptances: {
@@ -726,7 +745,20 @@ export async function runDemo(databaseUrl: string): Promise<void> {
   try {
     const accounts = await seedDemo(db);
     if (!accounts) {
-      console.log('Demo data already present — nothing to do.');
+      // Demo accounts made before the sign-up type was recorded: put each on its own screen.
+      let repaired = 0;
+      for (const [local, signupRole] of Object.entries(SIGNUP_ROLE_OF)) {
+        const { count } = await db.user.updateMany({
+          where: { email: `${local}@${DEMO_DOMAIN}`, signupRole: { not: signupRole } },
+          data: { signupRole },
+        });
+        repaired += count;
+      }
+      console.log(
+        repaired > 0
+          ? `Demo data already present — corrected ${repaired} account types.`
+          : 'Demo data already present — nothing to do.',
+      );
       return;
     }
     console.log(`✓ ${accounts.length} demo accounts, password: ${DEMO_PASSWORD}`);

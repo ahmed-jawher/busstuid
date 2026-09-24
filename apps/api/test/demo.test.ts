@@ -78,6 +78,15 @@ describe('demo data', () => {
     const profile = await t.http.get('/v1/me').set(waitingDriver).expect(200);
     expect(profile.body.memberships).toEqual([]);
 
+    // A driver is not shown the guardian screens, and a school admin is not either.
+    for (const email of ['driver.active', 'school.admin', 'driver.waiting']) {
+      const profile = await t.http
+        .get('/v1/me')
+        .set(await signIn(`${email}@tammeni.demo`))
+        .expect(200);
+      expect(profile.body.isGuardian, email).toBe(false);
+    }
+
     // The platform admin has a kindergarten to approve.
     const platform = await signIn('platform.admin@tammeni.demo');
     const review = await t.http.get('/v1/platform/organizations/pending').set(platform).expect(200);
