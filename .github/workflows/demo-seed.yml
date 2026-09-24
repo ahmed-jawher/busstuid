@@ -1,0 +1,42 @@
+# Fills the demonstration server with the demo accounts (docs/DEMO.md). Manual only: Actions →
+# "Demo data" → Run workflow. It does nothing if the demo accounts are already there, and it must
+# never be run against a server holding a real child's data.
+name: Demo data
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type "demo" to confirm this server holds no real data
+        required: true
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  seed:
+    if: inputs.confirm == 'demo'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: SSH setup
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy_key ~/.ssh/known_hosts
+
+      - name: Create the demo accounts
+        env:
+          HOST: deploy@${{ vars.DEPLOY_HOST }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes "$HOST" \
+            'cd ~/tammeni && docker compose -f infra/docker-compose.prod.yml -f infra/docker-compose.images.yml --env-file .env.production --env-file .deploy.env exec -T api node dist/ops/cli.js demo'
