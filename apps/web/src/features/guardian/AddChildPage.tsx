@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import { PRIVACY_POLICY_VERSION, type DirectorySchool } from '@wusool/shared';
@@ -30,9 +30,26 @@ import { OrgList, useDirectory } from './GuardianPages';
  * list means every family writes the same school the same way; a school that is not listed yet
  * can still be typed.
  */
-function SchoolField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export function SchoolField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  // Close the list on a touch or click anywhere outside the field, or on Escape.
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: PointerEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
   const schools = useQuery({
     queryKey: ['schools', value],
     queryFn: () => api<DirectorySchool[]>(`/schools?country=BH&q=${encodeURIComponent(value)}`),
@@ -41,7 +58,7 @@ function SchoolField({ value, onChange }: { value: string; onChange: (v: string)
   const label = (s: DirectorySchool) => (i18n.language === 'en' ? s.en : s.ar);
   const matches = (schools.data ?? []).filter((s) => label(s) !== value.trim());
   return (
-    <div className="flex flex-col gap-1.5">
+    <div ref={box} className="flex flex-col gap-1.5">
       <FieldLabel label={t('guardian.schoolName')}>
         <input
           value={value}
@@ -50,6 +67,7 @@ function SchoolField({ value, onChange }: { value: string; onChange: (v: string)
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
+          onClick={() => setOpen(true)}
           placeholder={t('gd.add.schoolPh')}
           autoComplete="off"
           className={inputClass}
