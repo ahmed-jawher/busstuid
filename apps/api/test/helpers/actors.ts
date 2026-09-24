@@ -34,6 +34,7 @@ export async function registerVerified(
       fullNameAr: opts.fullNameAr ?? 'مستخدم تجريبي',
       phone: opts.phone ?? uniquePhone(),
       country: 'BH',
+      acceptTerms: true,
     })
     .expect(202);
   const res = await t.http
@@ -61,6 +62,7 @@ export async function registerUnverified(t: TestApp): Promise<Actor> {
       fullNameAr: 'غير مؤكد',
       phone: uniquePhone(),
       country: 'BH',
+      acceptTerms: true,
     })
     .expect(202);
   const res = await t.http.post('/v1/auth/login').send({ email, password: PASSWORD }).expect(200);
@@ -89,6 +91,7 @@ export async function createActiveOrg(
       nameAr: `منظمة ${suffix}`,
       nameEn: `Org ${suffix}`,
       country: 'BH',
+      acceptTerms: true,
     })
     .expect(201);
   await t.db.admin.organization.update({ where: { id: res.body.id }, data: { status: 'active' } });

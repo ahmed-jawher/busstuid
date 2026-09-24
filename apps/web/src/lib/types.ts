@@ -39,6 +39,10 @@ export interface Me {
   /** Signed up as a guardian, or has added a child. */
   isGuardian: boolean;
   publicCode: string;
+  /** Which version of the terms this account agreed to, and when. */
+  termsVersion: string | null;
+  termsAcceptedAt: string | null;
+  mustAcceptTerms: boolean;
   memberships: { role: Role; organization: OrgSummary }[];
 }
 

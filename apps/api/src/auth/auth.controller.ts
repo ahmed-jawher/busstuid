@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Headers } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import {
   forgotPasswordSchema,
@@ -32,8 +32,9 @@ export class AuthController {
   async register(
     @Body(zod(registerSchema)) body: z.output<typeof registerSchema>,
     @ClientIp() ip: string | null,
+    @Headers('user-agent') userAgent: string | undefined,
   ) {
-    await this.auth.register(body, ip);
+    await this.auth.register({ ...body, userAgent }, ip);
     return { status: 'verification_sent' };
   }
 

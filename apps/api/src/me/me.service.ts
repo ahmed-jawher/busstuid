@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { LEGAL_VERSION } from '@wusool/shared';
 import type { Locale } from '@wusool/shared';
 import { EmailCodesService } from '../auth/email-codes.service';
 import { checkPasswordPolicy, hashPassword, verifyPassword } from '../auth/passwords';
@@ -36,6 +37,8 @@ export class MeService {
           phoneE164: true,
           phoneVerified: true,
           publicCode: true,
+          termsVersion: true,
+          termsAcceptedAt: true,
           fullNameAr: true,
           fullNameEn: true,
           preferredLocale: true,
@@ -62,11 +65,14 @@ export class MeService {
     const childLinks = await this.prisma.withContext({ userId }, (tx) =>
       tx.studentGuardian.count({ where: { guardianUserId: userId, student: { deletedAt: null } } }),
     );
-    const { status: _status, emailVerifiedAt, totpEnabledAt, ...rest } = user;
+    const { status: _status, emailVerifiedAt, totpEnabledAt, termsVersion, ...rest } = user;
     return {
       ...rest,
       emailVerified: emailVerifiedAt !== null,
       totpEnabled: totpEnabledAt !== null,
+      termsVersion,
+      /** True while the person still has to agree to the current documents. */
+      mustAcceptTerms: termsVersion !== LEGAL_VERSION,
       isGuardian: user.signupRole === 'guardian' || childLinks > 0,
       memberships,
     };

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   COUNTRIES,
+  LEGAL_DOCUMENTS,
   EMAIL_CODE_PURPOSES,
   ENROLLABLE_ORG_TYPES,
   LOCALES,
@@ -60,6 +61,8 @@ export const registerSchema = z
     ...phoneFields,
     locale: z.enum(LOCALES).default('ar'),
     signupRole: z.enum(SIGNUP_ROLES).default('guardian'),
+    /** Ticked by the person; the server records which version they agreed to. */
+    acceptTerms: z.literal(true, { error: 'terms_not_accepted' }),
     /** Required when signing up as a school or transport company. */
     organization: z
       .object({
@@ -134,6 +137,12 @@ export const updateProfileSchema = z
   );
 
 export const notificationSettingsSchema = z.object({ muteRoutineNotifications: z.boolean() });
+
+/** Agreeing again after the documents change, or a driver's safety acknowledgement. */
+export const acceptLegalSchema = z.object({
+  documents: z.array(z.enum(LEGAL_DOCUMENTS)).min(1),
+  version: z.string().min(4).max(20),
+});
 
 export const changeEmailSchema = z.object({ newEmail: emailSchema, password: z.string().max(128) });
 export const confirmEmailChangeSchema = z.object({ code: codeSchema });

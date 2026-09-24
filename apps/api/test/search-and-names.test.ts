@@ -153,6 +153,7 @@ describe('organisation names', () => {
       fullNameAr: 'سائق بلا اسم إنجليزي',
       phone: uniquePhone(),
       country: 'BH',
+      acceptTerms: true,
       signupRole: 'independent_driver',
     });
     expect(missing.status).toBe(400);

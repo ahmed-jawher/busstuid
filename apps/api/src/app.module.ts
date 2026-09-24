@@ -17,6 +17,7 @@ import { JobsModule } from './jobs/jobs.module';
 import { MeModule } from './me/me.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { OrgSetupModule } from './org-setup/org-setup.module';
+import { LegalModule } from './legal/legal.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { PushModule } from './push/push.module';
 import { StudentsModule } from './students/students.module';
@@ -59,6 +60,7 @@ export class AppModule {
         PushModule,
         AuthModule,
         MeModule,
+        LegalModule,
         OrganizationsModule,
         StudentsModule,
         OrgSetupModule,

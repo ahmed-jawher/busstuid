@@ -66,6 +66,8 @@ test('1. guardian adds a child; the school approves it', async ({ browser }) => 
   await guardian.getByLabel('رقم الجوال').fill(`3${randomInt(1_000_000, 9_999_999)}`);
   await guardian.getByLabel('كلمة المرور').fill('Quiet-Harbor-Lantern-81');
   await shot(guardian, '00b-signup-details');
+  // The terms must be ticked on purpose; the server refuses a sign-up without it.
+  await guardian.getByRole('checkbox').check();
   await guardian.getByRole('button', { name: 'إنشاء الحساب' }).click();
 
   // Step 3 of 3: the six digits are checked as soon as they are in.

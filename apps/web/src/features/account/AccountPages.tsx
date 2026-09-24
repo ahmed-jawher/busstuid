@@ -306,6 +306,14 @@ export function AccountPage() {
           <div className="text-[13px] text-muted">
             {t('settings.myCode')}: <span dir="ltr">{me.publicCode}</span>
           </div>
+          {me.termsAcceptedAt && (
+            <div className="text-[12.5px] text-muted">
+              {t('legal.acceptedOn', {
+                date: formatDate(me.termsAcceptedAt),
+                version: me.termsVersion,
+              })}
+            </div>
+          )}
         </div>
       </div>
 

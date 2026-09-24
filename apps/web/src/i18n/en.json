@@ -23,7 +23,8 @@
     "add": "Add",
     "remove": "Remove",
     "save": "Save",
-    "close": "Close"
+    "close": "Close",
+    "and": "and"
   },
   "countries": {
     "BH": "Bahrain",
@@ -550,7 +551,8 @@
     "password_unchanged": "The new password is the same as the current one.",
     "organization_name_taken": "That name is already registered. Check you are not adding the same place twice.",
     "name_en_latin": "Write the name in English letters.",
-    "name_en_required": "Write your name in English as well."
+    "name_en_required": "Write your name in English as well.",
+    "terms_not_accepted": "You must agree to the terms and the privacy policy to create an account."
   },
   "signup": {
     "whoAreYou": "Who are you?",
@@ -861,6 +863,8 @@
   "legal": {
     "privacy": "Privacy policy",
     "terms": "Terms of use",
-    "updated": "Last updated"
+    "updated": "Last updated",
+    "acceptLine": "I have read and agree to the",
+    "acceptedOn": "You agreed to the terms on {{date}} (version {{version}})"
   }
 }
