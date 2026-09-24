@@ -1,0 +1,94 @@
+# Writes optional server settings into .env.production and restarts the API (docs/DEPLOY.md §5).
+# Manual only: Actions → "Server settings" → Run workflow, and pick what to apply.
+#
+# The values come from repository secrets, so they are never printed here or kept in the repo:
+#   FCM_SERVICE_ACCOUNT_BASE64   Android notifications (docs/RELEASE.md §2)
+#   SMTP_SETTINGS                real email: several KEY=VALUE lines (SMTP_HOST, SMTP_PORT,
+#                                SMTP_SECURE, SMTP_USER, SMTP_PASSWORD, MAIL_FROM)
+name: Server settings
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: Which settings to write
+        required: true
+        type: choice
+        options: [firebase, email, both]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  settings:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: SSH setup
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy_key ~/.ssh/known_hosts
+
+      - name: Build the settings to apply
+        env:
+          FCM: ${{ secrets.FCM_SERVICE_ACCOUNT_BASE64 }}
+          SMTP: ${{ secrets.SMTP_SETTINGS }}
+          APPLY: ${{ inputs.apply }}
+        run: |
+          : > settings.env
+          if [ "$APPLY" != email ] && [ -n "$FCM" ]; then
+            printf 'FCM_SERVICE_ACCOUNT_BASE64=%s\n' "$(printf '%s' "$FCM" | tr -d '\r\n')" >> settings.env
+          fi
+          if [ "$APPLY" != firebase ] && [ -n "$SMTP" ]; then
+            printf '%s\n' "$SMTP" | tr -d '\r' | grep -E '^[A-Z_]+=' >> settings.env
+          fi
+          if [ ! -s settings.env ]; then
+            echo "Nothing to apply: the matching secrets are empty." >&2
+            exit 1
+          fi
+          echo "applying: $(cut -d= -f1 settings.env | tr '\n' ' ')"
+
+      - name: Apply on the server and restart the API
+        env:
+          HOST: deploy@${{ vars.DEPLOY_HOST }}
+        run: |
+          ssh_() { ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes "$HOST" "$@"; }
+          # Replace each key in place, keeping a dated copy of the file first.
+          cat settings.env | ssh_ 'cat > ~/settings.env'
+          ssh_ 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          cd ~/tammeni
+          cp .env.production ".env.production.bak-$(date +%Y%m%d-%H%M%S)"
+          while IFS='=' read -r key value; do
+            [ -n "$key" ] || continue
+            # Remove any existing line for this key, then append the new one.
+            sed -i "/^${key}=/d" .env.production
+            printf '%s=%s\n' "$key" "$value" >> .env.production
+          done < ~/settings.env
+          rm -f ~/settings.env
+          chmod 600 .env.production
+          docker compose -f infra/docker-compose.prod.yml -f infra/docker-compose.images.yml \
+            --env-file .env.production --env-file .deploy.env up -d --no-build api
+          REMOTE
+
+      - name: Health check
+        env:
+          URL: ${{ vars.DEPLOY_URL }}
+        run: |
+          for _ in $(seq 1 30); do
+            if curl -fsS "$URL/v1/health" | grep -q '"database":"up"'; then
+              echo "API healthy with the new settings."; exit 0
+            fi
+            sleep 5
+          done
+          echo "The API did not come back healthy — check the server logs." >&2
+          exit 1
