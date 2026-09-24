@@ -5,8 +5,10 @@
 //   backup             encrypted dump into BACKUP_DIR, keep BACKUP_KEEP newest
 //   backup --daily     same, then repeat every 24 h (the production backup service)
 //   restore <file> [--into <url>] [--yes]
+//   demo               demo accounts and trips for showing the system (docs/DEMO.md)
 import { provisionLoginRoles } from '../database/roles';
 import { createBackup, pruneBackups, restoreBackup } from './backup';
+import { runDemo } from './demo';
 
 const DAY_MS = 24 * 3_600_000;
 
@@ -36,6 +38,9 @@ async function main(argv: string[]): Promise<void> {
         system: required('SYSTEM_DB_PASSWORD'),
       });
       console.log('✓ database login roles ready (wusool_app, wusool_system)');
+      return;
+    case 'demo':
+      await runDemo(required('DATABASE_ADMIN_URL'));
       return;
     case 'backup':
       await backupOnce();
