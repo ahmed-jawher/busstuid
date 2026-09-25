@@ -1,0 +1,53 @@
+# Prints recent API log lines from the server (docs/DEPLOY.md §7). Manual only:
+# Actions → "Server logs" → Run workflow, and choose what to look at.
+#
+# The logs can name a person (an email address in a delivery error), so this workflow prints
+# only what was asked for and keeps the amount small.
+name: Server logs
+
+on:
+  workflow_dispatch:
+    inputs:
+      filter:
+        description: Which lines to show
+        required: true
+        type: choice
+        options: [errors, email, push, all]
+      lines:
+        description: How many recent lines to search
+        required: false
+        default: '400'
+
+permissions:
+  contents: read
+
+jobs:
+  logs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: SSH setup
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy_key ~/.ssh/known_hosts
+
+      - name: Read the logs
+        env:
+          HOST: deploy@${{ vars.DEPLOY_HOST }}
+          FILTER: ${{ inputs.filter }}
+          LINES: ${{ inputs.lines }}
+        run: |
+          case "$FILTER" in
+            errors) pattern='error|Error|ERROR|exception|failed|FAIL' ;;
+            email)  pattern='mail|Mail|smtp|SMTP|EmailCodes|email_' ;;
+            push)   pattern='push|Push|fcm|FCM|apns|APNS|notification' ;;
+            all)    pattern='.' ;;
+          esac
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes "$HOST" \
+            "cd ~/tammeni && docker compose -f infra/docker-compose.prod.yml -f infra/docker-compose.images.yml --env-file .env.production --env-file .deploy.env logs --tail ${LINES:-400} api" \
+            | grep -E "$pattern" | tail -60 || echo "No matching lines."
