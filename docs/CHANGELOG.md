@@ -218,3 +218,9 @@ passes too. ✅
 
 - Terms and privacy policy rewritten as numbered legal clauses in both languages; back button
   fixed; the sign-up form survives a trip to the documents.
+
+## Service status in the health check
+
+- `/v1/health` now says which optional services the server can use (email, Android push, iPhone
+  push, web push) as plain yes/no, so "why did no code arrive?" is answered without opening the
+  server.

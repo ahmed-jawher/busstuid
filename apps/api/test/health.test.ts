@@ -12,6 +12,28 @@ describe('GET /v1/health (real PostgreSQL)', () => {
     expect(res.body).toMatchObject({ status: 'ok', database: 'up' });
   });
 
+  it('says which optional services this server can actually use, without leaking keys', async () => {
+    const res = await t.http.get('/v1/health').expect(200);
+    // The test server uses the local mail catcher and no native push keys.
+    expect(res.body.features).toEqual({
+      email: false,
+      androidPush: false,
+      iosPush: false,
+      webPush: true,
+    });
+    expect(JSON.stringify(res.body)).not.toMatch(/key|secret|password/i);
+  });
+
+  it('reports email as usable once a real mail server is set', async () => {
+    const withMail = await createTestApp({ env: { SMTP_HOST: 'smtp-relay.example.com' } });
+    try {
+      const res = await withMail.http.get('/v1/health').expect(200);
+      expect(res.body.features.email).toBe(true);
+    } finally {
+      await withMail.close();
+    }
+  });
+
   it('allows the Capacitor origin for the wrapped app (PLAN §9.1)', async () => {
     const res = await t.http.get('/v1/health').set('Origin', 'capacitor://localhost').expect(200);
     expect(res.headers['access-control-allow-origin']).toBe('capacitor://localhost');
