@@ -157,6 +157,41 @@ export function LoginPage() {
   );
 }
 
+/**
+ * What the person has typed so far, kept only for this browser tab. The password is never
+ * written down: it is retyped if the page is left and returned to.
+ */
+const DRAFT_KEY = 'tammeni:signup-draft';
+
+interface SignupDraft {
+  form?: { fullNameAr?: string; email?: string; phone?: string };
+  org?: { type?: EnrollableOrgType; nameAr?: string; nameEn?: string };
+}
+
+function readDraft(): SignupDraft {
+  try {
+    return JSON.parse(sessionStorage.getItem(DRAFT_KEY) ?? '{}') as SignupDraft;
+  } catch {
+    return {};
+  }
+}
+
+function writeDraft(draft: SignupDraft): void {
+  try {
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  } catch {
+    // Private mode or storage disabled: the draft simply is not kept.
+  }
+}
+
+function clearDraft(): void {
+  try {
+    sessionStorage.removeItem(DRAFT_KEY);
+  } catch {
+    // Nothing to clean up.
+  }
+}
+
 const ROLES: { role: SignupRole; icon: IconName }[] = [
   { role: 'guardian', icon: 'family_restroom' },
   { role: 'staff_driver', icon: 'badge' },
@@ -284,15 +319,27 @@ export function RegisterPage() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const role = ROLES.find((c) => c.role === params.get('as'));
-  const [form, setForm] = useState({ fullNameAr: '', email: '', phone: '', password: '' });
-  const [org, setOrg] = useState({
+  const [form, setForm] = useState(() => ({
+    fullNameAr: '',
+    email: '',
+    phone: '',
+    password: '',
+    ...readDraft().form,
+  }));
+  const [org, setOrg] = useState(() => ({
     type: 'school' as EnrollableOrgType,
     nameAr: '',
     nameEn: '',
-  });
+    ...readDraft().org,
+  }));
   const [tried, setTried] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const set = (k: keyof typeof form) => (v: string) => setForm({ ...form, [k]: v });
+  // Keep the draft as it is typed, so a trip to the terms and back costs nothing.
+  useEffect(() => {
+    const { password: _password, ...withoutPassword } = form;
+    writeDraft({ form: withoutPassword, org });
+  }, [form, org]);
   const register = useMutation({
     mutationFn: () =>
       api('/auth/register', {
@@ -310,8 +357,10 @@ export function RegisterPage() {
             : {}),
         },
       }),
-    onSuccess: () =>
-      navigate(`/verify-email?email=${encodeURIComponent(form.email.trim().toLowerCase())}`),
+    onSuccess: () => {
+      clearDraft();
+      navigate(`/verify-email?email=${encodeURIComponent(form.email.trim().toLowerCase())}`);
+    },
   });
 
   if (!role) return <RolePicker onPick={(r) => setParams({ as: r })} />;
@@ -440,11 +489,11 @@ export function RegisterPage() {
           />
           <span>
             {t('legal.acceptLine')}{' '}
-            <Link to="/terms" target="_blank" className="font-semibold text-primary underline">
+            <Link to="/terms" className="font-semibold text-primary underline">
               {t('legal.terms')}
             </Link>{' '}
             {t('common.and')}{' '}
-            <Link to="/privacy" target="_blank" className="font-semibold text-primary underline">
+            <Link to="/privacy" className="font-semibold text-primary underline">
               {t('legal.privacy')}
             </Link>
             .
