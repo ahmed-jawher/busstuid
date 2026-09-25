@@ -338,7 +338,13 @@ export function BackBar({
       <button
         type="button"
         aria-label={t('common.back')}
-        onClick={() => (onBack ? onBack() : to ? navigate(to) : navigate(-1))}
+        onClick={() => {
+          if (onBack) return onBack();
+          if (to) return navigate(to);
+          // Opened directly (a link from outside, or a new window): there is nothing to go
+          // back to, so go home instead of leaving the person stuck.
+          return window.history.length > 1 ? navigate(-1) : navigate('/');
+        }}
         className={cn(
           '-ms-2.5 flex size-11 shrink-0 items-center justify-center rounded-full',
           light ? 'text-white active:bg-white/10' : 'text-foreground active:bg-surface-2',

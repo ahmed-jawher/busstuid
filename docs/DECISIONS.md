@@ -413,3 +413,18 @@ Format: the decision, then why.
   agreement they are held to.
 - This is a consent mechanism, not legal advice. No wording removes responsibility for a child's
   safety; a lawyer must review both documents before a real school uses Tammeni.
+
+## The agreement reads as an agreement (owner's request, 2026-09-25)
+
+- **Numbered clauses, no headings.** Both documents are a preamble followed by numbered clauses
+  in formal legal Arabic and English, so a clause can be cited on its own ("clause 18") the way
+  an agreement is argued about. Headings were friendlier to skim and useless to cite.
+- **The wording is legal, the facts are still the code's.** Every clause matches what the system
+  does: the data named is the data stored, the retention periods are the job's periods, the
+  rights are buttons that exist.
+- **A back button that always works.** The documents can be opened from outside the app, where
+  there is no history to go back to; the button now falls back to the start screen instead of
+  doing nothing. The links from sign-up open in the app rather than a new window.
+- **Reading the terms mid-sign-up costs nothing:** the form is kept in session storage while it
+  is being filled, except the password, which is never written down and is retyped.
+- Raising `LEGAL_VERSION` to 2026-09-25 asks every existing account to agree again.

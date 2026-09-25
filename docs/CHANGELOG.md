@@ -213,3 +213,8 @@ passes too. ✅
 
 - `cli.js demo` fills a demonstration server with one account per situation, with trips, alerts
   and notifications ready (docs/DEMO.md). Never for a server with real data.
+
+## Legal documents as clauses
+
+- Terms and privacy policy rewritten as numbered legal clauses in both languages; back button
+  fixed; the sign-up form survives a trip to the documents.
