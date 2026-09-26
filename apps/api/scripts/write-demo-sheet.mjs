@@ -44,7 +44,7 @@ const xml = (v) =>
 
 const column = (i) => {
   let name = '';
-  for (let n = i + 1; n > 0; ) {
+  for (let n = i + 1; n > 0;) {
     const r = (n - 1) % 26;
     name = String.fromCharCode(65 + r) + name;
     n = Math.floor((n - 1) / 26);

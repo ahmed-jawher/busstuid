@@ -715,7 +715,10 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
  * first — every account, child, trip and alert — and the demo data is written fresh. That is only
  * ever right on a demonstration server.
  */
-export async function runDemo(databaseUrl: string, options: { reset?: boolean } = {}): Promise<void> {
+export async function runDemo(
+  databaseUrl: string,
+  options: { reset?: boolean } = {},
+): Promise<void> {
   const db = new PrismaClient({ datasourceUrl: databaseUrl });
   try {
     if (options.reset) {

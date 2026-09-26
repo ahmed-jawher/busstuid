@@ -85,7 +85,11 @@ export async function createOrganization(tx: Tx, userId: string, input: NewOrgan
  * ordinary link requests, waiting in the driver's own list for them to accept — so a guardian who
  * wrote the number weeks ago does not have to do it again, and the driver still decides.
  */
-async function claimDriverInvitations(tx: Tx, organizationId: string, phone: string): Promise<void> {
+async function claimDriverInvitations(
+  tx: Tx,
+  organizationId: string,
+  phone: string,
+): Promise<void> {
   const waiting = await tx.driverInvitation.findMany({
     where: { driverPhoneE164: phone, status: 'pending', student: { deletedAt: null } },
     select: { id: true, studentId: true, invitedBy: true },

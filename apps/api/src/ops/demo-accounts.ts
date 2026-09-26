@@ -63,7 +63,8 @@ export const DEMO_PEOPLE: readonly DemoPerson[] = [
     role: 'ولي أمر',
     roleEn: 'Guardian',
     scenario: 'التنبيه الحرج: انتهت رحلة الأمس والطفل ما زال مسجّلاً على الحافلة.',
-    scenarioEn: "The critical alert: yesterday's trip ended with the child still recorded on board.",
+    scenarioEn:
+      "The critical alert: yesterday's trip ended with the child still recorded on board.",
     signupRole: 'guardian',
   },
   {
@@ -73,7 +74,8 @@ export const DEMO_PEOPLE: readonly DemoPerson[] = [
     role: 'ولي أمر',
     roleEn: 'Guardian',
     scenario: 'طفل مع سائق مستقل بدل مدرسة: الربط تمّ برقم جوال السائق.',
-    scenarioEn: "A child with an independent driver instead of a school, linked by the driver's number.",
+    scenarioEn:
+      "A child with an independent driver instead of a school, linked by the driver's number.",
     signupRole: 'guardian',
   },
   {

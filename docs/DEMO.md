@@ -36,21 +36,21 @@ The accounts are also in [demo-accounts.xlsx](demo-accounts.xlsx) (and
 
 Password for all of them: `123456`
 
-| Email            | Type              | What has been set up                                                                    |
-| ---------------- | ----------------- | --------------------------------------------------------------------------------------- |
-| `parent1@t.test` | ولي أمر           | Two siblings on one phone number boarded and got off; a third child is absent            |
-| `parent2@t.test` | ولي أمر           | A child waiting for the school to approve the link                                       |
-| `parent3@t.test` | ولي أمر           | A trip happening right now, the child on board                                           |
-| `parent4@t.test` | ولي أمر           | An open critical alert: a child still recorded on the bus                                |
-| `parent5@t.test` | ولي أمر           | A child with an independent driver instead of a school                                   |
-| `parent6@t.test` | ولي أمر           | Added her own driver, who has no account yet: the invitation waits on the child page     |
-| `driver1@t.test` | سائق مدرسة        | The morning run finished safely; the trip home is next                                   |
-| `driver2@t.test` | سائق مدرسة        | A trip in progress with a student on board — press "end trip" to see the red refusal     |
-| `driver3@t.test` | سائق بلا مدرسة    | Signed up and waiting for a school to add them                                           |
-| `driver4@t.test` | سائق مستقل        | Runs their own organisation, vehicle and route                                           |
-| `school@t.test`  | مديرة مدرسة       | Three buses, routes, students, a pending request, an open critical alert                  |
-| `kg@t.test`      | مديرة روضة        | A kindergarten waiting for platform review                                               |
-| `admin@t.test`   | مشغّل المنصة      | Approves the waiting kindergarten                                                        |
+| Email            | Type           | What has been set up                                                                 |
+| ---------------- | -------------- | ------------------------------------------------------------------------------------ |
+| `parent1@t.test` | ولي أمر        | Two siblings on one phone number boarded and got off; a third child is absent        |
+| `parent2@t.test` | ولي أمر        | A child waiting for the school to approve the link                                   |
+| `parent3@t.test` | ولي أمر        | A trip happening right now, the child on board                                       |
+| `parent4@t.test` | ولي أمر        | An open critical alert: a child still recorded on the bus                            |
+| `parent5@t.test` | ولي أمر        | A child with an independent driver instead of a school                               |
+| `parent6@t.test` | ولي أمر        | Added her own driver, who has no account yet: the invitation waits on the child page |
+| `driver1@t.test` | سائق مدرسة     | The morning run finished safely; the trip home is next                               |
+| `driver2@t.test` | سائق مدرسة     | A trip in progress with a student on board — press "end trip" to see the red refusal |
+| `driver3@t.test` | سائق بلا مدرسة | Signed up and waiting for a school to add them                                       |
+| `driver4@t.test` | سائق مستقل     | Runs their own organisation, vehicle and route                                       |
+| `school@t.test`  | مديرة مدرسة    | Three buses, routes, students, a pending request, an open critical alert             |
+| `kg@t.test`      | مديرة روضة     | A kindergarten waiting for platform review                                           |
+| `admin@t.test`   | مشغّل المنصة   | Approves the waiting kindergarten                                                    |
 
 Sign-in accepts the email address **or** the phone number; the test accounts' numbers are printed
 by the seeder, and the addresses above are the easier way in.

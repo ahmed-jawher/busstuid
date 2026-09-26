@@ -429,7 +429,6 @@ describe('guardians, children and enrollment', () => {
       .expect(201);
     expect(res.body.enrollmentRequests).toEqual([]);
   });
-
 });
 
 describe('organisations and the independent-driver phone rule', () => {
