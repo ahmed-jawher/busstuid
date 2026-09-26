@@ -95,4 +95,39 @@ describe('organisation setup', () => {
       .expect(404);
     expect(res.body.error.code).toBe('user_not_found');
   });
+
+  it('names a route after where it goes, and gives it a stop, when the school gives neither', async () => {
+    const f = await buildFleet(t, 0);
+    const res = await t.http
+      .post('/v1/org/routes')
+      .set(f.admin.auth)
+      .set(f.org.header)
+      .send({
+        direction: 'to_school',
+        defaultVehicleId: f.vehicleId,
+        defaultDriverId: f.driver.id,
+        plannedStart: '06:30',
+        plannedEnd: '07:15',
+      })
+      .expect(201);
+    expect(res.body.name).toBe('ذهاب إلى المدرسة 06:30');
+    expect(res.body.stops).toHaveLength(1);
+    expect(res.body.stops[0].name).toBe('المدرسة');
+
+    // Anything at all is accepted as a name: Arabic, English, digits.
+    const named = await t.http
+      .post('/v1/org/routes')
+      .set(f.admin.auth)
+      .set(f.org.header)
+      .send({
+        name: 'Bus 7 — سترة',
+        direction: 'to_home',
+        defaultVehicleId: f.vehicleId,
+        defaultDriverId: f.driver.id,
+        plannedStart: '13:00',
+        plannedEnd: '14:00',
+      })
+      .expect(201);
+    expect(named.body.name).toBe('Bus 7 — سترة');
+  });
 });

@@ -157,6 +157,7 @@ export class TripsService {
           endedAt: true,
           route: { select: { name: true } },
           vehicle: { select: { plateNumber: true, type: true } },
+          organization: { select: { id: true, nameAr: true, nameEn: true } },
           students: {
             select: {
               studentId: true,

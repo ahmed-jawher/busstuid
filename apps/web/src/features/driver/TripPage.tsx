@@ -10,7 +10,7 @@ import { Spinner } from '@/components/ui/layout';
 import { api, ApiError } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { errorMessage } from '@/lib/errors';
-import { displayName, formatTime } from '@/lib/format';
+import { displayName, formatTime, orgName } from '@/lib/format';
 import type { Manifest, ManifestStudent } from '@/lib/types';
 import { platform } from '@/platform';
 import { enqueueTap, flushTrip, pendingFor } from './trip-sync';
@@ -252,12 +252,25 @@ export function TripPage() {
     if (stage !== 'list') clearUndoToasts();
   }, [stage, clearUndoToasts]);
 
-  // The local alarm sounds while the red screen shows a child still on board (PLAN §3.5).
+  /**
+   * Once the driver has tried to end a trip with a child still on board, the refusal does not go
+   * away by walking back to the list: the red bar stays at the top of the screen and the alarm
+   * keeps sounding until that child is tapped off or the end is forced with a reason (PLAN §3.1,
+   * §6.3). Pressing "end" must never feel like it worked.
+   */
+  const [endRefused, setEndRefused] = useState(false);
+  const stillOnboard = endRefused && onboard.length > 0;
   useEffect(() => {
-    if (stage === 'onboard' && onboard.length > 0) platform.alarm.start();
+    if (onboard.length === 0) setEndRefused(false);
+  }, [onboard.length]);
+
+  // The local alarm needs no internet (PLAN §3.5): it sounds on the red screen, and goes on
+  // sounding behind the list while a refused end is still refused.
+  useEffect(() => {
+    if (onboard.length > 0 && (stage === 'onboard' || stillOnboard)) platform.alarm.start();
     else platform.alarm.stop();
     return () => platform.alarm.stop();
-  }, [stage, onboard.length]);
+  }, [stage, stillOnboard, onboard.length]);
 
   // Each stage moves on by itself once its children are decided.
   useEffect(() => {
@@ -267,8 +280,10 @@ export function TripPage() {
       setStage(onboard.length > 0 ? 'onboard' : 'confirm');
   }, [stage, onboard.length, unresolved.length]);
 
-  const endTrip = () =>
+  const endTrip = () => {
+    if (onboard.length > 0) setEndRefused(true);
     setStage(onboard.length > 0 ? 'onboard' : unresolved.length > 0 ? 'unresolved' : 'confirm');
+  };
 
   const end = useMutation({
     mutationFn: async (body: object) => {
@@ -288,6 +303,7 @@ export function TripPage() {
         (e.code === 'students_onboard' || e.code === 'students_unresolved')
       ) {
         await qc.invalidateQueries({ queryKey: ['manifest', tripId] });
+        if (e.code === 'students_onboard') setEndRefused(true);
         setStage(e.code === 'students_onboard' ? 'onboard' : 'unresolved');
       }
     },
@@ -371,8 +387,7 @@ export function TripPage() {
             </Link>
             <div className="min-w-0 flex-1">
               <h1 className="truncate text-lg font-bold">
-                {trip.route?.name ?? trip.vehicle.plateNumber} ·{' '}
-                {t(`directionShort.${trip.direction}`)}
+                {t(`direction.${trip.direction}`)} · {orgName(trip.organization)}
               </h1>
               <div className="text-[13px] opacity-80">
                 {t('drv.bus', { plate: trip.vehicle.plateNumber })} ·{' '}
@@ -460,6 +475,23 @@ export function TripPage() {
           </button>
         )}
       </main>
+
+      {stillOnboard && (
+        <button
+          type="button"
+          onClick={() => setStage('onboard')}
+          className="sticky bottom-19 z-20 mx-3.5 flex items-center gap-2.5 rounded-[14px] bg-alert px-3.5 py-3 text-start text-alert-foreground"
+        >
+          <Icon name="warning" fill size={24} className="animate-blink" />
+          <span className="flex-1">
+            <span className="block text-[15px] font-bold">{t('drv.cannotEnd')}</span>
+            <span className="block text-[13px]">
+              {t('drv.cannotEndBody', { count: onboard.length })}
+            </span>
+          </span>
+          <Icon name="chevron_right" size={22} flip="rtl" />
+        </button>
+      )}
 
       <div
         data-tabbar="footer"

@@ -9,12 +9,15 @@ import { db, enableNotifications, latestCode, newPage, SEED, shot, signIn, state
 
 test.describe.configure({ mode: 'serial' });
 
-/** Opens a trip from the driver's day: its card's one big action (start, continue, or open). */
-async function openTrip(page: Page, routeName: RegExp) {
+/**
+ * Opens a trip from the driver's day. A trip is titled by where it is going and for whom — the
+ * driver has one of each direction a day — so that is what picks the card.
+ */
+async function openTrip(page: Page, heading: RegExp) {
   await page.goto(`${state().webUrl}/driver`);
   const card = page
     .getByRole('article')
-    .filter({ has: page.getByRole('heading', { name: routeName }) })
+    .filter({ has: page.getByRole('heading', { name: heading }) })
     .first();
   await card.getByRole('link').or(card.getByRole('button')).first().click();
   await expect(page).toHaveURL(/\/trip\//);
@@ -64,7 +67,9 @@ test('1. guardian adds a child; the school approves it', async ({ browser }) => 
   await guardian.getByLabel('الاسم الكامل').fill('نورة الاختبار');
   await guardian.getByLabel('البريد الإلكتروني').fill(email);
   await guardian.getByLabel('رقم الجوال').fill(`3${randomInt(1_000_000, 9_999_999)}`);
-  await guardian.getByLabel('كلمة المرور').fill('Quiet-Harbor-Lantern-81');
+  // Two boxes: the password and the confirmation, both shown with the eye if a human looks.
+  await guardian.getByLabel('كلمة المرور', { exact: true }).fill('Quiet-Harbor-Lantern-81');
+  await guardian.getByLabel('تأكيد كلمة المرور').fill('Quiet-Harbor-Lantern-81');
   await shot(guardian, '00b-signup-details');
   // The terms must be ticked on purpose; the server refuses a sign-up without it.
   await guardian.getByRole('checkbox').check();
@@ -139,7 +144,7 @@ test('2. full morning trip: everyone boards, everyone gets off, vehicle confirme
   const driver = await newPage(browser);
   await signIn(driver, SEED.driverOne);
   await enableNotifications(driver);
-  await openTrip(driver, /خط الرفاع — صباحي/);
+  await openTrip(driver, /ذهاب إلى المدرسة/);
   await startTrip(driver);
 
   const count = await driver.getByRole('button', { name: 'صعد', exact: true }).count();
@@ -174,7 +179,7 @@ test('2. full morning trip: everyone boards, everyone gets off, vehicle confirme
 test('3. return trip with an absence, an undo, and offline-safe sync', async ({ browser }) => {
   const driver = await newPage(browser);
   await signIn(driver, SEED.driverOne);
-  await openTrip(driver, /خط الرفاع — عودة/);
+  await openTrip(driver, /عودة إلى البيت/);
   await startTrip(driver);
 
   // Mark one child absent, then undo it from the toast within 60 s.
@@ -214,7 +219,7 @@ test('4. the forgotten child: forced end raises the alarm, guardian sees it, adm
   const driver = await newPage(browser);
   await signIn(driver, SEED.independentDriver);
   await enableNotifications(driver);
-  await openTrip(driver, /خط المحرق — صباحي/);
+  await openTrip(driver, /ذهاب إلى المدرسة/);
   await startTrip(driver);
 
   const firstName = (await driver

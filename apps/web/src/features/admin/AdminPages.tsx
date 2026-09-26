@@ -8,7 +8,7 @@ import { useToast } from '@/components/toast';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { SelectField, TextField } from '@/components/ui/form';
-import { Chip, ErrorLine, PersonBadge, TONE_TEXT } from '@/components/ui/kit';
+import { Chip, ErrorLine, PersonBadge, Segmented, TONE_TEXT } from '@/components/ui/kit';
 import { EmptyState, Notice, Spinner } from '@/components/ui/layout';
 import { cn } from '@/lib/cn';
 import { errorMessage } from '@/lib/errors';
@@ -139,11 +139,12 @@ function useSignal() {
   };
 }
 
-function tripTitle(
-  t: (k: string) => string,
-  trip: Pick<OrgTrip, 'route' | 'vehicle' | 'direction'>,
-) {
-  return `${trip.route?.name ?? trip.vehicle.plateNumber} · ${t(`directionShort.${trip.direction}`)}`;
+/**
+ * Where the trip is going, and which bus. Not the route's name: schools were inventing names
+ * ("Sitra route") that nobody outside the office could place (docs/DECISIONS.md, 2026-09-26).
+ */
+function tripTitle(t: (k: string) => string, trip: Pick<OrgTrip, 'vehicle' | 'direction'>) {
+  return `${t(`direction.${trip.direction}`)} · ${trip.vehicle.plateNumber}`;
 }
 
 /** Split view on desktop: the list, and the selected item beside it. */
@@ -1277,6 +1278,12 @@ function RouteDetail({ id, withTitle = false }: { id: string; withTitle?: boolea
   );
 }
 
+/**
+ * Adding a route: where the bus goes, which bus, which driver. Everything else has an answer
+ * already — the days are the school week, the times are the usual ones, the name is written from
+ * the direction, and a route with no stops gets one at the school (docs/DECISIONS.md, 2026-09-26).
+ * A school with one bus and one driver only has to choose the direction.
+ */
 function AddRouteDialog({
   open,
   onClose,
@@ -1292,9 +1299,10 @@ function AddRouteDialog({
   const vehicles = useVehicles();
   const members = useMembers();
   const drivers = (members.data ?? []).filter((m) => m.role === 'driver');
+  const buses = (vehicles.data ?? []).filter((v) => v.status === 'active');
   const empty = {
     name: '',
-    direction: 'to_school',
+    direction: 'to_school' as 'to_school' | 'to_home',
     defaultVehicleId: '',
     defaultDriverId: '',
     plannedStart: '06:30',
@@ -1303,16 +1311,27 @@ function AddRouteDialog({
   };
   const [form, setForm] = useState(empty);
   const [days, setDays] = useState<number[]>([7, 1, 2, 3, 4]);
+  // One bus, one driver: nothing to choose, so choose it.
+  useEffect(() => {
+    if (!open) return;
+    setForm((f) => ({
+      ...f,
+      defaultVehicleId: f.defaultVehicleId || (buses.length === 1 ? buses[0]!.id : ''),
+      defaultDriverId: f.defaultDriverId || (drivers.length === 1 ? drivers[0]!.user.id : ''),
+    }));
+  }, [open, buses.length, drivers.length, buses, drivers]);
   const create = useMutation({
     mutationFn: () =>
       call<{ id: string }>('/org/routes', {
         method: 'POST',
         body: {
           ...form,
+          // Left out on purpose: the API names the route after where it is going.
+          name: form.name.trim() || undefined,
           daysOfWeek: days,
           stops: form.stops
             .split('\n')
-            .map((s) => s.trim())
+            .map((line) => line.trim())
             .filter(Boolean)
             .map((name) => ({ name })),
         },
@@ -1325,32 +1344,36 @@ function AddRouteDialog({
   });
   const set = (k: keyof typeof form) => (e: { target: { value: string } }) =>
     setForm({ ...form, [k]: e.target.value });
+  const missing = !form.defaultVehicleId || !form.defaultDriverId || days.length === 0;
   return (
     <Dialog open={open} onClose={onClose} title={t('admin.addRouteAction')}>
       <form
-        className="grid max-h-[70dvh] gap-3 overflow-y-auto sm:grid-cols-2"
+        className="grid max-h-[70dvh] gap-3.5 overflow-y-auto sm:grid-cols-2"
         onSubmit={(e) => {
           e.preventDefault();
           create.mutate();
         }}
       >
         <div className="sm:col-span-2">
-          <TextField
-            label={t('admin.routeName')}
-            required
-            value={form.name}
-            onChange={set('name')}
-            placeholder={t('admin.routeNamePh')}
+          <Segmented
+            label={t('admin.direction')}
+            value={form.direction}
+            onChange={(direction) =>
+              setForm({
+                ...form,
+                direction,
+                // The usual times for each direction, so nobody types them twice a day.
+                ...(direction === 'to_school'
+                  ? { plannedStart: '06:30', plannedEnd: '07:15' }
+                  : { plannedStart: '12:30', plannedEnd: '13:30' }),
+              })
+            }
+            options={[
+              { value: 'to_school', label: t('direction.to_school') },
+              { value: 'to_home', label: t('direction.to_home') },
+            ]}
           />
         </div>
-        <SelectField
-          label={t('admin.direction')}
-          value={form.direction}
-          onChange={set('direction')}
-        >
-          <option value="to_school">{t('direction.to_school')}</option>
-          <option value="to_home">{t('direction.to_home')}</option>
-        </SelectField>
         <SelectField
           label={t('admin.vehicle')}
           required
@@ -1358,29 +1381,25 @@ function AddRouteDialog({
           onChange={set('defaultVehicleId')}
         >
           <option value="">—</option>
-          {vehicles.data
-            ?.filter((v) => v.status === 'active')
-            .map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.plateNumber} · {t(`vehicleType.${v.type}`)}
-              </option>
-            ))}
+          {buses.map((v) => (
+            <option key={v.id} value={v.id}>
+              {v.plateNumber} · {t(`vehicleType.${v.type}`)}
+            </option>
+          ))}
         </SelectField>
-        <div className="sm:col-span-2">
-          <SelectField
-            label={t('role.driver')}
-            required
-            value={form.defaultDriverId}
-            onChange={set('defaultDriverId')}
-          >
-            <option value="">—</option>
-            {drivers.map((d) => (
-              <option key={d.user.id} value={d.user.id}>
-                {displayName(d.user)}
-              </option>
-            ))}
-          </SelectField>
-        </div>
+        <SelectField
+          label={t('role.driver')}
+          required
+          value={form.defaultDriverId}
+          onChange={set('defaultDriverId')}
+        >
+          <option value="">—</option>
+          {drivers.map((d) => (
+            <option key={d.user.id} value={d.user.id}>
+              {displayName(d.user)}
+            </option>
+          ))}
+        </SelectField>
         <TextField
           label={t('admin.start')}
           type="time"
@@ -1411,29 +1430,38 @@ function AddRouteDialog({
             ))}
           </div>
         </fieldset>
-        <div className="sm:col-span-2">
-          <label className="mb-1.5 block text-sm font-semibold" htmlFor="stops">
-            {t('admin.stopsOnePerLine')}
-          </label>
-          <textarea
-            id="stops"
-            required
-            rows={4}
-            value={form.stops}
-            onChange={set('stops')}
-            className="w-full rounded-md border border-border bg-surface px-3 py-2"
-          />
-        </div>
+        <details className="rounded-[14px] border border-border bg-surface-2 px-3.5 sm:col-span-2">
+          <summary className="min-h-12 cursor-pointer list-none py-3.5 text-sm font-semibold text-primary [&::-webkit-details-marker]:hidden">
+            {t('admin.routeExtras')}
+          </summary>
+          <div className="grid gap-3 pb-3.5">
+            <TextField
+              label={t('admin.routeName')}
+              value={form.name}
+              onChange={set('name')}
+              placeholder={t('admin.routeNameAuto')}
+            />
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold" htmlFor="stops">
+                {t('admin.stopsOnePerLine')}
+              </label>
+              <textarea
+                id="stops"
+                rows={3}
+                value={form.stops}
+                onChange={set('stops')}
+                placeholder={t('admin.stopsOptional')}
+                className="w-full rounded-md border border-border bg-surface px-3 py-2"
+              />
+            </div>
+          </div>
+        </details>
         {create.error && (
           <div className="sm:col-span-2">
             <ErrorLine>{errorMessage(create.error)}</ErrorLine>
           </div>
         )}
-        <Button
-          type="submit"
-          className="sm:col-span-2"
-          disabled={create.isPending || days.length === 0}
-        >
+        <Button type="submit" className="sm:col-span-2" disabled={create.isPending || missing}>
           {t('admin.addRoute')}
         </Button>
         <Button variant="ghost" className="sm:col-span-2" onClick={onClose}>
@@ -1553,25 +1581,34 @@ export function VehiclesPage() {
             onChange={(e) => setForm({ ...form, plateNumber: e.target.value })}
             dir="ltr"
           />
-          <SelectField
-            label={t('admin.vehicleType')}
-            value={form.type}
-            onChange={(e) => setForm({ ...form, type: e.target.value })}
-          >
-            {(['bus', 'van', 'car'] as const).map((v) => (
-              <option key={v} value={v}>
-                {t(`vehicleType.${v}`)}
-              </option>
-            ))}
-          </SelectField>
-          <TextField
-            label={t('admin.capacity')}
-            type="number"
-            min={1}
-            max={100}
-            value={form.capacity}
-            onChange={(e) => setForm({ ...form, capacity: e.target.value })}
-          />
+          {/* A bus is its plate; the kind and the number of seats are a bus with thirty seats
+              until somebody says otherwise. */}
+          <details className="rounded-[14px] border border-border bg-surface-2 px-3.5">
+            <summary className="min-h-12 cursor-pointer list-none py-3.5 text-sm font-semibold text-primary [&::-webkit-details-marker]:hidden">
+              {t('admin.vehicleExtras')}
+            </summary>
+            <div className="grid gap-3 pb-3.5">
+              <SelectField
+                label={t('admin.vehicleType')}
+                value={form.type}
+                onChange={(e) => setForm({ ...form, type: e.target.value })}
+              >
+                {(['bus', 'van', 'car'] as const).map((v) => (
+                  <option key={v} value={v}>
+                    {t(`vehicleType.${v}`)}
+                  </option>
+                ))}
+              </SelectField>
+              <TextField
+                label={t('admin.capacity')}
+                type="number"
+                min={1}
+                max={100}
+                value={form.capacity}
+                onChange={(e) => setForm({ ...form, capacity: e.target.value })}
+              />
+            </div>
+          </details>
           {create.error && <ErrorLine>{errorMessage(create.error)}</ErrorLine>}
           <Button type="submit" disabled={create.isPending}>
             {t('common.add')}
