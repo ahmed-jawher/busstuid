@@ -17,7 +17,8 @@
     "db:seed": "node scripts/with-env.mjs tsx prisma/seed.ts",
     "loadtest": "vitest run --config vitest.load.config.ts",
     "db:backup": "node scripts/with-env.mjs tsx src/ops/cli.ts backup",
-    "db:restore": "node scripts/with-env.mjs tsx src/ops/cli.ts restore"
+    "db:restore": "node scripts/with-env.mjs tsx src/ops/cli.ts restore",
+    "demo:sheet": "pnpm run build && node scripts/write-demo-sheet.mjs"
   },
   "dependencies": {
     "@nestjs/common": "11.2.5",

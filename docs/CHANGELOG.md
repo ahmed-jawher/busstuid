@@ -224,3 +224,27 @@ passes too. ✅
 - `/v1/health` now says which optional services the server can use (email, Android push, iPhone
   push, web push) as plain yes/no, so "why did no code arrive?" is answered without opening the
   server.
+
+## Fewer walls (2026-09-26)
+
+- **Passwords**: six characters, anything at all; word lists and the "not your own name" rule
+  removed. Confirm-password box and a show-password eye on sign-up and reset. Guessing is still
+  answered by the ten-attempt lockout.
+- **Sign in with the email address or the phone number.** A number shared by two guardians asks for
+  the address instead of guessing.
+- **"Too many requests" fixed**: emails are counted per address as well as per network, so two
+  parents signing up on one school's wifi no longer take each other's turn. Sign-in limit 10 → 60 a
+  minute.
+- **Trips are named after where they go** — "الذهاب إلى المدرسة · مدرسة الأمل" — not after an
+  invented route name.
+- **A route takes three answers** (direction, bus, driver); name and stops are optional and written
+  by the API when missing. A bus is just a plate. Any name is accepted, in any script.
+- **A refused end stays refused**: the red bar and the alarm follow the driver back to the list until
+  the last child is off or the end is forced with a reason.
+- **Guardians can add a driver who has no account**, with an explicit permission for us to contact
+  them; nothing is sent to the number, and the invitation becomes a link request when that driver
+  registers. A child can be added with no organisation at all.
+- **The child's details are edited, not re-linked**, and a pending link request can be withdrawn.
+- **Back from the terms returns to the sign-up form**, with the answers still there.
+- **Test data**: `demo --reset` empties the database first; accounts are now `parent1@t.test` …
+  `admin@t.test` with password `123456`, listed in `docs/demo-accounts.xlsx`.

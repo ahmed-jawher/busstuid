@@ -1,6 +1,7 @@
-# Fills the demonstration server with the demo accounts (docs/DEMO.md). Manual only: Actions →
-# "Demo data" → Run workflow. It does nothing if the demo accounts are already there, and it must
-# never be run against a server holding a real child's data.
+# Fills the demonstration server with the test accounts (docs/DEMO.md). Manual only: Actions →
+# "Demo data" → Run workflow. Without "reset" it does nothing if the accounts are already there;
+# with it, everything in the database is deleted first. It must never be run against a server
+# holding a real child's data.
 name: Demo data
 
 on:
@@ -10,6 +11,11 @@ on:
         description: Type "demo" to confirm this server holds no real data
         required: true
         default: ''
+      reset:
+        description: Delete everything in the database first, then rebuild the test data
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -37,6 +43,7 @@ jobs:
       - name: Create the demo accounts
         env:
           HOST: deploy@${{ vars.DEPLOY_HOST }}
+          RESET: ${{ inputs.reset && '--reset' || '' }}
         run: |
           ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes "$HOST" \
-            'cd ~/tammeni && docker compose -f infra/docker-compose.prod.yml -f infra/docker-compose.images.yml --env-file .env.production --env-file .deploy.env exec -T api node dist/ops/cli.js demo'
+            "cd ~/tammeni && docker compose -f infra/docker-compose.prod.yml -f infra/docker-compose.images.yml --env-file .env.production --env-file .deploy.env exec -T api node dist/ops/cli.js demo $RESET"

@@ -4,4 +4,5 @@
 *.webp binary
 *.woff2 binary
 *.mp3 binary
+*.xlsx binary
 *.bat text eol=crlf
