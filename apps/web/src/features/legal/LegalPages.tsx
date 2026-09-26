@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { BackBar, Screen } from '@/components/ui/kit';
 import { PRIVACY_AR, PRIVACY_EN, TERMS_AR, TERMS_EN, type LegalDocument } from './legal-content';
 
@@ -10,9 +10,14 @@ import { PRIVACY_AR, PRIVACY_EN, TERMS_AR, TERMS_EN, type LegalDocument } from '
  */
 function LegalScreen({ doc, other }: { doc: LegalDocument; other: { to: string; label: string } }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  // Back goes back, to the half-filled sign-up form or the settings screen the reader came from —
+  // not to the start of the app, which threw their answers away. Opened from a store listing
+  // there is nothing behind it, and then the welcome screen is the right place.
+  const back = () => (window.history.length > 1 ? navigate(-1) : navigate('/welcome'));
   return (
     <Screen className="gap-4">
-      <BackBar to="/welcome" title={doc.title} />
+      <BackBar onBack={back} title={doc.title} />
       <article className="flex flex-col gap-4 pb-10 text-[15px] leading-loose">
         <header className="flex flex-col gap-2">
           <h1 className="text-[26px] font-bold">{doc.title}</h1>
@@ -28,8 +33,11 @@ function LegalScreen({ doc, other }: { doc: LegalDocument; other: { to: string; 
             </li>
           ))}
         </ol>
-        <nav className="border-t border-border pt-4 text-sm font-semibold text-primary">
+        <nav className="flex flex-wrap items-center gap-4 border-t border-border pt-4 text-sm font-semibold text-primary">
           <Link to={other.to}>{t(other.label)}</Link>
+          <button type="button" onClick={back} className="min-h-11">
+            {t('common.back')}
+          </button>
         </nav>
       </article>
     </Screen>

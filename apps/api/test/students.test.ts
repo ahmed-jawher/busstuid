@@ -323,6 +323,112 @@ describe('guardians, children and enrollment', () => {
     });
     expect(request.status).toBe('cancelled');
   });
+
+  it('corrects a child whose school was typed wrongly', async () => {
+    const child = await addChild(t, guardianA, school.id, 'ريم أحمد');
+    const res = await t.http
+      .patch(`/v1/students/${child.id}`)
+      .set(guardianA.auth)
+      .send({ schoolName: 'مدرسة أخرى', fullNameAr: 'ريم محمد' })
+      .expect(200);
+    expect(res.body.schoolName).toBe('مدرسة أخرى');
+    expect(res.body.fullNameAr).toBe('ريم محمد');
+
+    // Somebody else's child cannot be edited, and is not even admitted to exist.
+    await t.http
+      .patch(`/v1/students/${child.id}`)
+      .set(guardianB.auth)
+      .send({ schoolName: 'مدرسة ثالثة' })
+      .expect(404);
+  });
+
+  it('lets a guardian take a pending link request back, but not an approved one', async () => {
+    const child = await addChild(t, guardianA, school.id, 'بدر أحمد');
+    const pending = child.enrollmentRequests[0]!.id;
+    await t.http
+      .delete(`/v1/students/${child.id}/enrollments/${pending}`)
+      .set(guardianA.auth)
+      .expect(200);
+    const after = await t.http.get(`/v1/children/${child.id}`).set(guardianA.auth).expect(200);
+    expect(after.body.enrollmentRequests).toEqual([]);
+
+    // Approved: the school carries the child now, so only the school may remove them.
+    const second = await addChild(t, guardianA, school.id, 'هدى أحمد');
+    const request = second.enrollmentRequests[0]!.id;
+    await t.http
+      .post(`/v1/org/enrollment-requests/${request}/approve`)
+      .set(schoolAdmin.auth)
+      .set(school.header)
+      .expect(200);
+    await t.http
+      .delete(`/v1/students/${second.id}/enrollments/${request}`)
+      .set(guardianA.auth)
+      .expect(404);
+  });
+
+  it('keeps a driver with no account waiting, and turns it into a request when they sign up', async () => {
+    const child = await addChild(t, guardianA, school.id, 'لمى أحمد');
+    const phone = uniquePhone();
+    const local = phone.replace('+973', '');
+
+    // The permission to speak to that driver is not optional.
+    const refused = await t.http
+      .post(`/v1/students/${child.id}/driver-invitations`)
+      .set(guardianA.auth)
+      .send({ nameAr: 'سائق العائلة', phone: local, country: 'BH' })
+      .expect(400);
+    expect(JSON.stringify(refused.body)).toContain('contact_consent_required');
+
+    await t.http
+      .post(`/v1/students/${child.id}/driver-invitations`)
+      .set(guardianA.auth)
+      .send({ nameAr: 'سائق العائلة', phone: local, country: 'BH', consentContact: true })
+      .expect(201);
+    const withInvite = await t.http.get(`/v1/children/${child.id}`).set(guardianA.auth).expect(200);
+    expect(withInvite.body.driverInvitations).toHaveLength(1);
+
+    // The consent is kept with its version and the device that gave it (PLAN §14).
+    const stored = await t.db.admin.driverInvitation.findFirstOrThrow({
+      where: { studentId: child.id },
+    });
+    expect(stored.policyVersion).toBeTruthy();
+    expect(stored.contactConsentAt).toBeTruthy();
+    expect(stored.driverPhoneE164).toBe(phone);
+
+    // That driver registers with the same number: the family does not have to ask again.
+    const driver = await registerVerified(t, { prefix: 'invited-driver', phone });
+    await t.http
+      .post('/v1/organizations')
+      .set(driver.auth)
+      .send({
+        type: 'independent_driver',
+        nameAr: 'سائق العائلة',
+        nameEn: 'Family Driver',
+        country: 'BH',
+      })
+      .expect(201);
+    const linked = await t.http.get(`/v1/children/${child.id}`).set(guardianA.auth).expect(200);
+    expect(linked.body.driverInvitations).toEqual([]);
+    expect(
+      linked.body.enrollmentRequests.some(
+        (r: { status: string; organization: { type: string } }) =>
+          r.status === 'pending' && r.organization.type === 'independent_driver',
+      ),
+    ).toBe(true);
+  });
+
+  it('adds a child with no organisation at all', async () => {
+    const res = await t.http
+      .post('/v1/students')
+      .set(guardianA.auth)
+      .field('fullNameAr', 'طفل بلا ناقل')
+      .field('dateOfBirth', '2017-03-14')
+      .field('schoolName', 'مدرسة الاختبار')
+      .field('consent', 'true')
+      .attach('photo', await samplePhoto(), { filename: 'f.jpg', contentType: 'image/jpeg' })
+      .expect(201);
+    expect(res.body.enrollmentRequests).toEqual([]);
+  });
 });
 
 describe('organisations and the independent-driver phone rule', () => {

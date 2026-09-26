@@ -8,7 +8,7 @@ import { EmptyState, Spinner } from '@/components/ui/layout';
 import { api, ApiError } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { errorMessage } from '@/lib/errors';
-import { displayName, formatDate, formatTime } from '@/lib/format';
+import { displayName, formatDate, formatTime, orgName } from '@/lib/format';
 import { useSession } from '@/lib/session';
 import type { DriverTrip } from '@/lib/types';
 import { firstName, greeting } from '../guardian/guardian-data';
@@ -179,7 +179,7 @@ function TripCard({
       </div>
       <div>
         <h2 className="text-[22px] leading-tight font-bold">
-          {trip.route?.name ?? trip.vehicle.plateNumber} · {t(`direction.${trip.direction}`)}
+          {t(`direction.${trip.direction}`)} · {orgName(trip.organization)}
         </h2>
         <p className="mt-1 text-[15px] text-muted">
           {active

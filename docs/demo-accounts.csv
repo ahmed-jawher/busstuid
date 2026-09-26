@@ -1,0 +1,14 @@
+﻿النوع,البريد الإلكتروني,كلمة المرور,السيناريو,Role,Scenario
+ولي أمر,parent1@t.test,123456,اليوم الطبيعي: أخوان على نفس الرقم صعدا ونزلا، وطفل ثالث غائب اليوم.,Guardian,"An ordinary day: two siblings on one phone number boarded and got off, a third is absent."
+ولي أمر,parent2@t.test,123456,طلب الانضمام للمدرسة ما زال بانتظار الموافقة.,Guardian,The link request to the school is still waiting for approval.
+ولي أمر,parent3@t.test,123456,رحلة جارية الآن: الطفل على متن الحافلة والحالة تتغيّر أمامك.,Guardian,A trip running right now: the child is on board and the state changes live.
+ولي أمر,parent4@t.test,123456,التنبيه الحرج: انتهت رحلة الأمس والطفل ما زال مسجّلاً على الحافلة.,Guardian,The critical alert: yesterday's trip ended with the child still recorded on board.
+ولي أمر,parent5@t.test,123456,طفل مع سائق مستقل بدل مدرسة: الربط تمّ برقم جوال السائق.,Guardian,"A child with an independent driver instead of a school, linked by the driver's number."
+ولي أمر,parent6@t.test,123456,أضافت سائقها بنفسها وهو غير مسجّل: الدعوة معلّقة في صفحة الطفل.,Guardian,"Added her own driver, who has no account yet: the invitation is waiting on the child page."
+سائق مدرسة,driver1@t.test,123456,رحلة الصباح انتهت بسلام، ورحلة العودة تبدأ بعد قليل.,School driver,The morning run finished safely; the trip home starts shortly.
+سائق مدرسة,driver2@t.test,123456,رحلة جارية الآن: طالب على متن الحافلة — جرّب «إنهاء الرحلة» وشاهد الرفض الأحمر.,School driver,"A trip running now with a student on board — press ""end trip"" and watch the red refusal."
+سائق بانتظار إدارته,driver3@t.test,123456,أنشأ حسابه وينتظر أن تضيفه المدرسة: تظهر له شاشة الانتظار.,Driver waiting for a school,Signed up and is waiting for a school to add them: the waiting screen.
+سائق مستقل,driver4@t.test,123456,يدير مركبته ومساره بنفسه، والأهالي يربطون أطفالهم برقمه.,Independent driver,Runs their own vehicle and route; families link their children by their number.
+مديرة مدرسة,school@t.test,123456,مدرسة كاملة: ثلاث حافلات ومسارات وطلاب، طلب انضمام معلّق، وتنبيه حرج مفتوح.,School admin,"A complete school: three buses, routes and students, a pending request, an open critical alert."
+مديرة روضة,kg@t.test,123456,سجّلت روضة وتنتظر موافقة مشغّل المنصة: تظهر لها لافتة الانتظار.,Kindergarten admin,Registered a kindergarten and is waiting for the operator: the waiting banner.
+مشغّل المنصة,admin@t.test,123456,يوافق على المدارس والرياض الجديدة: عنده روضة بانتظار الموافقة.,Platform operator,Approves new schools and kindergartens: one kindergarten is waiting.

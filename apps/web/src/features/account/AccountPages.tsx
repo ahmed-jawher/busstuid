@@ -15,6 +15,7 @@ import {
   IconTile,
   inputClass,
   Panel,
+  PasswordField,
   PersonBadge,
   RowButton,
   RowLink,
@@ -35,6 +36,7 @@ import { useSession } from '@/lib/session';
 import type { InboxItem, OrgSummary } from '@/lib/types';
 import { platform } from '@/platform';
 import { usePushReady, usePushSubscriptions } from '../push/NotificationSetupPage';
+import { MIN_PASSWORD } from '../auth/AuthPages';
 
 /** Chooses the interface by role; with a single role it goes straight there. */
 export function HomePage() {
@@ -438,6 +440,7 @@ function ChangePasswordSheet({ open, onClose }: { open: boolean; onClose: () => 
   const toast = useToast();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
+  const [confirm, setConfirm] = useState('');
   const change = useMutation({
     mutationFn: () =>
       api<Tokens>('/me/password', {
@@ -449,35 +452,38 @@ function ChangePasswordSheet({ open, onClose }: { open: boolean; onClose: () => 
       await session.store(tokens);
       setCurrent('');
       setNext('');
+      setConfirm('');
       onClose();
       toast({ message: t('gd.acc.passwordChanged'), tone: 'success' });
     },
   });
   return (
     <Sheet open={open} onClose={onClose} title={t('gd.acc.changePassword')}>
-      <FieldLabel label={t('gd.acc.currentPassword')}>
-        <input
-          type="password"
-          autoComplete="current-password"
-          value={current}
-          onChange={(e) => setCurrent(e.target.value)}
-          className={cn(inputClass, 'bg-background')}
-        />
-      </FieldLabel>
-      <FieldLabel label={t('auth.newPassword')} hint={t('auth.passwordHint')}>
-        <input
-          type="password"
-          autoComplete="new-password"
-          value={next}
-          onChange={(e) => setNext(e.target.value)}
-          className={cn(inputClass, 'bg-background')}
-        />
-      </FieldLabel>
+      <PasswordField
+        label={t('gd.acc.currentPassword')}
+        value={current}
+        onChange={setCurrent}
+        autoComplete="current-password"
+      />
+      <PasswordField
+        label={t('auth.newPassword')}
+        value={next}
+        onChange={setNext}
+        autoComplete="new-password"
+        hint={t('auth.passwordHint')}
+      />
+      <PasswordField
+        label={t('auth.confirmPassword')}
+        value={confirm}
+        onChange={setConfirm}
+        autoComplete="new-password"
+        error={confirm && confirm !== next ? t('onb.err.confirmPassword') : null}
+      />
       <p className="text-[13px] text-muted">{t('gd.acc.otherDevices')}</p>
       {change.error && <ErrorLine>{errorMessage(change.error)}</ErrorLine>}
       <button
         type="button"
-        disabled={!current || next.length < 8 || change.isPending}
+        disabled={!current || next.length < MIN_PASSWORD || confirm !== next || change.isPending}
         onClick={() => change.mutate()}
         className={cn(
           bigButton,

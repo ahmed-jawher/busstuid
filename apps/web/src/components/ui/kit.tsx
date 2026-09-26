@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import { Icon, type IconName } from '@/components/Icon';
@@ -435,6 +435,67 @@ export function FieldLabel({
       ) : (
         hint && <span className="text-[12.5px] font-normal text-muted">{hint}</span>
       )}
+    </label>
+  );
+}
+
+/**
+ * A password box with an eye that shows what was typed. People mistype passwords they cannot see,
+ * and on a phone keyboard that is most of them; seeing it is also how someone checks that the two
+ * boxes match before pressing the button.
+ */
+export function PasswordField({
+  label,
+  value,
+  onChange,
+  hint,
+  error,
+  autoComplete = 'current-password',
+  children,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  hint?: ReactNode;
+  error?: string | null;
+  autoComplete?: 'current-password' | 'new-password';
+  /** Extra content under the box, e.g. the strength meter. */
+  children?: ReactNode;
+}) {
+  const { t } = useTranslation();
+  const [shown, setShown] = useState(false);
+  return (
+    <label className="flex flex-col gap-1.5 text-sm font-semibold">
+      <span>{label}</span>
+      <span className="relative flex">
+        <input
+          type={shown ? 'text' : 'password'}
+          // Named explicitly: the surrounding label also holds the strength meter and the hint,
+          // and "password" must not read as "password weak, at least six characters".
+          aria-label={label}
+          autoComplete={autoComplete}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          aria-invalid={!!error || undefined}
+          className={cn(inputClass, 'pe-13')}
+        />
+        <button
+          type="button"
+          onClick={() => setShown(!shown)}
+          aria-label={shown ? t('auth.hidePassword') : t('auth.showPassword')}
+          aria-pressed={shown}
+          className="absolute end-0 top-0 flex size-13 items-center justify-center rounded-xl text-muted"
+        >
+          <Icon name={shown ? 'visibility_off' : 'visibility'} size={22} />
+        </button>
+      </span>
+      {children}
+      {error && (
+        <span role="alert" className="text-[12.5px] font-semibold text-alert">
+          {error}
+        </span>
+      )}
+      {!error && hint && <span className="text-[12.5px] font-normal text-muted">{hint}</span>}
     </label>
   );
 }

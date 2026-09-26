@@ -3,8 +3,10 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Put,
   Query,
@@ -15,12 +17,24 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { SkipThrottle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { createStudentSchema, deleteAccountSchema, enrollSchema } from '@wusool/shared';
+import {
+  createStudentSchema,
+  deleteAccountSchema,
+  enrollSchema,
+  inviteDriverSchema,
+  updateStudentSchema,
+} from '@wusool/shared';
 import type { Response } from 'express';
 import { z } from 'zod';
 import { Audit } from '../audit/audit';
 import { Errors } from '../common/api-error';
-import { Auth, Public, RequireVerifiedEmail, type AuthContext } from '../common/auth-context';
+import {
+  Auth,
+  ClientIp,
+  Public,
+  RequireVerifiedEmail,
+  type AuthContext,
+} from '../common/auth-context';
 import { ApiZodBody, zod } from '../common/zod';
 import { MAX_UPLOAD_BYTES, PHOTO_URL_TTL_SECONDS } from './photos';
 import { StudentsService } from './students.service';
@@ -81,6 +95,57 @@ export class StudentsController {
     @UploadedFile() file?: Express.Multer.File,
   ) {
     return this.students.replacePhoto(auth.userId, id, requirePhoto(file));
+  }
+
+  /** Correcting the profile: a misspelled name, or the child who changed school. */
+  @Patch('students/:id')
+  @RequireVerifiedEmail()
+  @Audit('child.update', 'student', { idParam: 'id' })
+  @ApiZodBody(updateStudentSchema)
+  update(
+    @Auth() auth: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(zod(updateStudentSchema)) body: z.output<typeof updateStudentSchema>,
+  ) {
+    return this.students.update(auth.userId, id, body);
+  }
+
+  /** The family's own driver, who has no account yet (PLAN §5). */
+  @Post('students/:id/driver-invitations')
+  @RequireVerifiedEmail()
+  @Audit('child.invite_driver', 'student', { idParam: 'id' })
+  @ApiZodBody(inviteDriverSchema)
+  inviteDriver(
+    @Auth() auth: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(zod(inviteDriverSchema)) body: z.output<typeof inviteDriverSchema>,
+    @ClientIp() ip: string | null,
+    @Headers('user-agent') userAgent: string | undefined,
+  ) {
+    return this.students.inviteDriver(auth.userId, id, body, { ip, userAgent });
+  }
+
+  @Delete('students/:id/driver-invitations/:invitationId')
+  @RequireVerifiedEmail()
+  @Audit('child.cancel_driver_invitation', 'student', { idParam: 'id' })
+  cancelInvitation(
+    @Auth() auth: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('invitationId', ParseUUIDPipe) invitationId: string,
+  ) {
+    return this.students.cancelInvitation(auth.userId, id, invitationId);
+  }
+
+  /** Taking a pending link request back — the school was the wrong one. */
+  @Delete('students/:id/enrollments/:requestId')
+  @RequireVerifiedEmail()
+  @Audit('enrollment.withdraw', 'student', { idParam: 'id' })
+  withdrawEnrollment(
+    @Auth() auth: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('requestId', ParseUUIDPipe) requestId: string,
+  ) {
+    return this.students.withdrawEnrollment(auth.userId, id, requestId);
   }
 
   @Post('students/:id/enrollments')

@@ -37,7 +37,7 @@
     "email": "Email",
     "password": "Password",
     "newPassword": "New password",
-    "passwordHint": "At least 8 characters; avoid common words and your name",
+    "passwordHint": "At least 6 characters or digits",
     "fullName": "Full name",
     "country": "Country",
     "phone": "Mobile number",
@@ -53,7 +53,13 @@
     "resendCode": "Resend code",
     "codeResent": "A new code was sent to your email",
     "totpCode": "Authenticator code",
-    "totpHint": "The 6-digit code in your authenticator app"
+    "totpHint": "The 6-digit code in your authenticator app",
+    "emailOrPhone": "Email or phone number",
+    "emailOrPhoneHint": "Sign in with whichever you remember",
+    "confirmPassword": "Confirm password",
+    "confirmPasswordHint": "Type it again to be sure",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "push": {
     "title": "Turn on notifications",
@@ -396,7 +402,11 @@
     "stopN": "stop {{n}}",
     "studentsSub": "Approved students in {{org}}",
     "tripsToday": "{{count}} trips today",
-    "unreachableSub": "Check daily before trips start"
+    "unreachableSub": "Check daily before trips start",
+    "routeExtras": "More options (name and stops)",
+    "routeNameAuto": "Written from the direction",
+    "stopsOptional": "Leave empty if there are no stops",
+    "vehicleExtras": "More options (type and seats)"
   },
   "orgType": {
     "school": "School",
@@ -477,10 +487,8 @@
     "resend_too_soon": "Wait {{seconds}} seconds before requesting a new code.",
     "too_many_codes": "Too many codes sent. Try again in an hour.",
     "email_already_verified": "Email already verified. Please sign in.",
-    "password_too_short": "Password too short (at least 8 characters).",
+    "password_too_short": "Password too short (at least 6).",
     "password_too_long": "Password too long.",
-    "password_too_common": "This password is too common. Choose another.",
-    "password_contains_personal_info": "Do not use your name or email in the password.",
     "phone_invalid": "Invalid mobile number.",
     "email_taken": "This email is used by another account.",
     "email_unchanged": "This is already your email.",
@@ -552,7 +560,12 @@
     "organization_name_taken": "That name is already registered. Check you are not adding the same place twice.",
     "name_en_latin": "Write the name in English letters.",
     "name_en_required": "Write your name in English as well.",
-    "terms_not_accepted": "You must agree to the terms and the privacy policy to create an account."
+    "terms_not_accepted": "You must agree to the terms and the privacy policy to create an account.",
+    "identifier_required": "Enter your email address or phone number.",
+    "phone_not_unique": "That number belongs to more than one account. Sign in with your email address instead.",
+    "nothing_to_update": "Nothing to save.",
+    "contact_consent_required": "The permission to contact the driver is required.",
+    "driver_already_invited": "That driver is already added for this child."
   },
   "signup": {
     "whoAreYou": "Who are you?",
@@ -633,8 +646,9 @@
       "name": "Write your full name.",
       "email": "That email address is not valid.",
       "phone": "The mobile number has 8 digits.",
-      "password": "The password is too short (at least 8 characters).",
-      "org": "Write the school or company name."
+      "password": "Password too short (at least 6).",
+      "org": "Write the school or company name.",
+      "confirmPassword": "The two passwords do not match."
     },
     "strength": {
       "0": "Too short",
@@ -790,7 +804,17 @@
       "err4": "Consent is required.",
       "sentTitle": "Link request sent",
       "sentBody": "We will tell you when {{org}} approves. Until then {{name}} shows as \"awaiting approval\".",
-      "schoolHint": "Pick from the list, or type the name if your child's school is not there."
+      "schoolHint": "Pick from the list, or type the name if your child's school is not there.",
+      "driverNotFound": "No registered driver with that number",
+      "driverNotFoundBody": "Add your driver yourself and we will contact them to register. Nothing is sent to the number.",
+      "addDriver": "Add the driver",
+      "newDriverTitle": "New driver",
+      "driverName": "Driver name",
+      "driverNamePh": "e.g. Ahmed Ali",
+      "driverConsent": "I allow the Tammeni team to contact this driver on my behalf and tell them my child travels with them.",
+      "driverConsentNote": "We keep your permission with its time. You can withdraw it from the child page at any time.",
+      "invitedBody": "{{name}} is saved. We will contact {{driver}} to register, and tell you as soon as they are ready.",
+      "submitInvited": "Add the child"
     },
     "alert": {
       "reason": "Reason:",
@@ -827,7 +851,18 @@
       "currentPassword": "Current password",
       "otherDevices": "You will be signed out on your other devices.",
       "passwordChanged": "Password changed."
-    }
+    },
+    "edit": {
+      "title": "Edit the child",
+      "saved": "Saved"
+    },
+    "invite": {
+      "waiting": "Waiting for the driver to register",
+      "cancelled": "Invitation withdrawn"
+    },
+    "withdraw": "Withdraw",
+    "withdrawn": "Request withdrawn",
+    "changeTransport": "Change the school or carrier"
   },
   "drv": {
     "pushOn": "Notifications on",
@@ -858,7 +893,9 @@
     "doneAlertTitle": "Trip ended with an alert",
     "doneAlertBody": "The guardian and the admins were told. Follow up with the admins until the alert is closed.",
     "addHint": "Added as “unexpected”; their guardian and the admins are told.",
-    "searchHint": "Search by name, child code, or guardian's phone"
+    "searchHint": "Search by name, child code, or guardian's phone",
+    "cannotEnd": "The trip cannot be ended",
+    "cannotEndBody": "{{count}} still on board. Tap to continue."
   },
   "legal": {
     "privacy": "Privacy policy",

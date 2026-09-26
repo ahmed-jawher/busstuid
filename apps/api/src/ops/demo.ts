@@ -1,18 +1,25 @@
 // Demo data for showing Tammeni to someone: one account per situation a real user can be in,
 // with trips, alerts and notifications already in place (PLAN §17).
 //
-// Everything here is invented: names, phone numbers, schools. The accounts share one password
-// and are meant for a demonstration server, never for a server holding a real child's data.
-// Run it with `node dist/ops/cli.js demo` (see docs/DEMO.md); running it twice does nothing.
+// Everything here is invented: names, phone numbers, schools. Who the accounts are is in
+// demo-accounts.ts; they share one password and are meant for a demonstration server, never for a
+// server holding a real child's data. Run it with `node dist/ops/cli.js demo` (see docs/DEMO.md);
+// running it twice does nothing, and `demo --reset` empties the database first.
 import { PrismaClient, type Prisma, type TripDirection } from '@prisma/client';
-import { COUNTRY_DEFAULTS, PRIVACY_POLICY_VERSION, LEGAL_VERSION } from '@wusool/shared';
+import {
+  COUNTRY_DEFAULTS,
+  defaultRouteName,
+  PRIVACY_POLICY_VERSION,
+  LEGAL_VERSION,
+} from '@wusool/shared';
 import sharp from 'sharp';
 import { hashPassword } from '../auth/passwords';
 import { processStudentPhoto } from '../students/photos';
+import { DEMO_PASSWORD, demoPerson, emailOf } from './demo-accounts';
 
-export const DEMO_PASSWORD = 'Falcon-Harbour-2026';
-export const DEMO_DOMAIN = 'tammeni.demo';
-const MARKER_EMAIL = `platform.admin@${DEMO_DOMAIN}`;
+export { DEMO_DOMAIN, DEMO_PASSWORD, emailOf } from './demo-accounts';
+
+const MARKER_EMAIL = emailOf('admin');
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
@@ -34,27 +41,47 @@ function todayAt(hour: number, minute: number, dayOffset = 0): Date {
   return d;
 }
 
-/**
- * What each demo account said it was when signing up. It decides which screens they land on:
- * a school admin should not be shown an empty "my children" tab.
- */
-const SIGNUP_ROLE_OF: Record<
-  string,
-  'guardian' | 'independent_driver' | 'organization' | 'staff_driver'
-> = {
-  'platform.admin': 'organization',
-  'school.admin': 'organization',
-  'kindergarten.admin': 'organization',
-  'driver.bus': 'staff_driver',
-  'driver.active': 'staff_driver',
-  'driver.waiting': 'staff_driver',
-  'driver.independent': 'independent_driver',
-};
-
 export interface DemoAccount {
   email: string;
   role: string;
   scenario: string;
+}
+
+/** The append-only safety records (PLAN §3.2): protected by triggers nothing may delete through. */
+const PROTECTED_TABLES = [
+  'trip_events',
+  'alert_events',
+  'audit_logs',
+  'legal_acceptances',
+  'alerts',
+  'trips',
+  'trip_students',
+];
+
+/**
+ * Empties the database — every account, child, trip and alert. Only ever right on a demonstration
+ * server. The triggers that make the safety records append-only are switched off around the
+ * truncate and switched straight back on: only the owner of the tables can do that, which is the
+ * migration role, never the API's own two roles.
+ */
+export async function wipeEverything(db: PrismaClient): Promise<void> {
+  const quoted = (name: string) => `"${name.replaceAll('"', '""')}"`;
+  const toggle = async (state: 'DISABLE' | 'ENABLE') => {
+    for (const table of PROTECTED_TABLES) {
+      await db.$executeRawUnsafe(`ALTER TABLE ${quoted(table)} ${state} TRIGGER USER`);
+    }
+  };
+  const tables = await db.$queryRaw<{ tablename: string }[]>`
+    SELECT tablename FROM pg_tables
+     WHERE schemaname = 'public' AND tablename <> '_prisma_migrations'`;
+  if (tables.length === 0) return;
+  await toggle('DISABLE');
+  try {
+    const list = tables.map((t) => quoted(t.tablename)).join(', ');
+    await db.$executeRawUnsafe(`TRUNCATE TABLE ${list} CASCADE`);
+  } finally {
+    await toggle('ENABLE');
+  }
 }
 
 export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> {
@@ -66,25 +93,18 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
   let phoneCounter = 3900_0001;
   const accounts: DemoAccount[] = [];
 
-  const user = async (
-    local: string,
-    ar: string,
-    en: string,
-    role: string,
-    scenario: string,
-    extra: Prisma.UserUncheckedCreateInput | object = {},
-  ) => {
-    const signupRole = SIGNUP_ROLE_OF[local] ?? 'guardian';
-    const email = `${local}@${DEMO_DOMAIN}`;
+  const user = async (local: string, extra: Prisma.UserUncheckedCreateInput | object = {}) => {
+    const person = demoPerson(local);
+    const email = emailOf(local);
     const created = await db.user.create({
       data: {
         email,
-        fullNameAr: ar,
-        fullNameEn: en,
+        fullNameAr: person.nameAr,
+        fullNameEn: person.nameEn,
         phoneE164: `+973${phoneCounter++}`,
         passwordHash,
         emailVerifiedAt: now,
-        signupRole,
+        signupRole: person.signupRole,
         termsVersion: LEGAL_VERSION,
         termsAcceptedAt: now,
         legalAcceptances: {
@@ -96,7 +116,7 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
         ...extra,
       },
     });
-    accounts.push({ email, role, scenario });
+    accounts.push({ email, role: person.role, scenario: person.scenario });
     return created;
   };
 
@@ -120,16 +140,7 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
     });
 
   // ── The organisations ──────────────────────────────────────────────────────
-  await user(
-    'platform.admin',
-    'مشغّل المنصة',
-    'Platform Operator',
-    'مشغّل المنصة',
-    'يوافق على المدارس والرياض الجديدة: عنده روضة بانتظار الموافقة.',
-    {
-      isPlatformAdmin: true,
-    },
-  );
+  await user('admin', { isPlatformAdmin: true });
 
   const school = await org(
     'school',
@@ -150,48 +161,12 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
     'pending_review',
   );
 
-  const schoolAdmin = await user(
-    'school.admin',
-    'منى الحداد',
-    'Mona Alhaddad',
-    'مدير مدرسة',
-    'مدرسة كاملة: حافلتان ومساران وطلاب، طلب انضمام معلّق، وتنبيه حرج مفتوح.',
-  );
-  const driverBus = await user(
-    'driver.bus',
-    'جاسم الدوسري',
-    'Jassim Aldosari',
-    'سائق مدرسة',
-    'رحلة الصباح انتهت بسلام، ورحلة العودة تبدأ بعد قليل.',
-  );
-  const driverActive = await user(
-    'driver.active',
-    'سلمان النعيمي',
-    'Salman Alnaimi',
-    'سائق مدرسة',
-    'رحلة جارية الآن: ثلاثة طلاب على متن الحافلة وطالب لم يصعد بعد.',
-  );
-  const independentDriver = await user(
-    'driver.independent',
-    'خالد المناعي',
-    'Khalid Almannai',
-    'سائق مستقل',
-    'صاحب منظمته: يدير مركبته ومساره بنفسه، والأهالي يربطون أطفالهم برقمه.',
-  );
-  const staffDriver = await user(
-    'driver.waiting',
-    'عيسى البنعلي',
-    'Isa Albinali',
-    'سائق بانتظار إدارته',
-    'أنشأ حسابه وينتظر أن تضيفه المدرسة: تظهر له شاشة الانتظار.',
-  );
-  const kindergartenAdmin = await user(
-    'kindergarten.admin',
-    'أمل السعد',
-    'Amal Alsaad',
-    'مديرة روضة',
-    'سجّلت روضة وتنتظر موافقة مشغّل المنصة: تظهر لها لافتة الانتظار.',
-  );
+  const schoolAdmin = await user('school');
+  const driverBus = await user('driver1');
+  const driverActive = await user('driver2');
+  const independentDriver = await user('driver4');
+  const staffDriver = await user('driver3');
+  const kindergartenAdmin = await user('kg');
 
   await db.membership.createMany({
     data: [
@@ -246,7 +221,7 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
         organizationId,
         routeId: route.id,
         sequence: 1,
-        name: `${name} — المحطة الأولى`,
+        name: 'المحطة الأولى',
         lat: '26.130000',
         lng: '50.555000',
       },
@@ -256,7 +231,7 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
 
   const morning = await makeRoute(
     school.id,
-    'خط الرفاع',
+    defaultRouteName('to_school', '06:15'),
     'to_school',
     bus1.id,
     driverBus.id,
@@ -265,7 +240,7 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
   );
   const afternoon = await makeRoute(
     school.id,
-    'خط الرفاع',
+    defaultRouteName('to_home', '13:15'),
     'to_home',
     bus1.id,
     driverBus.id,
@@ -274,7 +249,7 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
   );
   const busy = await makeRoute(
     school.id,
-    'خط مدينة عيسى',
+    defaultRouteName('to_school', '06:30'),
     'to_school',
     bus2.id,
     driverActive.id,
@@ -283,7 +258,7 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
   );
   const late = await makeRoute(
     school.id,
-    'خط سترة',
+    defaultRouteName('to_home', '13:30'),
     'to_home',
     bus3.id,
     driverActive.id,
@@ -292,7 +267,7 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
   );
   const vanRoute = await makeRoute(
     van.id,
-    'خط المحرق',
+    defaultRouteName('to_school', '06:45'),
     'to_school',
     minivan.id,
     independentDriver.id,
@@ -309,7 +284,7 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
     nameEn: string,
     organizationId: string,
     schoolName: string,
-    enrollment: 'approved' | 'pending',
+    enrollment: 'approved' | 'pending' | 'none',
     decidedBy?: string,
   ) => {
     const photo = await placeholderPhoto(nameAr[0]!, colours[colourIndex++ % colours.length]!);
@@ -332,31 +307,29 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
             policyVersion: PRIVACY_POLICY_VERSION,
           },
         },
-        enrollmentRequests: {
-          create:
-            enrollment === 'approved'
-              ? {
-                  organizationId,
-                  requestedBy: guardianId,
-                  status: 'approved',
-                  decidedAt: now,
-                  decidedBy,
-                }
-              : { organizationId, requestedBy: guardianId },
-        },
+        ...(enrollment === 'none'
+          ? {}
+          : {
+              enrollmentRequests: {
+                create:
+                  enrollment === 'approved'
+                    ? {
+                        organizationId,
+                        requestedBy: guardianId,
+                        status: 'approved',
+                        decidedAt: now,
+                        decidedBy,
+                      }
+                    : { organizationId, requestedBy: guardianId },
+              },
+            }),
         ...(enrollment === 'approved' ? { orgStudents: { create: { organizationId } } } : {}),
       },
     });
   };
 
   // 1. A quiet day that went well, with two siblings on one phone number.
-  const calmGuardian = await user(
-    'guardian.calm',
-    'نورة القطان',
-    'Noora Alqattan',
-    'ولي أمر',
-    'اليوم الطبيعي: طفلان (إخوة) على نفس الرقم، صعدا ونزلا، وطفل ثالث غائب اليوم.',
-  );
+  const calmGuardian = await user('parent1');
   const sibling1 = await addChild(
     calmGuardian.id,
     'سالم القطان',
@@ -377,13 +350,7 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
   );
 
   // 2. Waiting for the school to approve.
-  const waitingGuardian = await user(
-    'guardian.waiting',
-    'هيا العلوي',
-    'Haya Alalawi',
-    'ولي أمر',
-    'طلب الانضمام للمدرسة ما زال بانتظار الموافقة: يظهر الطفل «بانتظار الموافقة».',
-  );
+  const waitingGuardian = await user('parent2');
   await addChild(
     waitingGuardian.id,
     'عمر العلوي',
@@ -394,13 +361,7 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
   );
 
   // 3. A trip happening right now.
-  const liveGuardian = await user(
-    'guardian.live',
-    'مريم الشاعر',
-    'Maryam Alshaer',
-    'ولي أمر',
-    'رحلة جارية الآن: الطفل على متن الحافلة، والحالة تتغير أمامك.',
-  );
+  const liveGuardian = await user('parent3');
   const liveChild = await addChild(
     liveGuardian.id,
     'يوسف الشاعر',
@@ -412,13 +373,7 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
   );
 
   // 4. The situation the whole system exists for.
-  const alertGuardian = await user(
-    'guardian.alert',
-    'دانة المحمود',
-    'Dana Almahmood',
-    'ولي أمر',
-    'التنبيه الحرج: انتهت رحلة الأمس والطفل ما زال مسجّلاً على الحافلة — التنبيه مفتوح.',
-  );
+  const alertGuardian = await user('parent4');
   const forgottenChild = await addChild(
     alertGuardian.id,
     'ليان المحمود',
@@ -430,13 +385,7 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
   );
 
   // 5. With the independent driver.
-  const vanGuardian = await user(
-    'guardian.van',
-    'شيخة الجودر',
-    'Shaikha Aljowder',
-    'ولي أمر',
-    'طفل مع سائق مستقل بدل مدرسة: الربط تمّ برقم جوال السائق.',
-  );
+  const vanGuardian = await user('parent5');
   const vanChild = await addChild(
     vanGuardian.id,
     'حمد الجودر',
@@ -447,7 +396,29 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
     independentDriver.id,
   );
 
-  // 6. A child marked absent today.
+  // 6. A family whose own driver is not registered yet: the invitation waits, nothing was sent.
+  const invitingGuardian = await user('parent6');
+  const invitedChild = await addChild(
+    invitingGuardian.id,
+    'لولوة الشيراوي',
+    'Lulwa Alshirawi',
+    school.id,
+    'مدرسة الأمل النموذجية (تجريبية)',
+    'none',
+  );
+  await db.driverInvitation.create({
+    data: {
+      studentId: invitedChild.id,
+      invitedBy: invitingGuardian.id,
+      driverName: 'عبدالله الستري',
+      driverPhoneE164: '+97339007788',
+      policyVersion: PRIVACY_POLICY_VERSION,
+      consentIp: '127.0.0.1',
+      consentUserAgent: 'demo',
+    },
+  });
+
+  // 7. A child marked absent today.
   const absentChild = await addChild(
     calmGuardian.id,
     'خالد القطان',
@@ -739,26 +710,24 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
   return accounts;
 }
 
-/** Entry point for `cli.js demo`. */
-export async function runDemo(databaseUrl: string): Promise<void> {
+/**
+ * Entry point for `cli.js demo`. With `--reset` everything already in the database is deleted
+ * first — every account, child, trip and alert — and the demo data is written fresh. That is only
+ * ever right on a demonstration server.
+ */
+export async function runDemo(
+  databaseUrl: string,
+  options: { reset?: boolean } = {},
+): Promise<void> {
   const db = new PrismaClient({ datasourceUrl: databaseUrl });
   try {
+    if (options.reset) {
+      await wipeEverything(db);
+      console.log('✓ database emptied');
+    }
     const accounts = await seedDemo(db);
     if (!accounts) {
-      // Demo accounts made before the sign-up type was recorded: put each on its own screen.
-      let repaired = 0;
-      for (const [local, signupRole] of Object.entries(SIGNUP_ROLE_OF)) {
-        const { count } = await db.user.updateMany({
-          where: { email: `${local}@${DEMO_DOMAIN}`, signupRole: { not: signupRole } },
-          data: { signupRole },
-        });
-        repaired += count;
-      }
-      console.log(
-        repaired > 0
-          ? `Demo data already present — corrected ${repaired} account types.`
-          : 'Demo data already present — nothing to do.',
-      );
+      console.log('Demo data already present — nothing to do (use --reset to rebuild it).');
       return;
     }
     console.log(`✓ ${accounts.length} demo accounts, password: ${DEMO_PASSWORD}`);

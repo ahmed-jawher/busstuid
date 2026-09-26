@@ -1,6 +1,6 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { LEGAL_VERSION } from '@wusool/shared';
+import { LEGAL_VERSION, normalizePhone } from '@wusool/shared';
 import type { Country, EnrollableOrgType, Locale, SignupRole } from '@wusool/shared';
 import { AuditService } from '../audit/audit';
 import { LegalService } from '../legal/legal.service';
@@ -66,10 +66,7 @@ export class AuthService {
    * used to discover who has an account.
    */
   async register(input: RegisterData, ip: string | null): Promise<void> {
-    const weak = checkPasswordPolicy(input.password, {
-      email: input.email,
-      names: [input.fullNameAr, input.fullNameEn],
-    });
+    const weak = checkPasswordPolicy(input.password);
     if (weak) throw Errors.badRequest(weak);
 
     const existing = await this.prisma.system.user.findUnique({ where: { email: input.email } });
@@ -179,12 +176,13 @@ export class AuthService {
   }
 
   async login(
-    email: string,
+    identifier: string,
     password: string,
     deviceInfo?: string,
     totp?: string,
+    country: Country = 'BH',
   ): Promise<TokenPair> {
-    const user = await this.findActive(email);
+    const user = await this.findForSignIn(identifier, country);
     if (!user) {
       await verifyPassword(null, password);
       throw Errors.unauthorized('invalid_credentials');
@@ -244,10 +242,7 @@ export class AuthService {
   async resetPassword(email: string, code: string, newPassword: string): Promise<void> {
     const user = await this.findActive(email);
     if (!user) throw Errors.badRequest('code_invalid');
-    const weak = checkPasswordPolicy(newPassword, {
-      email: user.email,
-      names: [user.fullNameAr, user.fullNameEn],
-    });
+    const weak = checkPasswordPolicy(newPassword);
     if (weak) throw Errors.badRequest(weak);
     await this.codes.consume(user.id, 'reset_password', code);
     const passwordHash = await hashPassword(newPassword);
@@ -267,7 +262,27 @@ export class AuthService {
   }
 
   private findActive(email: string) {
-    return this.prisma.system.user.findFirst({ where: { email, status: 'active' } });
+    return this.prisma.system.user.findFirst({
+      where: { email: email.trim().toLowerCase(), status: 'active' },
+    });
+  }
+
+  /**
+   * The person typed either their email address or their phone number. A phone number is only
+   * accepted when it belongs to exactly one account: a family may share one number between two
+   * guardians, and in that case there is no way to tell which of them is signing in, so we ask
+   * for the email address instead of guessing.
+   */
+  private async findForSignIn(identifier: string, country: Country) {
+    if (identifier.includes('@')) return this.findActive(identifier);
+    const phone = normalizePhone(identifier, country);
+    if (!phone) return null;
+    const matches = await this.prisma.system.user.findMany({
+      where: { phoneE164: phone, status: 'active' },
+      take: 2,
+    });
+    if (matches.length > 1) throw Errors.badRequest('phone_not_unique');
+    return matches[0] ?? null;
   }
 }
 

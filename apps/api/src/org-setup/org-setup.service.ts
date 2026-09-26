@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Role } from '@wusool/shared';
+import { defaultRouteName, defaultStopName, type Role } from '@wusool/shared';
 import type { z } from 'zod';
 import type {
   routeSchema,
@@ -105,18 +105,26 @@ export class OrgSetupService {
         input.defaultVehicleId,
         input.defaultDriverId,
       );
-      const { stops, ...route } = input;
+      const { stops, name, ...route } = input;
       const created = await tx.route.create({
-        data: { organizationId: ctx.orgId, ...route, daysOfWeek: [...new Set(route.daysOfWeek)] },
+        data: {
+          organizationId: ctx.orgId,
+          ...route,
+          // Both may be left out: a school should not have to invent a route name or a list of
+          // stops before its bus can run (PLAN §11).
+          name: name?.trim() || defaultRouteName(route.direction, route.plannedStart),
+          daysOfWeek: [...new Set(route.daysOfWeek)],
+        },
       });
+      const stopList = stops.length > 0 ? stops : [{ name: defaultStopName(route.direction) }];
       await tx.routeStop.createMany({
-        data: stops.map((s, i) => ({
+        data: stopList.map((s, i) => ({
           organizationId: ctx.orgId,
           routeId: created.id,
           sequence: i + 1,
           name: s.name,
-          lat: s.lat,
-          lng: s.lng,
+          lat: 'lat' in s ? s.lat : undefined,
+          lng: 'lng' in s ? s.lng : undefined,
         })),
       });
       return tx.route.findUniqueOrThrow({ where: { id: created.id }, select: ROUTE_SELECT });

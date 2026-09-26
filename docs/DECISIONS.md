@@ -428,3 +428,82 @@ Format: the decision, then why.
 - **Reading the terms mid-sign-up costs nothing:** the form is kept in session storage while it
   is being filled, except the password, which is never written down and is retyped.
 - Raising `LEGAL_VERSION` to 2026-09-25 asks every existing account to agree again.
+
+## Getting out of the user's way (owner's request, 2026-09-26)
+
+A round of changes after the owner used the app as a parent, a driver and a school in one sitting.
+The theme is the same in every one: the screen that stops a person is worse for a child's safety
+than the rule it was enforcing, because a parent who cannot sign in gets no alert at all.
+
+### Passwords
+
+- **Six characters, anything at all** — digits only is fine. The word list and the "not your own
+  name" rule are gone. A password a parent cannot remember ends up on the fridge or, worse, ends up
+  as an account they abandon. What actually answers guessing is unchanged and cheap: **ten wrong
+  passwords lock the account for fifteen minutes**, the sign-in limit is per network, and admins
+  can add a second factor.
+- **Two boxes and an eye.** Sign-up and reset ask for the password twice and let it be shown. A
+  typo in a password nobody can see is the most common way to lock yourself out of a new account.
+
+### Signing in
+
+- **The email address or the phone number**, whichever the person remembers. A number is accepted
+  only when exactly one account has it: a family may share one number between two guardians, and
+  guessing which of them is signing in is not something to be clever about — the app asks for the
+  email address instead.
+
+### "Too many requests, wait a little"
+
+- **Emails are counted per address as well as per network.** A school's wifi, a family's home and a
+  mobile network all put many people behind one address; the second parent to sign up in the same
+  minute was being told to wait for something they had not done. The real protection against mass
+  email is unchanged: five codes an hour per address, sixty seconds between them.
+- The sign-in limit rose from 10 to 60 a minute per network, for the same reason.
+
+### Trips and routes
+
+- **A trip is named after where it is going**, with the school's name beside it: "الذهاب إلى
+  المدرسة · مدرسة الأمل", not "مسار سترة". Schools were being asked to invent route names that mean
+  nothing to a driver and less to a parent.
+- **A route needs three answers**: direction, bus, driver. The days are the school week, the times
+  are the usual ones for that direction, the **name is written from the direction** if none is
+  given, and a route with **no stops gets one** at the school. Name and stops moved behind "more
+  options". A school with one bus and one driver only chooses the direction.
+- **Any name is accepted** — Arabic, English, digits, a nickname. Nothing about a name is a safety
+  rule, so nothing about a name is refused.
+- **A bus is a plate.** Type and seats have defaults (a bus with thirty seats) behind "more
+  options".
+
+### The end of a trip
+
+- **A refused end stays refused.** Pressing "end trip" with a child still on board already showed
+  the red screen and sounded the alarm; walking back to the list used to silence it. Now the red bar
+  stays at the top of the list and the alarm goes on sounding until that child is tapped off or the
+  end is forced with a written reason. Pressing "end" must never feel like it worked.
+
+### Guardians
+
+- **A driver with no account can be added by the family**: name, number, and a tick that lets us
+  speak to that driver on their behalf. **Nothing is sent to the number** (PLAN §2: no SMS) — the
+  invitation waits, and the moment that driver registers as an independent driver with the same
+  number it becomes an ordinary link request in their list, which they still have to accept. The
+  permission is kept with its version, time, address and device, like the other consents, and the
+  family can withdraw it from the child's page.
+- **A child can be added without any organisation at all**, because that is the true state of a
+  family whose driver has not signed up yet.
+- **The school is edited, not re-linked.** Correcting a name or a school is a pencil on the child's
+  page and changes nothing else; asking a school or a company to carry the child stays a separate,
+  deliberate step. A **pending** request can be withdrawn by the family; an approved one cannot,
+  because the school is carrying that child now and only the school may remove them.
+- **Back goes back.** Opening the terms from a half-filled sign-up form and pressing back returns
+  to the form (its answers are kept, never the password), instead of the start screen.
+
+### Test data
+
+- **`demo --reset` empties the database first**, including the append-only safety tables: their
+  triggers are switched off around one truncate by the migration role, which is the only role that
+  can, and switched straight back on. Only ever for a demonstration server.
+- **The accounts are `parent1@t.test` … `admin@t.test`, password `123456`.** Short enough to type on
+  a phone during a demonstration, and `.test` can never be delivered anywhere (RFC 6761), so a
+  reset code for a test account cannot reach a real person. They are listed in
+  `docs/demo-accounts.xlsx`, generated from the code so the sheet cannot drift from the server.

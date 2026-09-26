@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Outlet, useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 import { COUNTRY_DEFAULTS } from '@wusool/shared';
@@ -11,6 +11,7 @@ import {
   ChildAvatar,
   Chip,
   ErrorLine,
+  FieldLabel,
   inputClass,
   Panel,
   PersonBadge,
@@ -32,6 +33,7 @@ import { displayName, formatDate, formatTime, orgName } from '@/lib/format';
 import { useSession } from '@/lib/session';
 import type { Child, ChildTripRow, OrgSummary } from '@/lib/types';
 import { usePushReady } from '../push/NotificationSetupPage';
+import { SchoolField } from './SchoolField';
 import {
   childView,
   firstName,
@@ -345,6 +347,7 @@ export function ChildPage() {
   const alerts = useMyAlerts();
   const today = useChildToday(id);
   const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   if (child.isLoading)
     return (
@@ -377,6 +380,14 @@ export function ChildPage() {
             {t('guardian.childCode')}: <span dir="ltr">{c.publicCode}</span>
           </div>
         </div>
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="flex size-11 shrink-0 items-center justify-center rounded-full bg-surface-2 text-primary"
+          aria-label={t('gd.edit.title')}
+        >
+          <Icon name="edit" size={22} />
+        </button>
       </div>
       <div
         className={cn(
@@ -414,7 +425,7 @@ export function ChildPage() {
         {c.enrollmentRequests.map((r) => (
           <div key={r.id} className="flex items-center gap-3 border-b border-border px-4 py-3.5">
             <Icon name="apartment" className="text-muted" />
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <div className="text-[15px] font-semibold">{orgName(r.organization)}</div>
               <div className="text-[13px] text-muted">{t('gd.transportBody')}</div>
             </div>
@@ -428,8 +439,25 @@ export function ChildPage() {
             >
               {t(`enrollment.${r.status}`)}
             </span>
+            {r.status === 'pending' && <WithdrawButton childId={c.id} requestId={r.id} />}
           </div>
         ))}
+        {c.driverInvitations.map((d) => (
+          <div key={d.id} className="flex items-center gap-3 border-b border-border px-4 py-3.5">
+            <Icon name="hourglass_top" className="text-warning" />
+            <div className="min-w-0 flex-1">
+              <div className="text-[15px] font-semibold">{d.driverName}</div>
+              <div className="text-[13px] text-muted">
+                {t('gd.invite.waiting')} · <span dir="ltr">{d.driverPhoneE164}</span>
+              </div>
+            </div>
+            <CancelInviteButton childId={c.id} invitationId={d.id} />
+          </div>
+        ))}
+        <RowLink to={`/link?child=${c.id}`}>
+          <Icon name="link" className="text-muted" />
+          <span className="flex-1 text-[15px]">{t('gd.changeTransport')}</span>
+        </RowLink>
         <RowLink to={`/history?child=${c.id}`}>
           <Icon name="history" className="text-muted" />
           <span className="flex-1 text-[15px]">{t('gd.history30')}</span>
@@ -440,6 +468,7 @@ export function ChildPage() {
           <span className="flex-1 text-[15px] font-semibold">{t('guardian.deleteData')}</span>
         </RowButton>
       </Panel>
+      <EditChildSheet open={editing} onClose={() => setEditing(false)} child={c} />
       <DeleteChildSheet
         open={deleting}
         onClose={() => setDeleting(false)}
@@ -447,6 +476,133 @@ export function ChildPage() {
         name={firstName(displayName(c))}
       />
     </Screen>
+  );
+}
+
+/**
+ * Correcting what was typed: the name, and the school. Changing the school here changes the
+ * child's school — asking a transport company to carry them is a separate step, so nothing is
+ * sent to anybody by fixing a spelling (PLAN §5).
+ */
+function EditChildSheet({
+  open,
+  onClose,
+  child,
+}: {
+  open: boolean;
+  onClose: () => void;
+  child: Child;
+}) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const toast = useToast();
+  const [form, setForm] = useState({
+    fullNameAr: child.fullNameAr,
+    schoolName: child.schoolName,
+  });
+  // Reopened after a change elsewhere: start from what is stored now.
+  useEffect(() => {
+    if (open) setForm({ fullNameAr: child.fullNameAr, schoolName: child.schoolName });
+  }, [open, child.fullNameAr, child.schoolName]);
+  const save = useMutation({
+    mutationFn: () =>
+      api(`/students/${child.id}`, {
+        method: 'PATCH',
+        body: { fullNameAr: form.fullNameAr.trim(), schoolName: form.schoolName.trim() },
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['child', child.id] }),
+        qc.invalidateQueries({ queryKey: ['children'] }),
+      ]);
+      toast({ message: t('gd.edit.saved'), tone: 'success' });
+      onClose();
+    },
+  });
+  const ready = form.fullNameAr.trim().length >= 2 && form.schoolName.trim().length >= 2;
+  return (
+    <Sheet open={open} onClose={onClose} title={t('gd.edit.title')}>
+      <FieldLabel label={t('gd.add.nameAr')}>
+        <input
+          value={form.fullNameAr}
+          onChange={(e) => setForm({ ...form, fullNameAr: e.target.value })}
+          className={inputClass}
+        />
+      </FieldLabel>
+      <SchoolField
+        value={form.schoolName}
+        onChange={(schoolName) => setForm({ ...form, schoolName })}
+      />
+      {save.error && <ErrorLine>{errorMessage(save.error)}</ErrorLine>}
+      <button
+        type="button"
+        disabled={!ready || save.isPending}
+        onClick={() => save.mutate()}
+        className={cn(bigButton, 'min-h-13 rounded-[14px] bg-primary text-primary-foreground')}
+      >
+        {t('common.save')}
+      </button>
+      <button type="button" onClick={onClose} className="min-h-12 text-[15px] font-semibold">
+        {t('common.cancel')}
+      </button>
+    </Sheet>
+  );
+}
+
+/** Takes a pending link request back — the family picked the wrong school. */
+function WithdrawButton({ childId, requestId }: { childId: string; requestId: string }) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const toast = useToast();
+  const withdraw = useMutation({
+    mutationFn: () => api(`/students/${childId}/enrollments/${requestId}`, { method: 'DELETE' }),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['child', childId] }),
+        qc.invalidateQueries({ queryKey: ['children'] }),
+      ]);
+      toast({ message: t('gd.withdrawn'), tone: 'success' });
+    },
+    onError: (e) => toast({ message: errorMessage(e), tone: 'error' }),
+  });
+  return (
+    <button
+      type="button"
+      disabled={withdraw.isPending}
+      onClick={() => withdraw.mutate()}
+      className="min-h-10 rounded-[10px] bg-surface-2 px-3 text-[13px] font-semibold"
+    >
+      {t('gd.withdraw')}
+    </button>
+  );
+}
+
+/** Stops following up a driver the family no longer uses. */
+function CancelInviteButton({ childId, invitationId }: { childId: string; invitationId: string }) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const toast = useToast();
+  const cancel = useMutation({
+    mutationFn: () =>
+      api(`/students/${childId}/driver-invitations/${invitationId}`, { method: 'DELETE' }),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['child', childId] }),
+        qc.invalidateQueries({ queryKey: ['children'] }),
+      ]);
+      toast({ message: t('gd.invite.cancelled'), tone: 'success' });
+    },
+    onError: (e) => toast({ message: errorMessage(e), tone: 'error' }),
+  });
+  return (
+    <button
+      type="button"
+      disabled={cancel.isPending}
+      onClick={() => cancel.mutate()}
+      className="min-h-10 rounded-[10px] bg-surface-2 px-3 text-[13px] font-semibold"
+    >
+      {t('common.cancel')}
+    </button>
   );
 }
 
@@ -801,7 +957,9 @@ export function LinkChildPage() {
   const toast = useToast();
   const navigate = useNavigate();
   const children = useChildren();
-  const [childId, setChildId] = useState('');
+  const [params] = useSearchParams();
+  // Opened from a child's page: that child is the one being moved.
+  const [childId, setChildId] = useState(params.get('child') ?? '');
   const [orgId, setOrgId] = useState('');
   const kid = childId || children.data?.[0]?.id || '';
   const directory = useDirectory();

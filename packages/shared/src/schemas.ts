@@ -14,8 +14,13 @@ import { normalizePhone } from './phone';
 
 export const emailSchema = z.string().trim().toLowerCase().pipe(z.email().max(254));
 
-/** Length only; the API additionally rejects common and personal passwords. */
-export const passwordSchema = z.string().min(8, 'password_too_short').max(128, 'password_too_long');
+/**
+ * Six characters, anything at all — digits only is fine. A password a parent cannot remember is
+ * written on the fridge, and the account they cannot sign in to is the one that stops telling them
+ * where their child is (docs/DECISIONS.md). Guessing is held back by the per-account lockout
+ * instead.
+ */
+export const passwordSchema = z.string().min(6, 'password_too_short').max(128, 'password_too_long');
 
 export const codeSchema = z
   .string()
@@ -98,13 +103,29 @@ export const resendCodeSchema = z.object({
   purpose: z.enum(['verify_email', 'reset_password']).default('verify_email'),
 });
 
-export const loginSchema = z.object({
-  email: emailSchema,
-  password: z.string().max(128),
-  /** Authenticator code, required once TOTP is enabled on the account. */
-  totp: codeSchema.optional(),
-  deviceInfo,
-});
+/**
+ * The email address or the phone number, whichever the person remembers. `identifier` is what the
+ * app sends; `email` is still accepted so older builds keep working.
+ */
+export const loginSchema = z
+  .object({
+    identifier: z.string().trim().min(3).max(254).optional(),
+    email: z.string().trim().max(254).optional(),
+    password: z.string().max(128),
+    /** Needed to read a phone number as a local one; the API defaults to Bahrain. */
+    country: countrySchema.optional(),
+    /** Authenticator code, required once TOTP is enabled on the account. */
+    totp: codeSchema.optional(),
+    deviceInfo,
+  })
+  .transform((v, ctx) => {
+    const identifier = (v.identifier ?? v.email ?? '').trim();
+    if (identifier.length < 3) {
+      ctx.addIssue({ code: 'custom', path: ['identifier'], message: 'identifier_required' });
+      return z.NEVER;
+    }
+    return { ...v, identifier };
+  });
 export type LoginInput = z.infer<typeof loginSchema>;
 
 export const refreshSchema = z.object({ refreshToken: z.string().min(20).max(200) });
@@ -178,13 +199,42 @@ export const createStudentSchema = z.object({
   schoolName: z.string().trim().min(2).max(150),
   notes: z.string().trim().max(500).optional(),
   relationship: z.enum(['mother', 'father', 'guardian', 'other']).default('guardian'),
-  organizationId: z.uuid(),
+  /**
+   * The school or company to ask for a link. Left out when the family's driver has no account
+   * yet: the child is added first, and the driver is invited straight after (PLAN §5).
+   */
+  organizationId: z.uuid().optional(),
   // Multipart sends strings; consent must be an explicit "true" (PLAN §14).
   consent: z.literal('true', { error: 'consent_required' }),
 });
 export type CreateStudentInput = z.infer<typeof createStudentSchema>;
 
 export const enrollSchema = z.object({ organizationId: z.uuid() });
+
+/** What a guardian may correct on a child's profile later (PLAN §5). */
+export const updateStudentSchema = z
+  .object({
+    fullNameAr: nameSchema.optional(),
+    fullNameEn: nameSchema.nullable().optional(),
+    dateOfBirth: isoDate.optional(),
+    schoolName: z.string().trim().min(2).max(150).optional(),
+    notes: z.string().trim().max(500).nullable().optional(),
+  })
+  .refine((v) => Object.values(v).some((x) => x !== undefined), { error: 'nothing_to_update' });
+export type UpdateStudentInput = z.infer<typeof updateStudentSchema>;
+
+/**
+ * A driver the family uses who has no account yet. Nothing is sent to the number: the record lets
+ * the operator invite them, and it becomes a link request the moment that driver signs up.
+ * `consentContact` is the guardian allowing us to name them to that driver (PLAN §14).
+ */
+export const inviteDriverSchema = z
+  .object({
+    nameAr: nameSchema,
+    ...phoneFields,
+    consentContact: z.literal(true, { error: 'contact_consent_required' }),
+  })
+  .transform(withNormalizedPhone);
 
 export const decisionSchema = z.object({ note: z.string().trim().max(500).optional() });
 
@@ -221,30 +271,31 @@ const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'time_format');
 const coordinate = (min: number, max: number) => z.number().min(min).max(max);
 
 export const vehicleSchema = z.object({
-  plateNumber: z.string().trim().min(2).max(20),
-  type: z.enum(['bus', 'van', 'car']),
-  capacity: z.number().int().min(1).max(100),
+  plateNumber: z.string().trim().min(1).max(20),
+  type: z.enum(['bus', 'van', 'car']).default('bus'),
+  capacity: z.number().int().min(1).max(100).default(20),
 });
 export const updateVehicleSchema = vehicleSchema
   .extend({ status: z.enum(['active', 'inactive']) })
   .partial();
 
 export const stopSchema = z.object({
-  name: z.string().trim().min(2).max(120),
+  name: z.string().trim().min(1).max(120),
   lat: coordinate(-90, 90).optional(),
   lng: coordinate(-180, 180).optional(),
 });
 
 export const routeSchema = z
   .object({
-    name: z.string().trim().min(2).max(120),
+    /** Free text — Arabic, English, digits, a nickname. Left out, the API writes it. */
+    name: z.string().trim().min(1).max(120).optional(),
     direction: z.enum(['to_school', 'to_home']),
     defaultVehicleId: z.uuid(),
     defaultDriverId: z.uuid(),
     plannedStart: hhmm,
     plannedEnd: hhmm,
-    daysOfWeek: z.array(z.number().int().min(1).max(7)).min(1).max(7),
-    stops: z.array(stopSchema).min(1).max(60),
+    daysOfWeek: z.array(z.number().int().min(1).max(7)).min(1).max(7).default([7, 1, 2, 3, 4]),
+    stops: z.array(stopSchema).max(60).default([]),
   })
   .refine((r) => r.plannedStart < r.plannedEnd, {
     path: ['plannedEnd'],
@@ -252,7 +303,7 @@ export const routeSchema = z
   });
 
 export const updateRouteSchema = z.object({
-  name: z.string().trim().min(2).max(120).optional(),
+  name: z.string().trim().min(1).max(120).optional(),
   defaultVehicleId: z.uuid().optional(),
   defaultDriverId: z.uuid().optional(),
   plannedStart: hhmm.optional(),

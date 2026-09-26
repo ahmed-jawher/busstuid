@@ -15,16 +15,37 @@ describe('rate limits and security headers', () => {
   });
   afterAll(() => t?.close());
 
-  it('limits password guessing per client IP', async () => {
+  it('limits password guessing per client address', async () => {
+    // 60 a minute: a school, a family or a mobile network shares one address, and the real
+    // answer to guessing is the per-account lockout (auth.test.ts).
     const statuses: number[] = [];
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 62; i++) {
       const res = await t.http
         .post('/v1/auth/login')
-        .send({ email: `nobody${i}@example.com`, password: 'x' });
+        .send({ identifier: `nobody${i}@example.com`, password: 'x' });
       statuses.push(res.status);
     }
-    expect(statuses.slice(0, 10).every((s) => s === 401)).toBe(true);
-    expect(statuses.slice(10)).toEqual([429, 429]);
+    expect(statuses.slice(0, 60).every((s) => s === 401)).toBe(true);
+    expect(statuses.slice(60)).toEqual([429, 429]);
+  });
+
+  it('counts the emails it sends per address, not only per network', async () => {
+    // Two parents signing up from one school's wifi must not take each other's turn: this is
+    // what the "too many requests, wait a little" reports were (docs/DECISIONS.md, 2026-09-26).
+    const body = (email: string) => ({
+      email,
+      password: PASSWORD,
+      fullNameAr: 'ولي أمر',
+      phone: '36009911',
+      country: 'BH',
+      acceptTerms: true,
+    });
+    for (let i = 0; i < 8; i++) {
+      await t.http
+        .post('/v1/auth/register')
+        .send(body(`crowd${i}@example.com`))
+        .expect(202);
+    }
   });
 
   it('sets security headers and never exposes the framework', async () => {

@@ -41,6 +41,22 @@ export type Locale = (typeof LOCALES)[number];
 export const TRIP_DIRECTIONS = values('to_school', 'to_home');
 export type TripDirection = (typeof TRIP_DIRECTIONS)[number];
 
+/**
+ * What a trip is called when nobody named it: where it is going, and when it leaves. Schools were
+ * being asked to invent names like "Sitra route" that mean nothing to a parent, and a route with no
+ * name of its own is the common case (docs/DECISIONS.md, 2026-09-26). Arabic, like the rest of the
+ * data a school types; the app shows the direction in the reader's own language beside it.
+ */
+export function defaultRouteName(direction: TripDirection, plannedStart: string): string {
+  const where = direction === 'to_school' ? 'ذهاب إلى المدرسة' : 'عودة إلى البيت';
+  return `${where} ${plannedStart}`;
+}
+
+/** The one stop a route gets when the school listed none. */
+export function defaultStopName(direction: TripDirection): string {
+  return direction === 'to_school' ? 'المدرسة' : 'البيت';
+}
+
 export const TRIP_STATUSES = values(
   'scheduled',
   'in_progress',

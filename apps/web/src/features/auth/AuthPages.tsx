@@ -13,6 +13,7 @@ import {
   FieldLabel,
   IconBadge,
   inputClass,
+  PasswordField,
   PhoneInput,
   Screen,
   Segmented,
@@ -66,14 +67,20 @@ export function LoginPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [params] = useSearchParams();
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [totp, setTotp] = useState('');
   const login = useMutation({
     mutationFn: () =>
       api<Tokens>('/auth/login', {
         method: 'POST',
-        body: { email, password, ...(totp ? { totp } : {}) },
+        // Either the email address or the local phone number; the API works out which.
+        body: {
+          identifier: identifier.replace(/\s+/g, ''),
+          password,
+          country: 'BH',
+          ...(totp ? { totp } : {}),
+        },
       }),
     onSuccess: async (tokens) => {
       await session.store(tokens);
@@ -99,28 +106,28 @@ export function LoginPage() {
           <h1 className="text-[28px] font-bold">{t('onb.welcomeTitle')}</h1>
           <p className="mt-1 text-sm text-muted">{t('onb.welcomeSub')}</p>
         </div>
-        <FieldLabel label={t('auth.email')}>
+        <FieldLabel label={t('auth.emailOrPhone')} hint={t('auth.emailOrPhoneHint')}>
           <input
-            type="email"
+            type="text"
             dir="ltr"
-            autoComplete="email"
+            inputMode="email"
+            autoComplete="username"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
             placeholder="name@example.com"
             className={cn(inputClass, 'text-end')}
           />
         </FieldLabel>
-        <FieldLabel label={t('auth.password')}>
-          <input
-            type="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={inputClass}
-          />
-        </FieldLabel>
+        <PasswordField
+          label={t('auth.password')}
+          value={password}
+          onChange={setPassword}
+          autoComplete="current-password"
+        />
         {needsTotp && (
           <FieldLabel label={t('auth.totpCode')} hint={t('auth.totpHint')}>
             <input
@@ -272,14 +279,17 @@ function RolePicker({
   );
 }
 
-/** Scores 0-4 like the design: length 8 and 12, letters with digits, a symbol. */
+/** Six characters is accepted (packages/shared: passwordSchema); the meter only advises. */
+export const MIN_PASSWORD = 6;
+
+/** Scores 0-4: long enough, longer, letters with digits, a symbol. */
 function passwordScore(pw: string): number {
   let s = 0;
-  if (pw.length >= 8) s++;
-  if (pw.length >= 12) s++;
+  if (pw.length >= MIN_PASSWORD) s++;
+  if (pw.length >= 10) s++;
   if (/[0-9]/.test(pw) && /[a-zA-Z؀-ۿ]/.test(pw)) s++;
   if (/[^a-zA-Z0-9؀-ۿ]/.test(pw)) s++;
-  return pw.length < 8 ? 0 : s;
+  return pw.length < MIN_PASSWORD ? 0 : s;
 }
 
 const STRENGTH = ['', 'bg-alert', 'bg-warning', 'bg-primary', 'bg-status-alighted'];
@@ -332,6 +342,7 @@ export function RegisterPage() {
     nameEn: '',
     ...readDraft().org,
   }));
+  const [confirm, setConfirm] = useState('');
   const [tried, setTried] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const set = (k: keyof typeof form) => (v: string) => setForm({ ...form, [k]: v });
@@ -370,7 +381,8 @@ export function RegisterPage() {
   if (form.fullNameAr.trim().length < 2) problems.fullNameAr = t('onb.err.name');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) problems.email = t('onb.err.email');
   if (form.phone.replace(/\D/g, '').length !== 8) problems.phone = t('onb.err.phone');
-  if (form.password.length < 8) problems.password = t('onb.err.password');
+  if (form.password.length < MIN_PASSWORD) problems.password = t('onb.err.password');
+  if (confirm !== form.password) problems.confirmPassword = t('onb.err.confirmPassword');
   if (role.role === 'organization' && org.nameAr.trim().length < 2)
     problems['organization.nameAr'] = t('onb.err.org');
   const server = fieldErrors(register.error);
@@ -443,6 +455,9 @@ export function RegisterPage() {
             type="email"
             dir="ltr"
             autoComplete="email"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             value={form.email}
             onChange={(e) => set('email')(e.target.value)}
             placeholder="name@example.com"
@@ -457,21 +472,23 @@ export function RegisterPage() {
         >
           <PhoneInput value={form.phone} onChange={set('phone')} invalid={!!err('phone')} />
         </FieldLabel>
-        <label className="flex flex-col gap-1.5 text-sm font-semibold">
-          {t('auth.password')}
-          <input
-            type="password"
-            autoComplete="new-password"
-            value={form.password}
-            onChange={(e) => set('password')(e.target.value)}
-            aria-invalid={!!err('password') || undefined}
-            className={inputClass}
-          />
+        <PasswordField
+          label={t('auth.password')}
+          value={form.password}
+          onChange={set('password')}
+          autoComplete="new-password"
+          error={err('password')}
+        >
           <PasswordStrength password={form.password} />
-          {err('password') && tried && problems.password === undefined && (
-            <span className="text-[12.5px] font-semibold text-alert">{err('password')}</span>
-          )}
-        </label>
+        </PasswordField>
+        <PasswordField
+          label={t('auth.confirmPassword')}
+          value={confirm}
+          onChange={setConfirm}
+          autoComplete="new-password"
+          error={err('confirmPassword')}
+          hint={t('auth.confirmPasswordHint')}
+        />
         {role.role === 'staff_driver' && (
           <p className="text-[13.5px] text-muted">{t('signup.staffDriverNote')}</p>
         )}
@@ -735,6 +752,7 @@ export function ResetPasswordPage() {
   const [email, setEmail] = useState(params.get('email') ?? '');
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const reset = useMutation({
     mutationFn: () =>
       api('/auth/reset-password', { method: 'POST', body: { email, code, newPassword } }),
@@ -765,24 +783,31 @@ export function ResetPasswordPage() {
           </FieldLabel>
         )}
         <CodeBoxes value={code} onChange={setCode} invalid={!!reset.error} />
-        <label className="flex flex-col gap-1.5 text-sm font-semibold">
-          {t('auth.newPassword')}
-          <input
-            type="password"
-            autoComplete="new-password"
-            minLength={8}
-            required
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            className={inputClass}
-          />
+        <PasswordField
+          label={t('auth.newPassword')}
+          value={newPassword}
+          onChange={setNewPassword}
+          autoComplete="new-password"
+        >
           <PasswordStrength password={newPassword} />
-        </label>
+        </PasswordField>
+        <PasswordField
+          label={t('auth.confirmPassword')}
+          value={confirm}
+          onChange={setConfirm}
+          autoComplete="new-password"
+          error={confirm && confirm !== newPassword ? t('onb.err.confirmPassword') : null}
+        />
         {reset.error && <ErrorLine>{errorMessage(reset.error)}</ErrorLine>}
         <div className="flex-1" />
         <button
           type="submit"
-          disabled={reset.isPending || code.length !== 6}
+          disabled={
+            reset.isPending ||
+            code.length !== 6 ||
+            newPassword.length < MIN_PASSWORD ||
+            confirm !== newPassword
+          }
           className={cn(bigButton, 'bg-primary text-primary-foreground')}
         >
           {t('auth.resetPassword')}
