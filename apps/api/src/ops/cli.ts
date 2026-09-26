@@ -5,7 +5,8 @@
 //   backup             encrypted dump into BACKUP_DIR, keep BACKUP_KEEP newest
 //   backup --daily     same, then repeat every 24 h (the production backup service)
 //   restore <file> [--into <url>] [--yes]
-//   demo               demo accounts and trips for showing the system (docs/DEMO.md)
+//   demo [--reset]     test accounts and trips for showing the system (docs/DEMO.md);
+//                      --reset deletes everything in the database first
 import { provisionLoginRoles } from '../database/roles';
 import { createBackup, pruneBackups, restoreBackup } from './backup';
 import { runDemo } from './demo';
@@ -40,7 +41,9 @@ async function main(argv: string[]): Promise<void> {
       console.log('✓ database login roles ready (wusool_app, wusool_system)');
       return;
     case 'demo':
-      await runDemo(required('DATABASE_ADMIN_URL'));
+      // The switches are read inside runDemo, where a test can hold them: forwarding a parsed
+      // object from here is exactly the kind of wiring that breaks in silence.
+      await runDemo(required('DATABASE_ADMIN_URL'), args);
       return;
     case 'backup':
       await backupOnce();
