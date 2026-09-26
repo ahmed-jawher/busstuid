@@ -1,8 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
-import { PRIVACY_POLICY_VERSION, type DirectorySchool } from '@wusool/shared';
+import { PRIVACY_POLICY_VERSION } from '@wusool/shared';
 import { Icon, type IconName } from '@/components/Icon';
 import {
   BackBar,
@@ -24,77 +24,9 @@ import { orgName } from '@/lib/format';
 import type { OrgSummary } from '@/lib/types';
 import { platform } from '@/platform';
 import { OrgList, useDirectory } from './GuardianPages';
+import { SchoolField } from './SchoolField';
 
-/**
- * Schools published by the ministry (docs: packages/shared/src/schools.ts). Picking from the
- * list means every family writes the same school the same way; a school that is not listed yet
- * can still be typed.
- */
-export function SchoolField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const { t, i18n } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const box = useRef<HTMLDivElement>(null);
-  // Close the list on a touch or click anywhere outside the field, or on Escape.
-  useEffect(() => {
-    if (!open) return;
-    const onPointer = (e: PointerEvent) => {
-      if (!box.current?.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('pointerdown', onPointer);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('pointerdown', onPointer);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-  const schools = useQuery({
-    queryKey: ['schools', value],
-    queryFn: () => api<DirectorySchool[]>(`/schools?country=BH&q=${encodeURIComponent(value)}`),
-    enabled: open,
-  });
-  const label = (s: DirectorySchool) => (i18n.language === 'en' ? s.en : s.ar);
-  const matches = (schools.data ?? []).filter((s) => label(s) !== value.trim());
-  return (
-    <div ref={box} className="flex flex-col gap-1.5">
-      <FieldLabel label={t('guardian.schoolName')}>
-        <input
-          value={value}
-          onChange={(e) => {
-            onChange(e.target.value);
-            setOpen(true);
-          }}
-          onFocus={() => setOpen(true)}
-          onClick={() => setOpen(true)}
-          placeholder={t('gd.add.schoolPh')}
-          autoComplete="off"
-          className={inputClass}
-        />
-      </FieldLabel>
-      <p className="text-xs text-muted">{t('gd.add.schoolHint')}</p>
-      {open && matches.length > 0 && (
-        <ul className="max-h-56 overflow-y-auto rounded-[14px] border border-border bg-surface">
-          {matches.map((s) => (
-            <li key={s.ar}>
-              <button
-                type="button"
-                onClick={() => {
-                  onChange(label(s));
-                  setOpen(false);
-                }}
-                className="flex min-h-12 w-full items-center px-3.5 py-2 text-start text-[15px]"
-              >
-                {label(s)}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
+export { SchoolField };
 
 interface DriverMatch extends OrgSummary {
   driverNameAr: string;
@@ -126,6 +58,8 @@ export function AddChildPage() {
   const [driverPhone, setDriverPhone] = useState('');
   const [driverMatch, setDriverMatch] = useState<DriverMatch | null>(null);
   const [driverConfirmed, setDriverConfirmed] = useState(false);
+  // The driver has no account yet: the family writes their name and lets us speak to them.
+  const [invite, setInvite] = useState({ open: false, nameAr: '', consent: false });
   const [photo, setPhoto] = useState<Blob | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
@@ -152,9 +86,13 @@ export function AddChildPage() {
     onSuccess: (m) => {
       setDriverMatch(m);
       setDriverConfirmed(false);
+      setInvite({ open: false, nameAr: '', consent: false });
     },
     onError: () => setDriverMatch(null),
   });
+  /** The number was searched for and no registered driver came back. */
+  const notRegistered = mode === 'driver' && lookup.isError && !driverMatch;
+  const inviting = invite.open && invite.nameAr.trim().length >= 2 && invite.consent;
 
   const targetOrg = mode === 'directory' ? orgId : driverConfirmed ? (driverMatch?.id ?? '') : '';
   const targetName =
@@ -162,20 +100,34 @@ export function AddChildPage() {
       ? orgName(directory.data?.find((o) => o.id === orgId) ?? { nameAr: '' })
       : driverMatch
         ? orgName(driverMatch)
-        : '';
+        : invite.nameAr.trim();
 
   const submit = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       const body = new FormData();
       body.set('fullNameAr', form.fullNameAr);
       if (form.fullNameEn.trim()) body.set('fullNameEn', form.fullNameEn);
       body.set('dateOfBirth', form.dateOfBirth);
       body.set('schoolName', form.schoolName);
       body.set('relationship', form.relationship);
-      body.set('organizationId', targetOrg);
+      if (targetOrg) body.set('organizationId', targetOrg);
       body.set('consent', consent ? 'true' : 'false');
       body.set('photo', photo!, 'photo.jpg');
-      return api('/students', { method: 'POST', body });
+      const child = await api<{ id: string }>('/students', { method: 'POST', body });
+      // A driver with no account is recorded against the child just created. Nothing is sent to
+      // the number (PLAN §2: no SMS) — it waits until that driver registers.
+      if (!targetOrg && inviting) {
+        await api(`/students/${child.id}/driver-invitations`, {
+          method: 'POST',
+          body: {
+            nameAr: invite.nameAr.trim(),
+            phone: driverPhone.replace(/\D/g, ''),
+            country: 'BH',
+            consentContact: true,
+          },
+        });
+      }
+      return child;
     },
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['children'] });
@@ -187,7 +139,7 @@ export function AddChildPage() {
   const next = () => {
     if (step === 1 && (!form.fullNameAr.trim() || !form.dateOfBirth || !form.schoolName.trim()))
       return setErr(t('gd.add.err1'));
-    if (step === 2 && !targetOrg)
+    if (step === 2 && !targetOrg && !inviting)
       return setErr(mode === 'directory' ? t('gd.add.err2org') : t('gd.add.err2driver'));
     if (step === 3 && !photo) return setErr(t('gd.add.err3'));
     if (step === 4) {
@@ -345,7 +297,62 @@ export function AddChildPage() {
                 >
                   {t('guardian.findDriver')}
                 </button>
-                {lookup.error && <ErrorLine>{errorMessage(lookup.error)}</ErrorLine>}
+                {notRegistered && !invite.open && (
+                  <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-primary bg-surface p-4">
+                    <div className="text-[15px] font-bold">{t('gd.add.driverNotFound')}</div>
+                    <p className="text-[13.5px] leading-relaxed text-muted">
+                      {t('gd.add.driverNotFoundBody')}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setInvite({ ...invite, open: true })}
+                      className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary text-[15px] font-bold text-primary-foreground"
+                    >
+                      <Icon name="person_add" size={20} />
+                      {t('gd.add.addDriver')}
+                    </button>
+                  </div>
+                )}
+                {invite.open && (
+                  <div
+                    className={cn(
+                      'flex flex-col gap-3 rounded-2xl bg-surface p-4',
+                      inviting ? 'border-2 border-status-alighted' : 'border border-border',
+                    )}
+                  >
+                    <div className="text-[15px] font-bold">{t('gd.add.newDriverTitle')}</div>
+                    <FieldLabel label={t('gd.add.driverName')}>
+                      <input
+                        value={invite.nameAr}
+                        onChange={(e) => {
+                          setInvite({ ...invite, nameAr: e.target.value });
+                          setErr('');
+                        }}
+                        placeholder={t('gd.add.driverNamePh')}
+                        className={inputClass}
+                      />
+                    </FieldLabel>
+                    <div className="text-[13px] text-muted">
+                      {t('guardian.driverPhone')}: <span dir="ltr">+973 {driverPhone}</span>
+                    </div>
+                    <label className="flex items-start gap-3 rounded-[14px] bg-surface-2 p-3.5 text-[13.5px] leading-relaxed">
+                      <input
+                        type="checkbox"
+                        checked={invite.consent}
+                        onChange={(e) => {
+                          setInvite({ ...invite, consent: e.target.checked });
+                          setErr('');
+                        }}
+                        className="mt-0.5 size-5 shrink-0 accent-primary"
+                      />
+                      <span>{t('gd.add.driverConsent')}</span>
+                    </label>
+                    <p className="text-xs text-muted">{t('gd.add.driverConsentNote')}</p>
+                  </div>
+                )}
+                {lookup.error && !notRegistered && (
+                  <ErrorLine>{errorMessage(lookup.error)}</ErrorLine>
+                )}
                 {driverMatch && (
                   <div
                     className={cn(
@@ -498,7 +505,9 @@ export function AddChildPage() {
             <IconBadge icon="send" size={88} round />
             <h2 className="mt-1.5 text-2xl font-bold">{t('gd.add.sentTitle')}</h2>
             <p className="text-[15.5px] leading-relaxed text-muted">
-              {t('gd.add.sentBody', { org: targetName, name: form.fullNameAr.trim() })}
+              {targetOrg
+                ? t('gd.add.sentBody', { org: targetName, name: form.fullNameAr.trim() })
+                : t('gd.add.invitedBody', { driver: targetName, name: form.fullNameAr.trim() })}
             </p>
             <button
               type="button"
@@ -530,7 +539,11 @@ export function AddChildPage() {
               'mx-auto max-w-lg min-h-13.5 rounded-[14px] bg-primary text-base text-primary-foreground',
             )}
           >
-            {step === 4 ? t('guardian.submitChild') : t('common.continue')}
+            {step === 4
+              ? targetOrg
+                ? t('guardian.submitChild')
+                : t('gd.add.submitInvited')
+              : t('common.continue')}
           </button>
         </div>
       )}

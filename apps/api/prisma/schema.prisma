@@ -90,6 +90,12 @@ enum DevicePlatform {
   ios
 }
 
+enum DriverInvitationStatus {
+  pending
+  linked
+  cancelled
+}
+
 enum EnrollmentStatus {
   pending
   approved
@@ -211,6 +217,7 @@ model Organization {
   deletedAt DateTime?          @map("deleted_at") @db.Timestamptz(3)
 
   memberships        Membership[]
+  driverInvitations  DriverInvitation[]
   enrollmentRequests EnrollmentRequest[]
   orgStudents        OrgStudent[]
   vehicles           Vehicle[]
@@ -259,6 +266,7 @@ model User {
   deletedAt                DateTime?  @map("deleted_at") @db.Timestamptz(3)
 
   memberships       Membership[]
+  driverInvitations DriverInvitation[]
   legalAcceptances  LegalAcceptance[]
   emailCodes        EmailCode[]
   pushSubscriptions PushSubscription[]
@@ -383,6 +391,7 @@ model Student {
 
   photo              StudentPhoto?
   guardians          StudentGuardian[]
+  driverInvitations  DriverInvitation[]
   enrollmentRequests EnrollmentRequest[]
   orgStudents        OrgStudent[]
   consents           Consent[]
@@ -438,6 +447,35 @@ model EnrollmentRequest {
   @@index([organizationId, status])
   @@index([studentId])
   @@map("enrollment_requests")
+}
+
+/// A driver a family already uses who has no account yet. Nothing is sent to the number (PLAN §2:
+/// no SMS); the row is what lets the operator invite them, and it becomes an EnrollmentRequest the
+/// moment that driver registers with the same number.
+model DriverInvitation {
+  id              String                 @id @default(uuid(7)) @db.Uuid
+  studentId       String                 @map("student_id") @db.Uuid
+  invitedBy       String                 @map("invited_by") @db.Uuid
+  driverName      String                 @map("driver_name")
+  driverPhoneE164 String                 @map("driver_phone_e164")
+  status          DriverInvitationStatus @default(pending)
+  /// The guardian allowing us to name them and their child to that driver (PLAN §14).
+  contactConsentAt DateTime              @default(now()) @map("contact_consent_at") @db.Timestamptz(3)
+  policyVersion    String                @map("policy_version")
+  consentIp        String?               @map("consent_ip")
+  consentUserAgent String?               @map("consent_user_agent")
+  linkedOrganizationId String?           @map("linked_organization_id") @db.Uuid
+  linkedAt             DateTime?         @map("linked_at") @db.Timestamptz(3)
+  createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  student            Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  guardian           User          @relation(fields: [invitedBy], references: [id], onDelete: Cascade)
+  linkedOrganization Organization? @relation(fields: [linkedOrganizationId], references: [id], onDelete: SetNull)
+
+  @@index([studentId])
+  @@index([invitedBy])
+  @@map("driver_invitations")
 }
 
 model OrgStudent {

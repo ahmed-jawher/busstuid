@@ -61,6 +61,13 @@ export interface Child {
     createdAt: string;
     organization: { id: string; type: OrganizationType; nameAr: string; nameEn: string | null };
   }[];
+  /** Drivers the family named who have no account yet; they are waiting, nothing was sent. */
+  driverInvitations: {
+    id: string;
+    driverName: string;
+    driverPhoneE164: string;
+    createdAt: string;
+  }[];
 }
 
 export interface Counts {
@@ -124,6 +131,7 @@ export interface Manifest {
   endedAt: string | null;
   route: { name: string } | null;
   vehicle: { plateNumber: string; type: string };
+  organization: { id: string; nameAr: string; nameEn: string | null };
   students: ManifestStudent[];
   counts: Counts;
 }

@@ -75,6 +75,38 @@ export async function createOrganization(tx: Tx, userId: string, input: NewOrgan
   // An independent driver is the admin of their own organisation and its driver.
   if (independent) {
     await tx.membership.create({ data: { userId, organizationId: org.id, role: 'driver' } });
+    await claimDriverInvitations(tx, org.id, user.phoneE164);
   }
   return org;
+}
+
+/**
+ * Families who added this driver before they had an account (PLAN §5). Their invitations become
+ * ordinary link requests, waiting in the driver's own list for them to accept — so a guardian who
+ * wrote the number weeks ago does not have to do it again, and the driver still decides.
+ */
+async function claimDriverInvitations(tx: Tx, organizationId: string, phone: string): Promise<void> {
+  const waiting = await tx.driverInvitation.findMany({
+    where: { driverPhoneE164: phone, status: 'pending', student: { deletedAt: null } },
+    select: { id: true, studentId: true, invitedBy: true },
+  });
+  for (const invitation of waiting) {
+    const already = await tx.enrollmentRequest.findFirst({
+      where: { studentId: invitation.studentId, organizationId, status: 'pending' },
+      select: { id: true },
+    });
+    if (!already) {
+      await tx.enrollmentRequest.create({
+        data: {
+          studentId: invitation.studentId,
+          organizationId,
+          requestedBy: invitation.invitedBy,
+        },
+      });
+    }
+    await tx.driverInvitation.update({
+      where: { id: invitation.id },
+      data: { status: 'linked', linkedOrganizationId: organizationId, linkedAt: new Date() },
+    });
+  }
 }

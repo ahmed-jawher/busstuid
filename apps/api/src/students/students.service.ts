@@ -1,5 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { PRIVACY_POLICY_VERSION, type CreateStudentInput } from '@wusool/shared';
+import {
+  PRIVACY_POLICY_VERSION,
+  type CreateStudentInput,
+  type UpdateStudentInput,
+} from '@wusool/shared';
 import { Errors } from '../common/api-error';
 import { APP_CONFIG, type AppConfig } from '../config/env';
 import { PrismaService, type Tx } from '../database/prisma.service';
@@ -28,6 +32,11 @@ const CHILD_SELECT = {
     },
     orderBy: { createdAt: 'desc' },
   },
+  driverInvitations: {
+    where: { status: 'pending' },
+    select: { id: true, driverName: true, driverPhoneE164: true, createdAt: true },
+    orderBy: { createdAt: 'desc' },
+  },
 } as const;
 
 @Injectable()
@@ -46,7 +55,7 @@ export class StudentsService {
    * request to the transport organisation — all in one transaction.
    */
   async create(guardianId: string, input: CreateStudentInput, photo: Buffer) {
-    await this.assertOrganizationAcceptsStudents(input.organizationId);
+    if (input.organizationId) await this.assertOrganizationAcceptsStudents(input.organizationId);
     const processed = await processStudentPhoto(photo);
     const dob = parseBirthDate(input.dateOfBirth);
 
@@ -80,16 +89,112 @@ export class StudentsService {
         },
       });
       await tx.studentPhoto.create({ data: { studentId: student.id, ...processed } });
-      await tx.enrollmentRequest.create({
-        data: {
-          studentId: student.id,
-          organizationId: input.organizationId,
-          requestedBy: guardianId,
-        },
-      });
+      if (input.organizationId) {
+        await tx.enrollmentRequest.create({
+          data: {
+            studentId: student.id,
+            organizationId: input.organizationId,
+            requestedBy: guardianId,
+          },
+        });
+      }
       return tx.student.findUniqueOrThrow({ where: { id: student.id }, select: CHILD_SELECT });
     });
     return this.toChild(child);
+  }
+
+  /**
+   * Corrects a child's profile (PLAN §5). The school a family typed wrongly, or the child who
+   * changed school, is edited here — linking to a transport organisation is a separate, deliberate
+   * step, so nothing is re-sent to anybody by changing a name.
+   */
+  async update(guardianId: string, studentId: string, input: UpdateStudentInput) {
+    const child = await this.prisma.withContext({ userId: guardianId }, async (tx) => {
+      await this.findGuarded(tx, guardianId, studentId);
+      await tx.student.update({
+        where: { id: studentId },
+        data: {
+          ...(input.fullNameAr !== undefined ? { fullNameAr: input.fullNameAr } : {}),
+          ...(input.fullNameEn !== undefined ? { fullNameEn: input.fullNameEn } : {}),
+          ...(input.dateOfBirth !== undefined
+            ? { dateOfBirth: parseBirthDate(input.dateOfBirth) }
+            : {}),
+          ...(input.schoolName !== undefined ? { schoolName: input.schoolName } : {}),
+          ...(input.notes !== undefined ? { notes: input.notes } : {}),
+        },
+      });
+      return tx.student.findUniqueOrThrow({ where: { id: studentId }, select: CHILD_SELECT });
+    });
+    return this.toChild(child);
+  }
+
+  /**
+   * Takes a link request back while it is still pending — the family picked the wrong school, or
+   * changed their mind. An approved link is not touched here: only the organisation removes a
+   * child it already carries.
+   */
+  async withdrawEnrollment(guardianId: string, studentId: string, requestId: string) {
+    return this.prisma.withContext({ userId: guardianId }, async (tx) => {
+      await this.findGuarded(tx, guardianId, studentId);
+      const request = await tx.enrollmentRequest.findFirst({
+        where: { id: requestId, studentId, status: 'pending' },
+        select: { id: true },
+      });
+      if (!request) throw Errors.notFound();
+      await tx.enrollmentRequest.delete({ where: { id: request.id } });
+      return { status: 'withdrawn' as const };
+    });
+  }
+
+  /**
+   * The family's driver has no account yet. Nothing is sent to the number (PLAN §2: no SMS): the
+   * invitation waits, and turns into an ordinary link request the moment that driver registers
+   * with the same number. `consentContact` is the guardian's permission for us to name them to
+   * that driver, kept with the version, time, address and device (PLAN §14).
+   */
+  async inviteDriver(
+    guardianId: string,
+    studentId: string,
+    input: { nameAr: string; phone: string },
+    evidence: { ip?: string | null; userAgent?: string | null },
+  ) {
+    return this.prisma.withContext({ userId: guardianId }, async (tx) => {
+      await this.findGuarded(tx, guardianId, studentId);
+      const waiting = await tx.driverInvitation.findFirst({
+        where: { studentId, driverPhoneE164: input.phone, status: 'pending' },
+        select: { id: true },
+      });
+      if (waiting) throw Errors.conflict('driver_already_invited');
+      return tx.driverInvitation.create({
+        data: {
+          studentId,
+          invitedBy: guardianId,
+          driverName: input.nameAr,
+          driverPhoneE164: input.phone,
+          policyVersion: PRIVACY_POLICY_VERSION,
+          consentIp: evidence.ip ?? null,
+          consentUserAgent: evidence.userAgent?.slice(0, 300) ?? null,
+        },
+        select: { id: true, driverName: true, driverPhoneE164: true, createdAt: true },
+      });
+    });
+  }
+
+  /** The guardian withdraws an invitation they no longer want followed up. */
+  async cancelInvitation(guardianId: string, studentId: string, invitationId: string) {
+    return this.prisma.withContext({ userId: guardianId }, async (tx) => {
+      await this.findGuarded(tx, guardianId, studentId);
+      const invitation = await tx.driverInvitation.findFirst({
+        where: { id: invitationId, studentId, status: 'pending' },
+        select: { id: true },
+      });
+      if (!invitation) throw Errors.notFound();
+      await tx.driverInvitation.update({
+        where: { id: invitation.id },
+        data: { status: 'cancelled' },
+      });
+      return { status: 'cancelled' as const };
+    });
   }
 
   async listChildren(guardianId: string) {
