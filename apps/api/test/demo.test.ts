@@ -1,5 +1,5 @@
 // The demo data must build cleanly and give a working account for every situation.
-import { DEMO_PASSWORD, seedDemo, wipeEverything } from '../src/ops/demo';
+import { DEMO_PASSWORD, runDemo, seedDemo, wipeEverything } from '../src/ops/demo';
 import { createTestApp, type TestApp } from './helpers/app';
 
 describe('demo data', () => {
@@ -127,5 +127,27 @@ describe('demo data', () => {
     await expect(
       t.db.admin.tripEvent.update({ where: { id: event.id }, data: { lat: '1.000000' } }),
     ).rejects.toThrow(/append-only/);
+  });
+
+  it('rebuilds from a database that already has data, and only when asked', async () => {
+    // The whole command, as the server runs it: `cli.js demo --reset` passes its switches
+    // straight through. This wiring was once dropped in silence, and the reset did nothing.
+    const before = await t.db.admin.user.count();
+    expect(before).toBeGreaterThan(0);
+    const wasAdmin = await t.db.admin.user.findUniqueOrThrow({ where: { email: 'admin@t.test' } });
+
+    // Without the switch it refuses to touch what is there.
+    await runDemo(t.db.adminUrl);
+    expect(await t.db.admin.user.count()).toBe(before);
+    expect((await t.db.admin.user.findUniqueOrThrow({ where: { email: 'admin@t.test' } })).id).toBe(
+      wasAdmin.id,
+    );
+
+    // With it, the same accounts are there but they are new rows: everything was deleted first.
+    await runDemo(t.db.adminUrl, ['--reset']);
+    expect(await t.db.admin.user.count()).toBe(before);
+    const nowAdmin = await t.db.admin.user.findUniqueOrThrow({ where: { email: 'admin@t.test' } });
+    expect(nowAdmin.id).not.toBe(wasAdmin.id);
+    expect(nowAdmin.isPlatformAdmin).toBe(true);
   });
 });
