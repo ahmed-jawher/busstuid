@@ -52,6 +52,8 @@ import doNotDisturbOn from '@material-symbols/svg-400/rounded/do_not_disturb_on.
 import doNotDisturbOnFill from '@material-symbols/svg-400/rounded/do_not_disturb_on-fill.svg?raw';
 import download from '@material-symbols/svg-400/rounded/download.svg?raw';
 import downloadFill from '@material-symbols/svg-400/rounded/download-fill.svg?raw';
+import edit from '@material-symbols/svg-400/rounded/edit.svg?raw';
+import editFill from '@material-symbols/svg-400/rounded/edit-fill.svg?raw';
 import emergency from '@material-symbols/svg-400/rounded/emergency.svg?raw';
 import emergencyFill from '@material-symbols/svg-400/rounded/emergency-fill.svg?raw';
 import error from '@material-symbols/svg-400/rounded/error.svg?raw';
@@ -154,6 +156,10 @@ import volumeOff from '@material-symbols/svg-400/rounded/volume_off.svg?raw';
 import volumeOffFill from '@material-symbols/svg-400/rounded/volume_off-fill.svg?raw';
 import volumeUp from '@material-symbols/svg-400/rounded/volume_up.svg?raw';
 import volumeUpFill from '@material-symbols/svg-400/rounded/volume_up-fill.svg?raw';
+import visibility from '@material-symbols/svg-400/rounded/visibility.svg?raw';
+import visibilityFill from '@material-symbols/svg-400/rounded/visibility-fill.svg?raw';
+import visibilityOff from '@material-symbols/svg-400/rounded/visibility_off.svg?raw';
+import visibilityOffFill from '@material-symbols/svg-400/rounded/visibility_off-fill.svg?raw';
 import warning from '@material-symbols/svg-400/rounded/warning.svg?raw';
 import warningFill from '@material-symbols/svg-400/rounded/warning-fill.svg?raw';
 import wifiOff from '@material-symbols/svg-400/rounded/wifi_off.svg?raw';
@@ -190,6 +196,7 @@ const SOURCES = {
   directions_car: [directionsCar, directionsCarFill],
   do_not_disturb_on: [doNotDisturbOn, doNotDisturbOnFill],
   download: [download, downloadFill],
+  edit: [edit, editFill],
   emergency: [emergency, emergencyFill],
   error: [error, errorFill],
   fact_check: [factCheck, factCheckFill],
@@ -240,6 +247,8 @@ const SOURCES = {
   unfold_more: [unfoldMore, unfoldMoreFill],
   verified: [verified, verifiedFill],
   volume_off: [volumeOff, volumeOffFill],
+  visibility: [visibility, visibilityFill],
+  visibility_off: [visibilityOff, visibilityOffFill],
   volume_up: [volumeUp, volumeUpFill],
   warning: [warning, warningFill],
   wifi_off: [wifiOff, wifiOffFill],

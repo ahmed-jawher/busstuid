@@ -1,5 +1,4 @@
 import { argon2id, hash, verify } from 'argon2';
-import { COMMON_PASSWORDS } from './common-passwords';
 
 // argon2id with OWASP-recommended parameters (PLAN §5.1).
 const ARGON_OPTIONS = { type: argon2id, memoryCost: 19_456, timeCost: 2, parallelism: 1 } as const;
@@ -18,22 +17,16 @@ export async function verifyPassword(stored: string | null, password: string): P
   return verify(stored, password).catch(() => false);
 }
 
-/** Returns an error code when the password is too weak, otherwise null. */
-export function checkPasswordPolicy(
-  password: string,
-  personal: { email: string; names: (string | null | undefined)[] },
-): string | null {
-  if (password.length < 8) return 'password_too_short';
-  const lower = password.toLowerCase();
-  if (COMMON_PASSWORDS.has(lower)) return 'password_too_common';
-  if (/^(.)\1+$/.test(password)) return 'password_too_common';
-  const emailLocal = personal.email.split('@')[0]?.toLowerCase() ?? '';
-  if (emailLocal.length >= 4 && lower.includes(emailLocal))
-    return 'password_contains_personal_info';
-  for (const name of personal.names) {
-    for (const part of (name ?? '').toLowerCase().split(/\s+/)) {
-      if (part.length >= 4 && lower.includes(part)) return 'password_contains_personal_info';
-    }
-  }
+/**
+ * Length only, six characters (docs/DECISIONS.md, 2026-09-26). Word lists and "do not use your
+ * name" rules were turning parents away at the one screen they cannot skip, and they are not what
+ * stops guessing here: ten wrong attempts lock the account for fifteen minutes, and the accounts
+ * that matter can add a second factor.
+ *
+ * Returns an error code when the password is not acceptable, otherwise null.
+ */
+export function checkPasswordPolicy(password: string): string | null {
+  if (password.length < 6) return 'password_too_short';
+  if (password.length > 128) return 'password_too_long';
   return null;
 }

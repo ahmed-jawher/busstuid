@@ -57,8 +57,9 @@ export async function newPage(browser: Browser): Promise<Page> {
 
 export async function signIn(page: Page, email: string, password = SEED_PASSWORD) {
   await page.goto(`${state().webUrl}/login`);
-  await page.getByLabel('البريد الإلكتروني').fill(email);
-  await page.getByLabel('كلمة المرور').fill(password);
+  // The field takes the address or the phone number.
+  await page.getByLabel('البريد الإلكتروني أو رقم الجوال').fill(email);
+  await page.getByLabel('كلمة المرور', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'تسجيل الدخول' }).click();
   await expect(page).not.toHaveURL(/\/login/);
 }

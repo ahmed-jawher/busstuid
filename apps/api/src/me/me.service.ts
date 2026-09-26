@@ -230,10 +230,7 @@ export class MeService {
     deviceInfo?: string | null,
   ) {
     const user = await this.requirePassword(userId, currentPassword);
-    const weak = checkPasswordPolicy(newPassword, {
-      email: user.email,
-      names: [user.fullNameAr, user.fullNameEn],
-    });
+    const weak = checkPasswordPolicy(newPassword);
     if (weak) throw Errors.badRequest(weak);
     if (await verifyPassword(user.passwordHash, newPassword))
       throw Errors.badRequest('password_unchanged');

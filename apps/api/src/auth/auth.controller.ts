@@ -63,7 +63,13 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiZodBody(loginSchema)
   login(@Body(zod(loginSchema)) body: z.output<typeof loginSchema>) {
-    return this.auth.login(body.email, body.password, body.deviceInfo, body.totp);
+    return this.auth.login(
+      body.identifier,
+      body.password,
+      body.deviceInfo,
+      body.totp,
+      body.country,
+    );
   }
 
   @Post('refresh')

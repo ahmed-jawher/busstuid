@@ -20,6 +20,42 @@ describe('accounts and email verification', () => {
       ...extra,
     });
 
+  it('accepts any password of six characters, and refuses five', async () => {
+    // A password a parent can remember (docs/DECISIONS.md, 2026-09-26): six digits is enough,
+    // and word lists are gone — what stops guessing is the lockout below.
+    await register('six.digits@example.com', { password: '123456' }).expect(202);
+    const res = await register('five.only@example.com', { password: '12345' }).expect(400);
+    expect(JSON.stringify(res.body)).toContain('password_too_short');
+    const login = await t.http
+      .post('/v1/auth/login')
+      .send({ identifier: 'six.digits@example.com', password: '123456' });
+    // The account exists but is not verified yet, so signing in works and the app asks for the code.
+    expect(login.status).toBe(200);
+  });
+
+  it('signs in with the phone number as well as the email address', async () => {
+    const phone = uniquePhone();
+    const person = await registerVerified(t, { phone });
+    const local = phone.replace('+973', '');
+    const byPhone = await t.http
+      .post('/v1/auth/login')
+      .send({ identifier: local, password: PASSWORD, country: 'BH' })
+      .expect(200);
+    expect(byPhone.body.accessToken).toBeTruthy();
+    await t.http
+      .post('/v1/auth/login')
+      .send({ identifier: person.email, password: PASSWORD })
+      .expect(200);
+
+    // Two guardians sharing one family number: the number alone cannot say which of them it is.
+    await registerVerified(t, { phone });
+    const ambiguous = await t.http
+      .post('/v1/auth/login')
+      .send({ identifier: local, password: PASSWORD, country: 'BH' })
+      .expect(400);
+    expect(ambiguous.body.error.code).toBe('phone_not_unique');
+  });
+
   it('registers, stores the email lower-case, and emails a 6-digit code', async () => {
     await register('New.Parent@Example.com').expect(202);
     const user = await t.db.admin.user.findUniqueOrThrow({
@@ -42,13 +78,12 @@ describe('accounts and email verification', () => {
     expect(t.mail.countTo(a.email)).toBe(before);
   });
 
-  it('rejects weak passwords', async () => {
-    const res = await register('weak@example.com', { password: 'password123' }).expect(400);
-    expect(res.body.error.code).toBe('password_too_common');
-    const personal = await register('khalidalbinali@example.com', {
-      password: 'khalidalbinali1',
-    }).expect(400);
-    expect(personal.body.error.code).toBe('password_contains_personal_info');
+  it('takes a common password and refuses an absurdly long one', async () => {
+    // Deliberate: a parent locked out of their own account is the worse failure
+    // (docs/DECISIONS.md, 2026-09-26). Guessing is answered by the lockout, tested below.
+    await register('weak@example.com', { password: 'password123' }).expect(202);
+    const long = await register('long@example.com', { password: 'x'.repeat(129) }).expect(400);
+    expect(JSON.stringify(long.body)).toContain('password_too_long');
   });
 
   it('test 12: an unverified account cannot add a student', async () => {
