@@ -20,7 +20,9 @@ export const LEGAL = {
   // until a company is registered. The stores show the same name on the listing.
   operator: 'عزام عصام القراضي وأحمد جوهر سلطان',
   operatorEn: 'Azzam Esam Alquradhi and Ahmed Jawher Sultan',
-  contactEmail: 'support.tammene@gmail.com',
+  // On the domain, with free forwarding to a mailbox that is actually read. A personal
+  // Gmail address on a store page and in an agreement reads as nobody is behind it.
+  contactEmail: 'support@tammene.com',
   version: '2026-09-27',
   serverCountry: { ar: 'ألمانيا (فرانكفورت)', en: 'Germany (Frankfurt)' },
 } as const;
