@@ -1,10 +1,15 @@
-# Writes optional server settings into .env.production and restarts the API (docs/DEPLOY.md §5).
-# Manual only: Actions → "Server settings" → Run workflow, and pick what to apply.
+# Writes optional server settings into .env.production and restarts what they touch
+# (docs/DEPLOY.md §5). Manual only: Actions → "Server settings" → Run workflow, and pick what
+# to apply.
 #
 # The values come from repository secrets, so they are never printed here or kept in the repo:
 #   FCM_SERVICE_ACCOUNT_BASE64   Android notifications (docs/RELEASE.md §2)
 #   SMTP_SETTINGS                real email: several KEY=VALUE lines (SMTP_HOST, SMTP_PORT,
 #                                SMTP_SECURE, SMTP_USER, SMTP_PASSWORD, MAIL_FROM)
+# The domain is not a secret, so it is a repository variable:
+#   SITE_DOMAIN                  e.g. tammene.com — moves the site off the sslip.io address.
+#                                Its A record must already point at the server, or Caddy cannot
+#                                be issued a certificate.
 name: Server settings
 
 on:
@@ -14,7 +19,7 @@ on:
         description: Which settings to write
         required: true
         type: choice
-        options: [firebase, email, both]
+        options: [firebase, email, both, domain]
 
 permissions:
   contents: read
@@ -42,14 +47,27 @@ jobs:
         env:
           FCM: ${{ secrets.FCM_SERVICE_ACCOUNT_BASE64 }}
           SMTP: ${{ secrets.SMTP_SETTINGS }}
+          SITE_DOMAIN: ${{ vars.SITE_DOMAIN }}
           APPLY: ${{ inputs.apply }}
         run: |
           : > settings.env
-          if [ "$APPLY" != email ] && [ -n "$FCM" ]; then
+          # A missing secret leaves the file empty and is reported below; a bare failing test
+          # would kill the step outright, because the shell runs with -e.
+          if { [ "$APPLY" = firebase ] || [ "$APPLY" = both ]; } && [ -n "$FCM" ]; then
             printf 'FCM_SERVICE_ACCOUNT_BASE64=%s\n' "$(printf '%s' "$FCM" | tr -d '\r\n')" >> settings.env
           fi
-          if [ "$APPLY" != firebase ] && [ -n "$SMTP" ]; then
+          if { [ "$APPLY" = email ] || [ "$APPLY" = both ]; } && [ -n "$SMTP" ]; then
             printf '%s\n' "$SMTP" | tr -d '\r' | grep -E '^[A-Z_]+=' >> settings.env
+          fi
+          if [ "$APPLY" = domain ]; then
+            case "$SITE_DOMAIN" in
+              '' ) echo "Set the SITE_DOMAIN repository variable first." >&2; exit 1 ;;
+              *[!a-zA-Z0-9.-]* ) echo "SITE_DOMAIN is not a bare domain name." >&2; exit 1 ;;
+            esac
+            # Caddy asks Let's Encrypt for this name, so the DNS must already point here.
+            printf 'DOMAIN=%s\n' "$SITE_DOMAIN" >> settings.env
+            # Photo links are signed with this address, so it has to be the public one.
+            printf 'PUBLIC_API_URL=https://%s/v1\n' "$SITE_DOMAIN" >> settings.env
           fi
           if [ ! -s settings.env ]; then
             echo "Nothing to apply: the matching secrets are empty." >&2
@@ -57,14 +75,16 @@ jobs:
           fi
           echo "applying: $(cut -d= -f1 settings.env | tr '\n' ' ')"
 
-      - name: Apply on the server and restart the API
+      - name: Apply on the server and restart what changed
         env:
           HOST: deploy@${{ vars.DEPLOY_HOST }}
+          # The domain belongs to Caddy, which runs in the web container.
+          SERVICES: ${{ inputs.apply == 'domain' && 'api web' || 'api' }}
         run: |
           ssh_() { ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes "$HOST" "$@"; }
           # Replace each key in place, keeping a dated copy of the file first.
           cat settings.env | ssh_ 'cat > ~/settings.env'
-          ssh_ 'bash -s' <<'REMOTE'
+          ssh_ "SERVICES='$SERVICES' bash -s" <<'REMOTE'
           set -euo pipefail
           cd ~/tammeni
           cp .env.production ".env.production.bak-$(date +%Y%m%d-%H%M%S)"
@@ -77,12 +97,13 @@ jobs:
           rm -f ~/settings.env
           chmod 600 .env.production
           docker compose -f infra/docker-compose.prod.yml -f infra/docker-compose.images.yml \
-            --env-file .env.production --env-file .deploy.env up -d --no-build api
+            --env-file .env.production --env-file .deploy.env up -d --no-build ${SERVICES}
           REMOTE
 
       - name: Health check
         env:
-          URL: ${{ vars.DEPLOY_URL }}
+          # A new domain answers on its own name; Let's Encrypt takes a few seconds.
+          URL: ${{ inputs.apply == 'domain' && format('https://{0}', vars.SITE_DOMAIN) || vars.DEPLOY_URL }}
         run: |
           for _ in $(seq 1 30); do
             if curl -fsS "$URL/v1/health" | grep -q '"database":"up"'; then

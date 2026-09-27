@@ -117,3 +117,38 @@ Manual commands on the server must include the image override:
 docker compose -f infra/docker-compose.prod.yml -f infra/docker-compose.images.yml \
   --env-file .env.production --env-file .deploy.env ps
 ```
+
+## 7. Moving the site to a real domain
+
+The app calls `/v1` on its own origin, so the web build never holds the address and nothing has to
+be rebuilt. Two values change on the server, and the Android app has to be rebuilt because **its**
+address is absolute.
+
+1. **DNS first.** At the registrar, point the name at the server before anything else — Caddy asks
+   Let's Encrypt for a certificate and that fails while the name still points elsewhere:
+
+   | Type | Host  | Value                       |
+   | ---- | ----- | --------------------------- |
+   | A    | `@`   | the server's IP             |
+   | A    | `www` | the server's IP             |
+
+   Wait until `nslookup <domain>` answers with the server's IP.
+
+2. **Set the repository variable `SITE_DOMAIN`** to the bare name (`tammene.com`, no `https://`).
+
+3. **Actions → "Server settings" → Run workflow → `domain`.** It writes `DOMAIN` and
+   `PUBLIC_API_URL` into `.env.production`, restarts Caddy and the API, and checks the site answers
+   on its new name. The old address keeps working as long as it still resolves here.
+
+4. **Update the variable `DEPLOY_URL`** to `https://<domain>` so later deploys and the Android
+   build in CI use it.
+
+5. **Email:** authenticate the domain with the mail provider (SPF, DKIM, DMARC records), then set
+   `MAIL_FROM` to `Tammeni <no-reply@<domain>>` through the same workflow with `email`. Sending
+   from a `@gmail.com` address is what makes verification codes land in spam.
+
+6. **The legal documents** name the domain in the contact clause: update
+   `apps/web/src/features/legal/legal-content.ts` and the store listings.
+
+Do all of this **before the first upload to Google Play**: the published Android app carries the
+address it was built with, and changing it later needs a new release.
