@@ -902,6 +902,11 @@
     "terms": "Terms of use",
     "updated": "Last updated",
     "acceptLine": "I have read and agree to the",
-    "acceptedOn": "You agreed to the terms on {{date}} (version {{version}})"
+    "acceptedOn": "You agreed to the terms on {{date}} (version {{version}})",
+    "updatedTitle": "The terms have changed",
+    "updatedBody": "We have updated the terms of use and the privacy policy. Read them and agree to carry on — nothing about your account or your children’s data changes.",
+    "acceptUpdated": "I have read the updated terms of use and privacy policy and I agree to them.",
+    "acceptContinue": "Agree and continue",
+    "acceptLater": "Not now — sign me out"
   }
 }

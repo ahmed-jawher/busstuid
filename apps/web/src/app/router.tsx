@@ -44,6 +44,7 @@ import {
   LinkChildPage,
   ServicesPage,
 } from '@/features/guardian/GuardianPages';
+import { AcceptUpdatedPage } from '@/features/legal/AcceptUpdatedPage';
 import { PrivacyPage, TermsPage } from '@/features/legal/LegalPages';
 import { NotificationSetupPage } from '@/features/push/NotificationSetupPage';
 import { RequireAuth } from './RequireAuth';
@@ -69,6 +70,7 @@ export const routes = [
           { index: true, element: <HomePage /> },
           { path: 'notifications/setup', element: <NotificationSetupPage /> },
           { path: 'ready', element: <ReadyPage /> },
+          { path: 'legal/accept', element: <AcceptUpdatedPage /> },
           { path: 'settings', element: <Navigate to="/account" replace /> },
           { path: 'organizations/new', element: <CreateOrgPage /> },
           { path: 'platform', element: <PlatformPage /> },

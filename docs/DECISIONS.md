@@ -507,3 +507,25 @@ than the rule it was enforcing, because a parent who cannot sign in gets no aler
   a phone during a demonstration, and `.test` can never be delivered anywhere (RFC 6761), so a
   reset code for a test account cannot reach a real person. They are listed in
   `docs/demo-accounts.xlsx`, generated from the code so the sheet cannot drift from the server.
+
+## Who the agreement is with (owner's answer, 2026-09-27)
+
+- **The service is run by two named people**: عزام عصام القراضي وأحمد جوهر سلطان (Azzam Esam
+  Alquradhi and Ahmed Jawher Sultan). Their names replace the placeholder in the terms and the
+  privacy policy, because an agreement has to say who it is with, and the stores show the same
+  name on the listing.
+- **Until a company is registered, the two of them are personally liable.** A registered entity
+  (and a matching store account) is the thing to ask a lawyer about first: a service that holds
+  children's data is not a good place for unlimited personal liability.
+- `LEGAL_VERSION` is raised to 2026-09-27, so every account is asked to agree again.
+
+### The re-acceptance screen the terms already promised
+
+Clause 9 says a person is asked to agree again before carrying on after a material change. The
+flag was there (`/me` → `mustAcceptTerms`) and the endpoint was there, but **nothing asked** —
+so the clause was not true. It is now: `RequireAuth` sends such an account to `/legal/accept`,
+which links to both documents, takes one deliberate tick and records the new acceptance as
+evidence. Refusing is not a trap: it signs the person out and keeps the account and its data.
+
+The gate is tested (`RequireAuth.test.tsx`), because a promise in an agreement should not be one
+render away from disappearing.

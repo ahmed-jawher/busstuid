@@ -16,12 +16,12 @@ export interface LegalDocument {
 }
 
 export const LEGAL = {
-  // TODO(owner): the full legal name exactly as it will appear in the App Store and Play
-  // Console. Apple shows the developer's real name on the store page.
-  operator: '[الاسم الكامل لمالك التطبيق]',
-  operatorEn: '[Full legal name of the app owner]',
+  // The two people who run the service, named because the agreement is with them personally
+  // until a company is registered. The stores show the same name on the listing.
+  operator: 'عزام عصام القراضي وأحمد جوهر سلطان',
+  operatorEn: 'Azzam Esam Alquradhi and Ahmed Jawher Sultan',
   contactEmail: 'support.tammeni@gmail.com',
-  version: '2026-09-25',
+  version: '2026-09-27',
   serverCountry: { ar: 'ألمانيا (فرانكفورت)', en: 'Germany (Frankfurt)' },
 } as const;
 
