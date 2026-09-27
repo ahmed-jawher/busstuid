@@ -347,7 +347,8 @@ Format: the decision, then why.
 - **Kept although the design leaves them out:** the organisation type when an organisation signs
   up (school or transport company), the two-step sign-in code, and removing members. Links to
   terms and privacy are plain text until those pages exist. The design's support address
-  (help@tammene.app) does not exist yet, so Help shows support.tammene@gmail.com.
+  (help@tammene.app) does not exist yet, so Help showed a personal address; since 2026-09-27 it’s
+  support@tammene.com, on the domain.
 - **Not possible yet:** the organisation "area" line in the design's directory has no data behind
   it, so the directory shows the type only.
 

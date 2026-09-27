@@ -33,6 +33,7 @@ import { displayName, formatDate, formatTime, orgName } from '@/lib/format';
 import { useSession } from '@/lib/session';
 import type { Child, ChildTripRow, OrgSummary } from '@/lib/types';
 import { usePushReady } from '../push/NotificationSetupPage';
+import { LEGAL } from '../legal/legal-content';
 import { SchoolField } from './SchoolField';
 import {
   childView,
@@ -941,8 +942,8 @@ export function HelpPage() {
       </Panel>
       <p className="text-center text-[13px] text-muted">
         {t('gd.support')}{' '}
-        <a href="mailto:support.tammene@gmail.com" className="text-primary" dir="ltr">
-          support.tammene@gmail.com
+        <a href={`mailto:${LEGAL.contactEmail}`} className="text-primary" dir="ltr">
+          {LEGAL.contactEmail}
         </a>
       </p>
     </Screen>
