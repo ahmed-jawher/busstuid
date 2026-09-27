@@ -4,7 +4,7 @@
 //
 // Idempotent: does nothing if the seed platform admin already exists.
 import { PrismaClient, type TripDirection } from '@prisma/client';
-import { COUNTRY_DEFAULTS, PRIVACY_POLICY_VERSION } from '@wusool/shared';
+import { COUNTRY_DEFAULTS, LEGAL_VERSION, PRIVACY_POLICY_VERSION } from '@wusool/shared';
 import sharp from 'sharp';
 import { hashPassword } from '../src/auth/passwords';
 import { processStudentPhoto } from '../src/students/photos';
@@ -120,6 +120,16 @@ async function main(): Promise<void> {
           phoneE164: nextPhone(),
           passwordHash,
           emailVerifiedAt: now,
+          // These stand for people who signed up and agreed, so they carry the agreement they
+          // would have given. Without it every one of them is asked again on the first screen.
+          termsVersion: LEGAL_VERSION,
+          termsAcceptedAt: now,
+          legalAcceptances: {
+            create: [
+              { document: 'terms', version: LEGAL_VERSION },
+              { document: 'privacy', version: LEGAL_VERSION },
+            ],
+          },
           ...extra,
         },
       });

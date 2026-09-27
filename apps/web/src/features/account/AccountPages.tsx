@@ -516,6 +516,10 @@ function DeleteAccountSheet({ open, onClose }: { open: boolean; onClose: () => v
   return (
     <Sheet open={open} onClose={onClose} title={t('settings.deleteAccount')} tone="danger">
       <p className="text-sm leading-relaxed text-muted">{t('settings.deleteWarning')}</p>
+      {/* The same page the stores link to, so what is promised there is what is read here. */}
+      <Link to="/delete-account" className="text-sm font-semibold text-primary underline">
+        {t('del.title')}
+      </Link>
       <FieldLabel label={t('gd.passwordToConfirm')}>
         <input
           type="password"
