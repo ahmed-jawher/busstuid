@@ -82,7 +82,7 @@ export const routes = [
           { path: 'trip/:id', element: <TripPage /> },
           { path: 'children/new', element: <AddChildPage /> },
           {
-            // Guardian screens with the bottom tab bar (Claude Design "Tammeni Guardian").
+            // Guardian screens with the bottom tab bar (Claude Design "Tammene Guardian").
             element: <GuardianShell />,
             children: [
               { path: 'guardian', element: <GuardianHomePage /> },

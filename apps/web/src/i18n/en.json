@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Tammeni",
+    "name": "Tammene",
     "tagline": "Student safety on school transport"
   },
   "nav": {
@@ -69,7 +69,7 @@
     "sendTestAgain": "Send a test notification",
     "testSent": "A test notification was sent. Check that it appeared on your phone.",
     "ready": "Notifications work on this device",
-    "denied": "Permission was refused. Turn it on in Settings → Tammeni → Notifications, then try again.",
+    "denied": "Permission was refused. Turn it on in Settings → Tammene → Notifications, then try again.",
     "unsupported": "This browser does not support notifications. Use Chrome or Edge.",
     "iosInstallTitle": "On iPhone, install the app first:",
     "iosStep1": "Tap the Share button in Safari",
@@ -679,7 +679,7 @@
       "copied": "Copied ✓"
     },
     "welcomeTitle": "Welcome",
-    "welcomeSub": "With Tammeni, your child is safe door to door.",
+    "welcomeSub": "With Tammene, your child is safe door to door.",
     "orgNameEn": "Name in English"
   },
   "gd": {
@@ -764,7 +764,7 @@
       "q2": "What happens during an alert?",
       "a2": "If a trip ends while your child is still on board, you get an immediate alert and the driver and school follow it until your child is confirmed safe.",
       "q3": "Why don't notifications reach my iPhone?",
-      "a3": "On iPhone: Share → \"Add to Home Screen\". Or install the Tammeni app."
+      "a3": "On iPhone: Share → \"Add to Home Screen\". Or install the Tammene app."
     },
     "chooseChild": "Choose the child",
     "chooseOrg": "Choose the transport",
@@ -811,7 +811,7 @@
       "newDriverTitle": "New driver",
       "driverName": "Driver name",
       "driverNamePh": "e.g. Ahmed Ali",
-      "driverConsent": "I allow the Tammeni team to contact this driver on my behalf and tell them my child travels with them.",
+      "driverConsent": "I allow the Tammene team to contact this driver on my behalf and tell them my child travels with them.",
       "driverConsentNote": "We keep your permission with its time. You can withdraw it from the child page at any time.",
       "invitedBody": "{{name}} is saved. We will contact {{driver}} to register, and tell you as soon as they are ready.",
       "submitInvited": "Add the child"
@@ -914,7 +914,7 @@
     "intro": "You can delete your account and your children’s data at any time, from inside the app or by writing to us. We ask no reason and set no conditions.",
     "inApp": "From inside the app",
     "steps": [
-      "Open Tammeni and sign in.",
+      "Open Tammene and sign in.",
       "Go to the “My account” tab.",
       "Press “Delete account” at the bottom of the page.",
       "Type your password to confirm. The account is deleted straight away.",

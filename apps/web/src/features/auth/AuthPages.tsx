@@ -23,7 +23,7 @@ import { cn } from '@/lib/cn';
 import { errorMessage, fieldErrors } from '@/lib/errors';
 import { useSession } from '@/lib/session';
 
-// Onboarding (Claude Design "Tammeni Onboarding"): welcome, sign in, then three steps — who you
+// Onboarding (Claude Design "Tammene Onboarding"): welcome, sign in, then three steps — who you
 // are, your details, the email code — followed by notifications and a role-specific "ready".
 
 export function WelcomePage() {
@@ -168,7 +168,7 @@ export function LoginPage() {
  * What the person has typed so far, kept only for this browser tab. The password is never
  * written down: it is retyped if the page is left and returned to.
  */
-const DRAFT_KEY = 'tammeni:signup-draft';
+const DRAFT_KEY = 'tammene:signup-draft';
 
 interface SignupDraft {
   form?: { fullNameAr?: string; email?: string; phone?: string };
@@ -359,7 +359,7 @@ export function RegisterPage() {
           ...form,
           acceptTerms,
           phone: form.phone.replace(/\D/g, ''),
-          // Bahrain only (Claude Design "Tammeni Brand").
+          // Bahrain only (Claude Design "Tammene Brand").
           country: 'BH',
           locale: i18n.language === 'en' ? 'en' : 'ar',
           signupRole: role?.role,

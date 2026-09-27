@@ -15,7 +15,7 @@ import { firstName, greeting } from '../guardian/guardian-data';
 import { usePushReady } from '../push/NotificationSetupPage';
 
 /**
- * Driver home (Claude Design "Tammeni Driver"): one card per trip with one big action — start,
+ * Driver home (Claude Design "Tammene Driver"): one card per trip with one big action — start,
  * continue, or see the summary. High contrast and 64px buttons for use in the vehicle.
  */
 export function DriverTodayPage() {

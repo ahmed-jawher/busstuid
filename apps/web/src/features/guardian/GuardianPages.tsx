@@ -46,7 +46,7 @@ import {
   type ChildView,
 } from './guardian-data';
 
-// Guardian app (Claude Design "Tammeni Guardian"): four tabs — Home, Notifications, Services,
+// Guardian app (Claude Design "Tammene Guardian"): four tabs — Home, Notifications, Services,
 // Account. Home answers one question: where is my child now?
 
 const EMERGENCY = COUNTRY_DEFAULTS.BH.emergencyNumber;
@@ -699,7 +699,7 @@ function ExportRow({ childId }: { childId: string }) {
       );
       const a = document.createElement('a');
       a.href = url;
-      a.download = `tammeni-child-${childId}.json`;
+      a.download = `tammene-child-${childId}.json`;
       a.click();
       URL.revokeObjectURL(url);
     },
@@ -941,8 +941,8 @@ export function HelpPage() {
       </Panel>
       <p className="text-center text-[13px] text-muted">
         {t('gd.support')}{' '}
-        <a href="mailto:support.tammeni@gmail.com" className="text-primary" dir="ltr">
-          support.tammeni@gmail.com
+        <a href="mailto:support.tammene@gmail.com" className="text-primary" dir="ltr">
+          support.tammene@gmail.com
         </a>
       </p>
     </Screen>

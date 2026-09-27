@@ -1,4 +1,4 @@
-package com.tammeni.app;
+package com.tammene.app;
 
 import com.getcapacitor.BridgeActivity;
 

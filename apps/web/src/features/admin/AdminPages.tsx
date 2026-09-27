@@ -54,7 +54,7 @@ import {
   type Tone,
 } from './admin-org';
 
-// Admin screens (Claude Design "Tammeni Admin Mobile" and "Tammeni Admin"). On phones each item
+// Admin screens (Claude Design "Tammene Admin Mobile" and "Tammene Admin"). On phones each item
 // opens its own screen; from 1024px lists get a side panel, as in the web design.
 
 const TRIP_TONE: Record<TripStatus, Tone> = {

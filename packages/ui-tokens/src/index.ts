@@ -62,7 +62,7 @@ export const themes: Record<ThemeName, Record<ColorScheme, SchemeColors>> = {
       navy: '#0a0f0d',
     },
   },
-  // Tammeni brand (Claude Design "Tammeni Brand"): indigo and navy, with red kept for alerts only.
+  // Tammene brand (Claude Design "Tammene Brand"): indigo and navy, with red kept for alerts only.
   bh: {
     light: {
       primary: '#3346c8',

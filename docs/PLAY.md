@@ -7,7 +7,7 @@ the parts marked **(owner)** cannot be done from the repository.
 
 | Decision       | Now                                           | Can it change later?                                  |
 | -------------- | --------------------------------------------- | ----------------------------------------------------- |
-| App id         | `com.tammeni.app`                             | **Never**, once uploaded                              |
+| App id         | `com.tammene.app`                             | **Never**, once uploaded                              |
 | API address    | baked into the Android build (`VITE_API_URL`) | Only with a new release                               |
 | Account holder | personal or a registered entity **(owner)**   | Transfer is possible but slow, and the name is public |
 
@@ -102,7 +102,7 @@ declaration form is required.
 
 ## 6. Store listing
 
-- **App name:** طمّني — Tammeni
+- **App name:** طمّني — Tammene
 - **Short description (80):** «ضغطة عند صعود طفلك، وضغطة عند نزوله — وطمأنينة بينهما.»
 - **Full description:** say what it does in plain words: a tap per child, the trip cannot end
   while a child is on board, the school and the guardian are told, and the watchdog works even if

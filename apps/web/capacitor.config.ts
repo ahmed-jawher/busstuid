@@ -5,7 +5,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   // Must match APNS_BUNDLE_ID on the server and the Firebase Android app. It cannot change after
   // the first store upload.
-  appId: 'com.tammeni.app',
+  appId: 'com.tammene.app',
   appName: 'طمّني',
   webDir: 'dist',
   android: {

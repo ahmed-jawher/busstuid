@@ -148,7 +148,7 @@ describe('APNs provider', () => {
     keyId: 'KEY1234567',
     teamId: 'TEAM123456',
     privateKey: pem(ec.privateKey),
-    bundleId: 'com.tammeni.app',
+    bundleId: 'com.tammene.app',
     production: true,
   };
   const token = 'ab'.repeat(32);
@@ -161,7 +161,7 @@ describe('APNs provider', () => {
     const req = fake.requests[0]!;
     expect(req.url).toBe(`https://api.push.apple.com/3/device/${token}`);
     expect(req.headers).toMatchObject({
-      'apns-topic': 'com.tammeni.app',
+      'apns-topic': 'com.tammene.app',
       'apns-push-type': 'alert',
       'apns-priority': '10',
       'apns-expiration': String(1_700_000_000 + 120),
@@ -366,7 +366,7 @@ describe('routing and configuration', () => {
     });
     expect(both.apns).toMatchObject({
       privateKey: '-----KEY-----',
-      bundleId: 'com.tammeni.app',
+      bundleId: 'com.tammene.app',
       production: true,
     });
     expect(

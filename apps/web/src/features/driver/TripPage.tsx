@@ -15,7 +15,7 @@ import type { Manifest, ManifestStudent } from '@/lib/types';
 import { platform } from '@/platform';
 import { enqueueTap, flushTrip, pendingFor } from './trip-sync';
 
-// Driver trip screen (Claude Design "Tammeni Driver"): children grouped by stop in driving order;
+// Driver trip screen (Claude Design "Tammene Driver"): children grouped by stop in driving order;
 // finished children shrink to one line so attention stays on who is left. Ending is staged: red
 // screen with the alarm if anyone is on board, then undecided children, then a press-and-hold
 // "the bus is empty" (PLAN §6.3).

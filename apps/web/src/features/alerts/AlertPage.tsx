@@ -72,7 +72,7 @@ export function AlertPage() {
   );
 }
 
-/** Full-screen alert for a guardian (Claude Design "Tammeni Guardian" → alert). */
+/** Full-screen alert for a guardian (Claude Design "Tammene Guardian" → alert). */
 function GuardianAlertView({ alert: a }: { alert: GuardianAlert }) {
   const { t } = useTranslation();
   const name = displayName(a.student);

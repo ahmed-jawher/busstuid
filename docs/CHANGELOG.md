@@ -158,10 +158,10 @@ passes too. ✅
 - The first sign-up screen asks: guardian, independent driver, school or company, or driver at
   one. Organisations are created on email verification; each account lands on its interface.
 
-## Name: طمّني — Tammeni
+## Name: طمّني — Tammene
 
 - Renamed everywhere users see it (app, emails, notifications, stores, authenticator issuer);
-  app id `com.tammeni.app`.
+  app id `com.tammene.app`.
 - Removed the pilot-version banner at the owner's request.
 
 ## Admin redesign (branch `new-design`)
@@ -170,7 +170,7 @@ passes too. ✅
   tabs on phones and a sidebar on desktop.
 - New screens: trip detail with the passenger list, alert detail with a timeline and a sticky
   close button, and "More" (data, follow-up, dark mode, language, account).
-- Tammeni brand colours, Readex Pro figures and bundled Material Symbols icons.
+- Tammene brand colours, Readex Pro figures and bundled Material Symbols icons.
 
 ## Full redesign (branch `new-design`)
 

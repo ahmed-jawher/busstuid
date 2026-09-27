@@ -48,7 +48,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 }
 
-/** Dark card with a status icon and an optional undo (Claude Design "Tammeni Driver"). */
+/** Dark card with a status icon and an optional undo (Claude Design "Tammene Driver"). */
 function ToastItem({ toast, onDone }: { toast: Toast; onDone: () => void }) {
   useEffect(() => {
     const timer = setTimeout(onDone, toast.duration);

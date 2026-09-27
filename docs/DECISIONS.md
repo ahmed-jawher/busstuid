@@ -268,8 +268,8 @@ Format: the decision, then why.
 
 ## Name and pilot banner (owner's request, 2026-09-23)
 
-- **The product is now طمّني — Tammeni** ("reassure me"), chosen by the owner. The app id is
-  `com.tammeni.app` (changed before any store upload, when it still could be). Internal code
+- **The product is now طمّني — Tammene** ("reassure me"), chosen by the owner. The app id is
+  `com.tammene.app` (changed before any store upload, when it still could be). Internal code
   names stay `wusool` (packages, database roles, storage keys) to avoid a risky data migration;
   users never see them.
 - **The "pilot version — do not rely on it alone" banner (PLAN §20.4) was removed** at the
@@ -312,7 +312,7 @@ Format: the decision, then why.
 
 ## Admin redesign from Claude Design (owner's request, 2026-09-23)
 
-- **Source:** Claude Design project "Tammeni", screen `Tammeni Admin Mobile.dc.html`. Work is on
+- **Source:** Claude Design project "Tammene", screen `Tammene Admin Mobile.dc.html`. Work is on
   the `new-design` branch; guardian, driver and onboarding screens follow separately.
 - **Brand colours applied to the `bh` theme** (indigo and navy, red kept for alerts), because the
   admin screens depend on them. This recolours the whole app. The `sa` theme only gets the new
@@ -329,7 +329,7 @@ Format: the decision, then why.
 
 ## Full redesign from Claude Design (owner's request, 2026-09-23)
 
-- **Every screen follows the Claude Design project "Tammeni"**: onboarding, the guardian app
+- **Every screen follows the Claude Design project "Tammene"**: onboarding, the guardian app
   (four tabs), the driver app, admin on phones and on the web, and the brand (logo, app icon,
   splash, indigo and navy colours).
 - **Bahrain only:** the Saudi theme switch and the country fields are gone from the screens;
@@ -347,7 +347,7 @@ Format: the decision, then why.
 - **Kept although the design leaves them out:** the organisation type when an organisation signs
   up (school or transport company), the two-step sign-in code, and removing members. Links to
   terms and privacy are plain text until those pages exist. The design's support address
-  (help@tammeni.app) does not exist yet, so Help shows support.tammeni@gmail.com.
+  (help@tammene.app) does not exist yet, so Help shows support.tammene@gmail.com.
 - **Not possible yet:** the organisation "area" line in the design's directory has no data behind
   it, so the directory shows the type only.
 
@@ -396,7 +396,7 @@ Format: the decision, then why.
   that exist (export, delete child, delete account, withdraw consent). If behaviour changes, the
   text changes with it.
 - **They are drafts, not legal advice.** A lawyer must read them before a real school uses
-  Tammeni: children's data, Bahrain's Personal Data Protection Law 30/2018, and the fact that the
+  Tammene: children's data, Bahrain's Personal Data Protection Law 30/2018, and the fact that the
   server is currently in Germany (transfer outside the country).
 - **The owner's legal name is a placeholder** in `legal-content.ts` until they confirm the exact
   name that will appear in the stores.
@@ -417,7 +417,7 @@ Format: the decision, then why.
 - **Settings shows what you agreed to and when**, because a person has the right to see the
   agreement they are held to.
 - This is a consent mechanism, not legal advice. No wording removes responsibility for a child's
-  safety; a lawyer must review both documents before a real school uses Tammeni.
+  safety; a lawyer must review both documents before a real school uses Tammene.
 
 ## The agreement reads as an agreement (owner's request, 2026-09-25)
 
@@ -534,3 +534,21 @@ evidence. Refusing is not a trap: it signs the person out and keeps the account 
 
 The gate is tested (`RequireAuth.test.tsx`), because a promise in an agreement should not be one
 render away from disappearing.
+
+## The name follows the domain: Tammene (owner's decision, 2026-09-27)
+
+`tammeni.com` was already registered by somebody else, so the domain bought for the service is
+**tammene.com** — and a product whose website, email and store page spell the name one way while
+the app spells it another teaches people to distrust both. The Latin spelling is therefore
+**Tammene** everywhere: the app id (`com.tammene.app`), the store listing, the contact address,
+the documents and the code.
+
+- **The Arabic name «طمّني» does not change**, and neither does the internal code name `wusool`
+  (packages, database roles, notification channels).
+- **The app id had to change now or never** — Google Play fixes it at the first upload, and
+  nothing has been uploaded yet.
+- Consequences that need the owner: a **new Android app in Firebase** for the new package and a
+  fresh `google-services.json` (the old file names the old package and the build refuses it), and
+  the same bundle id on the Apple side when iOS is set up.
+- The stack directory on the server moves from `~/tammeni` to `~/tammene`; the deploy workflow
+  does it once, because that directory holds `.env.production`, which exists nowhere else.

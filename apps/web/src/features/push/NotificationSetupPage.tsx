@@ -35,7 +35,7 @@ const isStandalone = () =>
 /**
  * One explanatory screen, then permission, subscription and a test notification (PLAN §5 step 2,
  * §7). Drivers cannot start a trip until the test has succeeded. Styled after Claude Design
- * "Tammeni Onboarding" (step after the email code).
+ * "Tammene Onboarding" (step after the email code).
  */
 export function NotificationSetupPage() {
   const { t } = useTranslation();

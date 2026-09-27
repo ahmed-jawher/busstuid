@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router';
 import { Icon, type IconName } from '@/components/Icon';
 import { cn } from '@/lib/cn';
 
-// Building blocks of the Tammeni redesign (Claude Design "Tammeni Brand"): rounded panels,
+// Building blocks of the Tammene redesign (Claude Design "Tammene Brand"): rounded panels,
 // tinted status pills, icon tiles, switches, bottom sheets. Colour is never the only signal:
 // pills carry an icon and a word (PLAN §15).
 
@@ -509,7 +509,7 @@ export function ErrorLine({ children }: { children: ReactNode }) {
   );
 }
 
-/** Bahrain-only phone field: fixed +973 and 8 digits (Claude Design "Tammeni Onboarding"). */
+/** Bahrain-only phone field: fixed +973 and 8 digits (Claude Design "Tammene Onboarding"). */
 export function PhoneInput({
   value,
   onChange,

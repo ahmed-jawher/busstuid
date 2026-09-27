@@ -7,7 +7,7 @@ import { PUSH_PROVIDER, toPushTarget, type PushProvider } from './push.provider'
 
 const TEST_MESSAGE: Record<Locale, { title: string; body: string }> = {
   ar: { title: 'طمّني', body: '✅ الإشعارات تعمل على هذا الجهاز.' },
-  en: { title: 'Tammeni', body: '✅ Notifications work on this device.' },
+  en: { title: 'Tammene', body: '✅ Notifications work on this device.' },
 };
 
 @Injectable()

@@ -30,7 +30,7 @@ async function startTrip(page: Page) {
   await expect(page.getByRole('button', { name: 'إنهاء الرحلة' })).toBeVisible();
 }
 
-/** "The bus is empty" is confirmed by pressing and holding (Claude Design "Tammeni Driver"). */
+/** "The bus is empty" is confirmed by pressing and holding (Claude Design "Tammene Driver"). */
 async function holdEmpty(page: Page) {
   const button = page.getByRole('button', { name: 'اضغط مطولاً: الباص خالٍ' });
   await button.hover();
@@ -117,7 +117,7 @@ test('1. guardian adds a child; the school approves it', async ({ browser }) => 
   await expect(row.locator('img')).toHaveCount(0);
   await shot(admin, '04-admin-requests');
   await row.getByRole('button', { name: 'قبول' }).click();
-  // The decision stays on screen with an undo (Claude Design "Tammeni Admin").
+  // The decision stays on screen with an undo (Claude Design "Tammene Admin").
   await expect(row.getByText('مقبول · أُبلغ ولي الأمر')).toBeVisible();
 
   await admin.goto(`${state().webUrl}/admin/students`);
@@ -126,7 +126,7 @@ test('1. guardian adds a child; the school approves it', async ({ browser }) => 
   await admin.goto(`${state().webUrl}/admin`);
   await expect(admin.getByRole('heading', { name: 'رحلات اليوم' })).toBeVisible();
   await shot(admin, '04c-admin-live');
-  // The web layout (Claude Design "Tammeni Admin"): navy sidebar and side panels.
+  // The web layout (Claude Design "Tammene Admin"): navy sidebar and side panels.
   await admin.setViewportSize({ width: 1280, height: 800 });
   await admin.goto(`${state().webUrl}/admin/students`);
   await expect(admin.getByRole('heading', { name: 'الطلاب' })).toBeVisible();

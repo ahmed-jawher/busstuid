@@ -250,7 +250,7 @@ export function InboxPage() {
 
 // ─── Account ────────────────────────────────────────────────────────────────
 
-/** Account (Claude Design "Tammeni Guardian" → حسابي); every role uses it. */
+/** Account (Claude Design "Tammene Guardian" → حسابي); every role uses it. */
 export function AccountPage() {
   const { t, i18n } = useTranslation();
   const { me, refresh, signOut, orgsWith } = useSession();
