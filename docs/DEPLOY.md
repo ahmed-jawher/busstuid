@@ -127,10 +127,10 @@ address is absolute.
 1. **DNS first.** At the registrar, point the name at the server before anything else — Caddy asks
    Let's Encrypt for a certificate and that fails while the name still points elsewhere:
 
-   | Type | Host  | Value                       |
-   | ---- | ----- | --------------------------- |
-   | A    | `@`   | the server's IP             |
-   | A    | `www` | the server's IP             |
+   | Type | Host  | Value           |
+   | ---- | ----- | --------------- |
+   | A    | `@`   | the server's IP |
+   | A    | `www` | the server's IP |
 
    Wait until `nslookup <domain>` answers with the server's IP.
 
