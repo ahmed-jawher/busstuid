@@ -6,11 +6,19 @@ import en from './en.json';
 
 // Every UI string lives in ar.json / en.json (CLAUDE.md). These checks keep them complete.
 
-type Tree = { [k: string]: string | Tree };
+type Tree = { [k: string]: string | string[] | Tree };
+
+/**
+ * Every leaf, as a dotted key. A list (the steps on the deletion page) counts as its own key —
+ * so `t('del.steps')` is found — and as one key per item, so a list translated with an item
+ * missing fails the comparison below instead of rendering short in one language.
+ */
 const flatten = (t: Tree, prefix = ''): string[] =>
-  Object.entries(t).flatMap(([k, v]) =>
-    typeof v === 'string' ? [`${prefix}${k}`] : flatten(v, `${prefix}${k}.`),
-  );
+  Object.entries(t).flatMap(([k, v]) => {
+    if (typeof v === 'string') return [`${prefix}${k}`];
+    if (Array.isArray(v)) return [`${prefix}${k}`, ...v.map((_, i) => `${prefix}${k}.${i}`)];
+    return flatten(v, `${prefix}${k}.`);
+  });
 
 function files(dir: string, ext: RegExp): string[] {
   return readdirSync(dir).flatMap((name) => {

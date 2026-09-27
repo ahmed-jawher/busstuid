@@ -908,5 +908,34 @@
     "acceptUpdated": "I have read the updated terms of use and privacy policy and I agree to them.",
     "acceptContinue": "Agree and continue",
     "acceptLater": "Not now — sign me out"
+  },
+  "del": {
+    "title": "Deleting your account and your child’s data",
+    "intro": "You can delete your account and your children’s data at any time, from inside the app or by writing to us. We ask no reason and set no conditions.",
+    "inApp": "From inside the app",
+    "steps": [
+      "Open Tammeni and sign in.",
+      "Go to the “My account” tab.",
+      "Press “Delete account” at the bottom of the page.",
+      "Type your password to confirm. The account is deleted straight away.",
+      "To delete one child only: open that child’s page, then “Delete the child’s data”."
+    ],
+    "byEmail": "Without the app",
+    "byEmailBody": "If you have removed the app or cannot sign in, write to us from the email address on the account and ask for deletion. We confirm you own the address, delete within 30 days at the latest, and write back to confirm.",
+    "mailSubject": "Account deletion request",
+    "removed": "What is deleted",
+    "removedList": [
+      "Your name, email address and phone number.",
+      "Your children’s names, photos, dates of birth and schools.",
+      "Their link to a school or a driver, and any pending request.",
+      "Your registered devices for notifications, and every sign-in session."
+    ],
+    "kept": "What stays, and why",
+    "keptWhy": "Safety records are not deleted with the account: they are the evidence of what happened on a real trip, and a school, an authority or you may need them. They stay without the child’s name or photo — times and numbers only — and are erased automatically after:",
+    "keptList": [
+      "Trip events (boarding and alighting): two years.",
+      "Alerts and their history: three years.",
+      "The audit log (who did what, and when): three years."
+    ]
   }
 }

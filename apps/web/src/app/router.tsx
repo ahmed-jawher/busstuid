@@ -45,6 +45,7 @@ import {
   ServicesPage,
 } from '@/features/guardian/GuardianPages';
 import { AcceptUpdatedPage } from '@/features/legal/AcceptUpdatedPage';
+import { DeleteAccountPage } from '@/features/legal/DeleteAccountPage';
 import { PrivacyPage, TermsPage } from '@/features/legal/LegalPages';
 import { NotificationSetupPage } from '@/features/push/NotificationSetupPage';
 import { RequireAuth } from './RequireAuth';
@@ -60,6 +61,9 @@ export const routes = [
       { path: 'login', element: <LoginPage /> },
       { path: 'privacy', element: <PrivacyPage /> },
       { path: 'terms', element: <TermsPage /> },
+      // Public on purpose: the stores require an address that explains deletion to someone who
+      // has already removed the app.
+      { path: 'delete-account', element: <DeleteAccountPage /> },
       { path: 'register', element: <RegisterPage /> },
       { path: 'verify-email', element: <VerifyEmailPage /> },
       { path: 'forgot-password', element: <ForgotPasswordPage /> },

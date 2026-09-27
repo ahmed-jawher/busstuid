@@ -35,6 +35,7 @@ function LegalScreen({ doc, other }: { doc: LegalDocument; other: { to: string; 
         </ol>
         <nav className="flex flex-wrap items-center gap-4 border-t border-border pt-4 text-sm font-semibold text-primary">
           <Link to={other.to}>{t(other.label)}</Link>
+          <Link to="/delete-account">{t('del.title')}</Link>
           <button type="button" onClick={back} className="min-h-11">
             {t('common.back')}
           </button>
