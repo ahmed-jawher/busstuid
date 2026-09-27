@@ -288,6 +288,11 @@ Format: the decision, then why.
 - **No domain yet: the address is `46-101-190-48.sslip.io`**, a free name that resolves to the
   server's IP and gets a normal Let's Encrypt certificate. Native test builds have this API
   address built in, so moving to a real domain means new test builds.
+- **Since 2026-09-27 the address is `tammene.com`** (and `www.tammene.com`), DNS at Namecheap.
+  The sslip.io name was removed from the server the same day, so APKs built before then no
+  longer connect. Caddy's `DOMAIN` lists the names separated by a comma **and a space**; a bare
+  comma stops Caddy from starting. The `DEPLOY_URL` variable (health checks, APK builds) is
+  `https://tammene.com`; `DEPLOY_HOST` stays the IP because it is only used for SSH.
 - **Email goes through Brevo on port 2525** because DigitalOcean blocks the usual SMTP ports
   (docs/DEPLOY.md). The sender is a Gmail address for now; a domain of our own (with SPF, DKIM
   and DMARC) replaces it before schools use the app.
