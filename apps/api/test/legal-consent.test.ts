@@ -39,7 +39,7 @@ describe('agreeing to the terms', () => {
     const body = signUpBody();
     await t.http
       .post('/v1/auth/register')
-      .set('User-Agent', 'TammeniTest/1.0')
+      .set('User-Agent', 'TammeneTest/1.0')
       .send(body)
       .expect(202);
 
@@ -49,7 +49,7 @@ describe('agreeing to the terms', () => {
     for (const row of rows) {
       expect(row.version).toBe(LEGAL_VERSION);
       expect(row.acceptedAt.getTime()).toBeGreaterThan(Date.now() - 60_000);
-      expect(row.userAgent).toBe('TammeniTest/1.0');
+      expect(row.userAgent).toBe('TammeneTest/1.0');
       expect(row.ip).not.toBeNull();
     }
     expect(user.termsVersion).toBe(LEGAL_VERSION);

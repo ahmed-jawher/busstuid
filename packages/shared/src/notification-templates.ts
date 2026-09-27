@@ -43,14 +43,14 @@ const TEMPLATES: Record<NotificationTemplate, Record<Locale, Render>> = {
       body: `✅ صعد ${d.student} إلى ${d.vehicle} الساعة ${d.time}`,
     }),
     en: (d) => ({
-      title: 'Tammeni',
+      title: 'Tammene',
       body: `✅ ${d.student} boarded ${d.vehicle} at ${d.time}`,
     }),
   },
   alighted: {
     ar: (d) => ({ title: 'طمّني', body: `🏫 نزل ${d.student} عند ${d.stop} الساعة ${d.time}` }),
     en: (d) => ({
-      title: 'Tammeni',
+      title: 'Tammene',
       body: `🏫 ${d.student} got off at ${d.stop} at ${d.time}`,
     }),
   },
@@ -60,7 +60,7 @@ const TEMPLATES: Record<NotificationTemplate, Record<Locale, Render>> = {
       body: `📋 سجّل السائق ${d.student} غائباً عن رحلة ${d.tripName}`,
     }),
     en: (d) => ({
-      title: 'Tammeni',
+      title: 'Tammene',
       body: `📋 The driver marked ${d.student} absent from ${d.tripName}`,
     }),
   },
@@ -104,13 +104,13 @@ const TEMPLATES: Record<NotificationTemplate, Record<Locale, Render>> = {
       body: `ℹ️ أُضيف ${d.student} إلى رحلة ${d.tripName} وهو غير مسجّل فيها.`,
     }),
     en: (d) => ({
-      title: 'Tammeni',
+      title: 'Tammene',
       body: `ℹ️ ${d.student} was added to ${d.tripName} without being on its list.`,
     }),
   },
   resolved: {
     ar: (d) => ({ title: 'طمّني', body: `✔️ تم التأكد من سلامة ${d.student}` }),
-    en: (d) => ({ title: 'Tammeni', body: `✔️ ${d.student} has been confirmed safe` }),
+    en: (d) => ({ title: 'Tammene', body: `✔️ ${d.student} has been confirmed safe` }),
   },
   enrollment_approved: {
     ar: (d) => ({
@@ -118,14 +118,14 @@ const TEMPLATES: Record<NotificationTemplate, Record<Locale, Render>> = {
       body: `🔗 قبلت ${d.organization} طلب ربط ${d.student}. ستصلك إشعارات رحلاته من الآن.`,
     }),
     en: (d) => ({
-      title: 'Tammeni',
+      title: 'Tammene',
       body: `🔗 ${d.organization} accepted ${d.student}'s link request. You will get trip notifications from now on.`,
     }),
   },
   enrollment_rejected: {
     ar: (d) => ({ title: 'طمّني', body: `رفضت ${d.organization} طلب ربط ${d.student}.` }),
     en: (d) => ({
-      title: 'Tammeni',
+      title: 'Tammene',
       body: `${d.organization} declined ${d.student}'s link request.`,
     }),
   },
@@ -135,7 +135,7 @@ const TEMPLATES: Record<NotificationTemplate, Record<Locale, Render>> = {
       body: `⚠️ تراجعت ${d.organization} عن قرارها في طلب ربط ${d.student}. الطلب بانتظار الموافقة مجدداً ولن تصلك إشعارات الرحلات حتى الموافقة.`,
     }),
     en: (d) => ({
-      title: 'Tammeni',
+      title: 'Tammene',
       body: `⚠️ ${d.organization} reversed its decision on ${d.student}'s link request. It is waiting for approval again, and trip notifications stop until then.`,
     }),
   },

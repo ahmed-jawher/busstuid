@@ -29,7 +29,7 @@ export function configureApp(app: INestApplication, config: AppConfig): void {
 
 export function buildOpenApi(app: INestApplication): OpenAPIObject {
   const doc = new DocumentBuilder()
-    .setTitle('Tammeni API')
+    .setTitle('Tammene API')
     .setDescription('طمّني — سلامة الطلاب في النقل المدرسي')
     .setVersion('0.1.0')
     .addBearerAuth()

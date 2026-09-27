@@ -1,4 +1,4 @@
-// Demo data for showing Tammeni to someone: one account per situation a real user can be in,
+// Demo data for showing Tammene to someone: one account per situation a real user can be in,
 // with trips, alerts and notifications already in place (PLAN §17).
 //
 // Everything here is invented: names, phone numbers, schools. Who the accounts are is in

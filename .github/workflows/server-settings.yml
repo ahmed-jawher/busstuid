@@ -86,7 +86,7 @@ jobs:
           cat settings.env | ssh_ 'cat > ~/settings.env'
           ssh_ "SERVICES='$SERVICES' bash -s" <<'REMOTE'
           set -euo pipefail
-          cd ~/tammeni
+          cd ~/tammene
           cp .env.production ".env.production.bak-$(date +%Y%m%d-%H%M%S)"
           while IFS='=' read -r key value; do
             [ -n "$key" ] || continue

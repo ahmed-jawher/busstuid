@@ -24,7 +24,7 @@ works; 2 vCPU / 4 GB RAM is plenty to start.
 
 ```bash
 git clone https://github.com/ahmed-jawher/busstuid.git && cd busstuid
-node scripts/prod-env.mjs --domain app.example.com --mail-from "Tammeni <no-reply@example.com>"
+node scripts/prod-env.mjs --domain app.example.com --mail-from "Tammene <no-reply@example.com>"
 # edit .env.production: fill SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASSWORD
 docker compose -f infra/docker-compose.prod.yml --env-file .env.production up -d --build
 ```
@@ -101,7 +101,8 @@ must be undone, a person runs `db:rollback` or restores the pre-deploy backup.
 
 **Setup (once):**
 
-- On the server, the `deploy` user runs Docker; the stack lives in `~/tammeni` with
+- On the server, the `deploy` user runs Docker; the stack lives in `~/tammene` (it was
+  `~/tammeni` before the rename; the deploy workflow moves it once, keeping `.env.production`) with
   `.env.production` (never in GitHub). `.deploy.env` records the running commit (`IMAGE_TAG`).
 - A dedicated SSH key for GitHub, added to `deploy`'s `authorized_keys` with
   `no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty`.
@@ -144,7 +145,7 @@ address is absolute.
    build in CI use it.
 
 5. **Email:** authenticate the domain with the mail provider (SPF, DKIM, DMARC records), then set
-   `MAIL_FROM` to `Tammeni <no-reply@<domain>>` through the same workflow with `email`. Sending
+   `MAIL_FROM` to `Tammene <no-reply@<domain>>` through the same workflow with `email`. Sending
    from a `@gmail.com` address is what makes verification codes land in spam.
 
 6. **The legal documents** name the domain in the contact clause: update

@@ -49,5 +49,5 @@ jobs:
             all)    pattern='.' ;;
           esac
           ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes "$HOST" \
-            "cd ~/tammeni && docker compose -f infra/docker-compose.prod.yml -f infra/docker-compose.images.yml --env-file .env.production --env-file .deploy.env logs --tail ${LINES:-400} api" \
+            "cd ~/tammene && docker compose -f infra/docker-compose.prod.yml -f infra/docker-compose.images.yml --env-file .env.production --env-file .deploy.env logs --tail ${LINES:-400} api" \
             | grep -E "$pattern" | tail -60 || echo "No matching lines."

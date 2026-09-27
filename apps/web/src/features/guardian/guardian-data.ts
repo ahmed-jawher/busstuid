@@ -64,7 +64,7 @@ export interface ChildView {
   alertId: string | null;
 }
 
-/** Where is my child now? (Claude Design "Tammeni Guardian": one answer per card.) */
+/** Where is my child now? (Claude Design "Tammene Guardian": one answer per card.) */
 export function childView(
   child: Child,
   rows: ChildTripRow[] | undefined,

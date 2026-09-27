@@ -36,7 +36,7 @@ interface DriverMatch extends OrgSummary {
 const RELATIONS = ['mother', 'father', 'guardian', 'other'] as const;
 
 /**
- * Adding a child (Claude Design "Tammeni Guardian"): details, who drives them, a face photo, and
+ * Adding a child (Claude Design "Tammene Guardian"): details, who drives them, a face photo, and
  * consent — one step per screen with the action pinned at the bottom (PLAN §5).
  */
 export function AddChildPage() {

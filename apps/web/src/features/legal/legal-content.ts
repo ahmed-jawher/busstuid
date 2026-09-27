@@ -2,7 +2,7 @@
 // They are written as numbered clauses, the way an agreement is read and cited, and they
 // describe exactly what the code does; change them together with the behaviour.
 //
-// NOT REVIEWED BY A LAWYER. Before the first real school uses Tammeni, a lawyer in the country
+// NOT REVIEWED BY A LAWYER. Before the first real school uses Tammene, a lawyer in the country
 // of operation must read both documents (children's data, Bahrain's Personal Data Protection
 // Law 30/2018, and the transfer of data to the server in Germany).
 
@@ -20,7 +20,7 @@ export const LEGAL = {
   // until a company is registered. The stores show the same name on the listing.
   operator: 'عزام عصام القراضي وأحمد جوهر سلطان',
   operatorEn: 'Azzam Esam Alquradhi and Ahmed Jawher Sultan',
-  contactEmail: 'support.tammeni@gmail.com',
+  contactEmail: 'support.tammene@gmail.com',
   version: '2026-09-27',
   serverCountry: { ar: 'ألمانيا (فرانكفورت)', en: 'Germany (Frankfurt)' },
 } as const;
@@ -94,7 +94,7 @@ export const PRIVACY_AR: LegalDocument = {
 export const TERMS_EN: LegalDocument = {
   title: 'Terms of Use',
   updated: LEGAL.version,
-  preamble: `These terms govern the use of the Tammeni application and website (the "Service"), provided by ${LEGAL.operatorEn} (the "Provider"). Creating an account or using the Service constitutes express and unconditional acceptance of these terms and of the privacy policy attached to them. If you do not agree to any clause, you must not use the Service.`,
+  preamble: `These terms govern the use of the Tammene application and website (the "Service"), provided by ${LEGAL.operatorEn} (the "Provider"). Creating an account or using the Service constitutes express and unconditional acceptance of these terms and of the privacy policy attached to them. If you do not agree to any clause, you must not use the Service.`,
   clauses: [
     '1- Definitions: "User" means any person who creates an account in the Service; "Guardian" means a User who registers a student and affirms guardianship over that student or authorisation from the guardian; "Driver" means a User who operates a trip; "Organisation" means a school, kindergarten, transport company or independent driver registered in the Service; "Trip" means the carriage of students to or from school at a stated time; "Alert" means the warning the system raises when a student may remain in the vehicle, a trip runs late, or a driver device goes silent.',
     '2- Subject of the Service: The Service provides a means of recording each student boarding and alighting by one tap from the Driver, notifying the Guardian, and raising an Alert where a trip ends while a student has not been recorded as having alighted, a trip exceeds its scheduled time, or the signal from the driver device is interrupted during a trip.',
@@ -128,7 +128,7 @@ export const TERMS_EN: LegalDocument = {
 export const PRIVACY_EN: LegalDocument = {
   title: 'Privacy Policy',
   updated: LEGAL.version,
-  preamble: `This policy states how personal data is processed in the Tammeni application. The controller of that data is ${LEGAL.operatorEn}, who may be contacted on all matters of privacy at ${LEGAL.contactEmail}. This policy is read together with the terms of use and forms a single agreement with them.`,
+  preamble: `This policy states how personal data is processed in the Tammene application. The controller of that data is ${LEGAL.operatorEn}, who may be contacted on all matters of privacy at ${LEGAL.contactEmail}. This policy is read together with the terms of use and forms a single agreement with them.`,
   clauses: [
     '1- Scope: This policy applies to data processed through the application, the website and the services connected with them, and does not apply to any third-party service to which the User is directed.',
     '2- Account holder data: The name in Arabic and English, the email address, the phone number, the interface language and the notification settings are processed. The password is under no circumstances stored in its original form; it is stored in an encrypted form that cannot be reversed. The two-step verification key is stored encrypted where enabled.',

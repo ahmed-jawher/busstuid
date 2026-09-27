@@ -105,12 +105,16 @@ jobs:
           REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ssh_() { ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes "$HOST" "$@"; }
+          # The stack directory was ~/tammeni before the app was renamed. One move, once: it
+          # carries .env.production and .deploy.env, which are not in the repository and cannot
+          # be recreated here. Harmless on every later run.
+          ssh_ 'if [ -d ~/tammeni ] && [ ! -e ~/tammene ]; then mv ~/tammeni ~/tammene; fi'
           # The compose files and deploy script of the version being deployed.
-          tar -c infra | ssh_ 'mkdir -p ~/tammeni && tar -x -C ~/tammeni'
+          tar -c infra | ssh_ 'mkdir -p ~/tammene && tar -x -C ~/tammene'
           # Short-lived registry login: this job's token expires when the job ends.
           printf '%s' "$REGISTRY_TOKEN" | ssh_ "docker login ghcr.io -u '$ACTOR' --password-stdin > /dev/null"
           status=0
-          ssh_ "IMAGE_PREFIX='$IMAGE_PREFIX' bash ~/tammeni/infra/deploy.sh '$TAG'" || status=$?
+          ssh_ "IMAGE_PREFIX='$IMAGE_PREFIX' bash ~/tammene/infra/deploy.sh '$TAG'" || status=$?
           ssh_ 'docker logout ghcr.io > /dev/null' || true
           exit $status
 

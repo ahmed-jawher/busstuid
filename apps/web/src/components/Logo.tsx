@@ -1,6 +1,6 @@
 import { cn } from '@/lib/cn';
 
-/** Tammeni mark: a smile under a sun, on indigo (Claude Design "Tammeni Brand"). */
+/** Tammene mark: a smile under a sun, on indigo (Claude Design "Tammene Brand"). */
 export function Logo({ size = 34, className }: { size?: number; className?: string }) {
   return (
     <svg

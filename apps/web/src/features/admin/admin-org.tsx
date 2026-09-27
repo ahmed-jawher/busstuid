@@ -18,7 +18,7 @@ import {
   useUnreachable,
 } from './admin-data';
 
-// Admin app shell (Claude Design "Tammeni Admin Mobile"): navy title bar, the critical alert
+// Admin app shell (Claude Design "Tammene Admin Mobile"): navy title bar, the critical alert
 // pinned under it on every screen, and four tabs at the bottom on phones. From 1024px wide the
 // tabs become a grouped sidebar.
 
@@ -408,7 +408,7 @@ export function AdminScreen({
           wide ? 'lg:max-w-[1280px]' : 'mx-auto max-w-3xl lg:mx-0 lg:max-w-[1280px]',
         )}
       >
-        {/* Desktop page header (Claude Design "Tammeni Admin"); phones use the navy bar. */}
+        {/* Desktop page header (Claude Design "Tammene Admin"); phones use the navy bar. */}
         <div className="hidden flex-wrap items-end gap-4 lg:flex">
           <div className="min-w-55 flex-1">
             <h1 className="text-[26px] font-bold">{title}</h1>
@@ -503,7 +503,7 @@ function useMinute() {
   return now;
 }
 
-/** True from 1024px: side panels instead of separate screens (Claude Design "Tammeni Admin"). */
+/** True from 1024px: side panels instead of separate screens (Claude Design "Tammene Admin"). */
 export function useWide() {
   const query = '(min-width: 64rem)';
   const [wide, setWide] = useState(() => window.matchMedia(query).matches);
