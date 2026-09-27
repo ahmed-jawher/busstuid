@@ -30,3 +30,8 @@ GoogleService-Info.plist
 
 # local preview config for the Claude app
 .claude/launch.json
+
+# The Android upload key and its passwords never leave the machine that holds them.
+keystore.properties
+*.jks
+*.keystore
