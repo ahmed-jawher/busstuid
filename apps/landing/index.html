@@ -116,28 +116,58 @@ const TEAM=[
  {src:'img/dev-1.jpg',pos:'center 18%',ar:['عزام القراضي','خريج من جامعة البحرين'],en:['Azzam Alquradhi','University of Bahrain graduate']},
  {src:'img/dev-2.png',pos:'center 10%',ar:['أحمد جوهر','طالب في جامعة البحرين'],en:['Ahmed Jawher','University of Bahrain student']}];
 const TONE={al:'#A3111B',ok:'#15803D'};
-const DK=[{id:'y',ar:{n:'يوسف',full:'يوسف أحمد',b:'صعد',a:'وصل',off:'نزل',ab:'غائب',i:'ي'},en:{n:'Yousif',full:'Yousif Ahmed',b:'boarded',a:'arrived at',off:'Off',ab:'absent',i:'Y'}},{id:'s',ar:{n:'سارة',full:'سارة أحمد',b:'صعدت',a:'وصلت',off:'نزلت',ab:'غائبة',i:'س'},en:{n:'Sara',full:'Sara Ahmed',b:'boarded',a:'arrived at',off:'Off',ab:'absent',i:'S'}}];
+const DK=[{id:'y',g:'m',ar:{n:'يوسف',full:'يوسف أحمد',b:'صعد',a:'وصل',off:'نزل',ab:'غائب',i:'ي'},en:{n:'Yousif',full:'Yousif Ahmed',b:'boarded',a:'arrived at',off:'Off',ab:'absent',i:'Y'}},{id:'s',g:'f',ar:{n:'سارة',full:'سارة أحمد',b:'صعدت',a:'وصلت',off:'نزلت',ab:'غائبة',i:'س'},en:{n:'Sara',full:'Sara Ahmed',b:'boarded',a:'arrived at',off:'Off',ab:'absent',i:'S'}}];
 const DD={
 ar:{live:'عرض حي · جرّبه بنفسك',roles:['أنا ولي أمر','أنا مدرسة','أنا سائق'],h1:{g:'اعرف لحظة صعود طفلك الباص، ولحظة وصوله.',s:'كل باصاتك، وكل طالب فيها، في شاشة واحدة.',d:'زر واحد لكل طالب. والباقي علينا.'},
  sub:'ثلاث شاشات حقيقية مرتبطة ببعضها. اضغط في جوال السائق وشاهد ما يصل لولي الأمر والمدرسة في اللحظة نفسها.',steps:['ابدأ الرحلة','سجّل الصعود','سجّل النزول','أنهِ الرحلة'],
- hints:{start:'اضغط «ابدأ الرحلة» في جوال السائق',board:'سجّل صعود الطالبين، وراقب جوال ولي الأمر',alight:'وصلتم المدرسة. سجّل نزولهما',end:'اضغط «إنهاء الرحلة»',hold:'اضغط مطولاً على «الباص خالٍ»',alert:'إنذار! سجّل نزول يوسف من جوال السائق، أو أغلق الإنذار من لوحة المدرسة',done:'انتهت الرحلة بأمان. هكذا يبدو كل صباح.'},
+ hints:{start:'اضغط «ابدأ الرحلة» في جوال السائق',board:'سجّل صعود الطالبين، وراقب جوال ولي الأمر',alight:'وصلتم المدرسة. سجّل نزولهما',end:'اضغط «إنهاء الرحلة»',hold:'اضغط مطولاً على «الباص خالٍ»',done:'انتهت الرحلة بأمان. هكذا يبدو كل صباح.'},
  tryAlert:'ماذا لو نُسي طفل في الباص؟',reset:'أعد التجربة',you:'أنت',devD:'جوال السائق',devP:'جوال ولي الأمر',devS:'لوحة المدرسة',storiesLink:'ثلاث قصص خلف كل رحلة',
- drv:{hi:'صباح الخير يا أحمد',today:'رحلات اليوم',route:'مسار الرفاع · ذهاب',meta:'الباص 45213 · طالبان',start:'ابدأ الرحلة',c1:'على الباص',c2:'نزلوا',c3:'بانتظار',exp:'بانتظار الصعود',on:'على الباص',board:'صعد',absent:'غائب',end:'إنهاء الرحلة',alertT:'طالب ما زال على الباص!',alertB:'لا يمكن إنهاء الرحلة. تحقّق من الباص وسجّل نزوله.',confirmT:'التأكد الأخير',confirmB:'امشِ حتى آخر مقعد. هل الباص خالٍ تماماً؟',hold:'اضغط مطولاً: الباص خالٍ',doneT:'انتهت الرحلة بأمان',doneB:'تأكدت أن الباص خالٍ.',again:'رحلة جديدة'},
- par:{hi:'صباح الخير يا مريم',kids:'أطفالي',recent:'آخر الإشعارات',empty:'لا إشعارات بعد. ستصلك لحظة يضغط السائق.',wait:'بانتظار الباص',onSince:'على الباص منذ',atSchool:'في المدرسة منذ',today:'اليوم',notOff:'لم يُسجَّل نزوله',pOn:'على الباص',pSchool:'في المدرسة',pWait:'بانتظار',pAbs:'غائب',pAlert:'إنذار',urgent:'إنذار عاجل',alertH:'يوسف لم يُسجَّل نزوله من الباص',alertP:'انتهت الرحلة وما زال يوسف مسجّلاً على الباص 45213.',call:'اتصل بالسائق',e999:'اتصل بالطوارئ 999',watching:'السائق والإدارة يتابعون الآن. لا يُطلب منك أي إجراء.',now:'الآن',tabs:['الرئيسية','الإشعارات','الخدمات','حسابي']},
- sch:{title:'الرحلات الآن',live:'مباشر',route:'مسار الرفاع · ذهاب',driver:'أحمد سالم · الباص 45213',st:{idle:'لم تبدأ',active:'جارية',alert:'إنذار',confirm:'جارية',done:'انتهت بأمان'},log:'سجل الأحداث',noLog:'لا أحداث بعد',alertT:'إنذار حرج: يوسف لم يُسجَّل نزوله',resolve:'إغلاق: وُجد في المركبة ونزل'},
+ drv:{hi:'صباح الخير يا أحمد',today:'رحلات اليوم',route:'مسار الرفاع · ذهاب',meta:'الباص 45213 · طالبان',start:'ابدأ الرحلة',c1:'على الباص',c2:'نزلوا',c3:'بانتظار',exp:'بانتظار الصعود',on:'على الباص',board:'صعد',absent:'غائب',end:'إنهاء الرحلة',confirmT:'التأكد الأخير',confirmB:'امشِ حتى آخر مقعد. هل الباص خالٍ تماماً؟',hold:'اضغط مطولاً: الباص خالٍ',doneT:'انتهت الرحلة بأمان',doneB:'تأكدت أن الباص خالٍ.',again:'رحلة جديدة'},
+ par:{hi:'صباح الخير يا مريم',kids:'أطفالي',recent:'آخر الإشعارات',empty:'لا إشعارات بعد. ستصلك لحظة يضغط السائق.',wait:'بانتظار الباص',onSince:'على الباص منذ',atSchool:'في المدرسة منذ',today:'اليوم',pOn:'على الباص',pSchool:'في المدرسة',pWait:'بانتظار',pAbs:'غائب',pAlert:'إنذار',urgent:'إنذار عاجل',call:'اتصل بالسائق',e999:'اتصل بالطوارئ 999',watching:'السائق والإدارة يتابعون الآن. لا يُطلب منك أي إجراء.',now:'الآن',tabs:['الرئيسية','الإشعارات','الخدمات','حسابي']},
+ sch:{title:'الرحلات الآن',live:'مباشر',route:'مسار الرفاع · ذهاب',driver:'أحمد سالم · الباص 45213',st:{idle:'لم تبدأ',active:'جارية',alert:'إنذار',confirm:'جارية',done:'انتهت بأمان'},log:'سجل الأحداث',noLog:'لا أحداث بعد'},
  counts:(a,b,c)=>`على الباص ${a} · نزلوا ${b} · بانتظار ${c}`,
- ev:{start:'بدأ أحمد الرحلة',board:k=>`${k.b} ${k.n} الباص`,alight:k=>`${k.a} ${k.n} المدرسة`,absent:k=>`${k.n} ${k.ab} اليوم`,alert:'إنذار حرج: يوسف لم يُسجَّل نزوله',resD:'سجّل السائق نزول يوسف · أُغلق الإنذار',resS:'أغلقت الإدارة الإنذار: وُجد يوسف في المركبة ونزل',safe:'تم التأكد من سلامة يوسف',done:'انتهت الرحلة · الباص خالٍ'},
+ ev:{start:'بدأ أحمد الرحلة',board:k=>`${k.b} ${k.n} الباص`,alight:k=>`${k.a} ${k.n} المدرسة`,absent:k=>`${k.n} ${k.ab} اليوم`,done:'انتهت الرحلة · الباص خالٍ'},
  t:m=>`${Math.floor(m/60)}:${String(m%60).padStart(2,'0')} ص`},
 en:{live:'Live demo · try it yourself',roles:['I’m a parent','I run a school','I’m a driver'],h1:{g:'Know the moment your child boards — and arrives.',s:'Every bus, every child, on one screen.',d:'One tap per child. We handle the rest.'},
  sub:'Three real screens, wired together. Tap on the driver’s phone and watch what reaches the parent and the school at the same moment.',steps:['Start trip','Record boarding','Record drop-off','End trip'],
- hints:{start:'Tap “Start trip” on the driver’s phone',board:'Board both children and watch the parent’s phone',alight:'You’ve reached school. Record them off',end:'Tap “End trip”',hold:'Press and hold “Bus is empty”',alert:'Alert! Record Yousif off on the driver’s phone, or close it from the school dashboard',done:'Trip ended safely. That’s every morning.'},
+ hints:{start:'Tap “Start trip” on the driver’s phone',board:'Board both children and watch the parent’s phone',alight:'You’ve reached school. Record them off',end:'Tap “End trip”',hold:'Press and hold “Bus is empty”',done:'Trip ended safely. That’s every morning.'},
  tryAlert:'What if a child is left on the bus?',reset:'Start over',you:'You',devD:'Driver’s phone',devP:'Parent’s phone',devS:'School dashboard',storiesLink:'Three stories behind every trip',
- drv:{hi:'Good morning, Ahmed',today:'Today’s trips',route:'Riffa route · to school',meta:'Bus 45213 · 2 students',start:'Start trip',c1:'On board',c2:'Off',c3:'Waiting',exp:'Waiting to board',on:'On the bus',board:'Boarded',absent:'Absent',end:'End trip',alertT:'A child is still on the bus!',alertB:'The trip can’t end. Check the bus and record them off.',confirmT:'Final check',confirmB:'Walk to the last seat. Is the bus completely empty?',hold:'Press and hold: bus is empty',doneT:'Trip ended safely',doneB:'You confirmed the bus is empty.',again:'New trip'},
- par:{hi:'Good morning, Maryam',kids:'My children',recent:'Latest',empty:'No notifications yet. They arrive the moment the driver taps.',wait:'Waiting for the bus',onSince:'On the bus since',atSchool:'At school since',today:'today',notOff:'Not recorded off the bus',pOn:'On bus',pSchool:'At school',pWait:'Waiting',pAbs:'Absent',pAlert:'Alert',urgent:'Urgent alert',alertH:'Yousif wasn’t recorded off the bus',alertP:'The trip ended and Yousif is still recorded on bus 45213.',call:'Call the driver',e999:'Call emergency 999',watching:'The driver and school are on it. Nothing is needed from you.',now:'now',tabs:['Home','Alerts','Services','Account']},
- sch:{title:'Trips now',live:'Live',route:'Riffa route · to school',driver:'Ahmed Salem · Bus 45213',st:{idle:'Not started',active:'In progress',alert:'Alert',confirm:'In progress',done:'Ended safely'},log:'Activity',noLog:'No activity yet',alertT:'Critical: Yousif not recorded off',resolve:'Close: found on vehicle and got off'},
+ drv:{hi:'Good morning, Ahmed',today:'Today’s trips',route:'Riffa route · to school',meta:'Bus 45213 · 2 students',start:'Start trip',c1:'On board',c2:'Off',c3:'Waiting',exp:'Waiting to board',on:'On the bus',board:'Boarded',absent:'Absent',end:'End trip',confirmT:'Final check',confirmB:'Walk to the last seat. Is the bus completely empty?',hold:'Press and hold: bus is empty',doneT:'Trip ended safely',doneB:'You confirmed the bus is empty.',again:'New trip'},
+ par:{hi:'Good morning, Maryam',kids:'My children',recent:'Latest',empty:'No notifications yet. They arrive the moment the driver taps.',wait:'Waiting for the bus',onSince:'On the bus since',atSchool:'At school since',today:'today',pOn:'On bus',pSchool:'At school',pWait:'Waiting',pAbs:'Absent',pAlert:'Alert',urgent:'Urgent alert',call:'Call the driver',e999:'Call emergency 999',watching:'The driver and school are on it. Nothing is needed from you.',now:'now',tabs:['Home','Alerts','Services','Account']},
+ sch:{title:'Trips now',live:'Live',route:'Riffa route · to school',driver:'Ahmed Salem · Bus 45213',st:{idle:'Not started',active:'In progress',alert:'Alert',confirm:'In progress',done:'Ended safely'},log:'Activity',noLog:'No activity yet'},
  counts:(a,b,c)=>`On board ${a} · Off ${b} · Waiting ${c}`,
- ev:{start:'Ahmed started the trip',board:k=>`${k.n} boarded the bus`,alight:k=>`${k.n} arrived at school`,absent:k=>`${k.n} marked absent`,alert:'Critical: Yousif not recorded off',resD:'Driver recorded Yousif off · alert closed',resS:'School closed the alert: Yousif found on vehicle and got off',safe:'Yousif confirmed safe',done:'Trip ended · bus empty'},
+ ev:{start:'Ahmed started the trip',board:k=>`${k.n} boarded the bus`,alight:k=>`${k.n} arrived at school`,absent:k=>`${k.n} marked absent`,done:'Trip ended · bus empty'},
  t:m=>`${Math.floor(m/60)}:${String(m%60).padStart(2,'0')} AM`}};
+
+// Alert wording: names whoever is still recorded on the bus — a boy, a girl or both — never a fixed child.
+const SUF={m:'ه',f:'ها',p:'هما'};
+const AL={
+ar:{names:ns=>ns.join(' و'),
+ notOff:g=>'لم يُسجَّل نزول'+SUF[g],
+ head:(n,g)=>`${n} لم يُسجَّل نزول${SUF[g]} من الباص`,
+ body:(n,g)=>g==='m'?`انتهت الرحلة وما زال ${n} مسجّلاً على الباص 45213.`:g==='f'?`انتهت الرحلة وما زالت ${n} مسجّلةً على الباص 45213.`:`انتهت الرحلة وما زال ${n} مسجّلَين على الباص 45213.`,
+ drvT:g=>({m:'طالب ما زال على الباص!',f:'طالبة ما زالت على الباص!',p:'طالبان ما زالا على الباص!'})[g],
+ drvB:g=>`لا يمكن إنهاء الرحلة. تحقّق من الباص وسجّل نزول${SUF[g]}.`,
+ crit:(n,g)=>`إنذار حرج: ${n} لم يُسجَّل نزول${SUF[g]}`,
+ resolve:g=>({m:'إغلاق: وُجد في المركبة ونزل',f:'إغلاق: وُجدت في المركبة ونزلت',p:'إغلاق: وُجدا في المركبة ونزلا'})[g],
+ resD:n=>`سجّل السائق نزول ${n} · أُغلق الإنذار`,
+ resS:(n,g)=>g==='m'?`أغلقت الإدارة الإنذار: وُجد ${n} في المركبة ونزل`:g==='f'?`أغلقت الإدارة الإنذار: وُجدت ${n} في المركبة ونزلت`:`أغلقت الإدارة الإنذار: وُجد ${n} في المركبة ونزلا`,
+ safe:n=>`تم التأكد من سلامة ${n}`,
+ hint:n=>`إنذار! سجّل نزول ${n} من جوال السائق، أو أغلق الإنذار من لوحة المدرسة`},
+en:{names:ns=>ns.join(' and '),
+ notOff:()=>'Not recorded off the bus',
+ head:(n,g)=>`${n} ${g==='p'?'weren’t':'wasn’t'} recorded off the bus`,
+ body:(n,g)=>`The trip ended and ${n} ${g==='p'?'are':'is'} still recorded on bus 45213.`,
+ drvT:g=>g==='p'?'Children are still on the bus!':'A child is still on the bus!',
+ drvB:()=>'The trip can’t end. Check the bus and record them off.',
+ crit:n=>`Critical: ${n} not recorded off`,
+ resolve:()=>'Close: found on vehicle and got off',
+ resD:n=>`Driver recorded ${n} off · alert closed`,
+ resS:n=>`School closed the alert: ${n} found on vehicle and got off`,
+ safe:n=>`${n} confirmed safe`,
+ hint:n=>`Alert! Record ${n} off on the driver’s phone, or close it from the school dashboard`}};
+const who=ids=>{const ks=ids.map(id=>DK.find(k=>k.id===id));return {n:AL[lang].names(ks.map(k=>k[lang].n)),g:ks.length>1?'p':ks[0].g};};
+const onBus=d=>DK.filter(k=>d.kids[k.id].st==='boarded').map(k=>k.id);
 
 // ── State ─────────────────────────────────────────────────────────────────────────────
 const DEMO0=()=>({step:'idle',clock:385,kids:{y:{st:'expected',t:0},s:{st:'expected',t:0}},ev:[],hold:0,banner:null});
@@ -149,21 +179,21 @@ let bannerTimer=0,holdTimer=0;
 
 const K=id=>DK.find(k=>k.id===id)[lang];
 function setDemo(fn){const d=JSON.parse(JSON.stringify(state.demo));fn(d);state.demo=d;renderDemo();}
-function push(d,type,kid,parent=true){d.ev.push({type,kid,t:d.clock,parent});if(parent){d.banner={type,kid,t:d.clock};clearTimeout(bannerTimer);bannerTimer=setTimeout(()=>{state.demo.banner=null;renderDemo();},3200);}}
+function push(d,type,kid,parent=true,kids){d.ev.push({type,kid,kids,t:d.clock,parent});if(parent){d.banner={type,kid,kids,t:d.clock};clearTimeout(bannerTimer);bannerTimer=setTimeout(()=>{state.demo.banner=null;renderDemo();},3200);}}
 function endTrip(d){
   d.clock=Math.max(d.clock+3,436);
   Object.keys(d.kids).forEach(id=>{if(d.kids[id].st==='expected'){d.kids[id]={st:'absent',t:d.clock};push(d,'absent',id);}});
-  if(Object.values(d.kids).some(k=>k.st==='boarded')){d.step='alert';push(d,'alert','y');}else d.step='confirm';
+  const left=onBus(d);if(left.length){d.step='alert';d.stuck=left;push(d,'alert',null,true,left);}else d.step='confirm';
 }
 const actions={
   start:()=>setDemo(d=>{d.step='active';d.clock=390;push(d,'start',null,false);}),
   tap:(id,st)=>setDemo(d=>{
     d.clock+=st==='alighted'?Math.max(3,425-d.clock):4;d.kids[id]={st,t:d.clock};
     push(d,st==='boarded'?'board':st==='alighted'?'alight':'absent',id);
-    if(d.step==='alert'&&!Object.values(d.kids).some(k=>k.st==='boarded')){d.step='confirm';d.ev.push({type:'resD',t:d.clock,parent:false});push(d,'safe','y');}
+    if(d.step==='alert'&&!onBus(d).length){d.step='confirm';d.ev.push({type:'resD',kids:d.stuck,t:d.clock,parent:false});push(d,'safe',null,true,d.stuck);}
   }),
   end:()=>setDemo(endTrip),
-  resolveS:()=>setDemo(d=>{if(d.step!=='alert')return;d.clock+=2;Object.keys(d.kids).forEach(id=>{if(d.kids[id].st==='boarded')d.kids[id]={st:'alighted',t:d.clock};});d.step='confirm';d.ev.push({type:'resS',t:d.clock,parent:false});push(d,'safe','y');}),
+  resolveS:()=>setDemo(d=>{if(d.step!=='alert')return;d.clock+=2;const left=onBus(d);left.forEach(id=>{d.kids[id]={st:'alighted',t:d.clock};});d.step='confirm';d.ev.push({type:'resS',kids:left,t:d.clock,parent:false});push(d,'safe',null,true,d.stuck);}),
   tryAlert:()=>{const d=DEMO0();d.step='active';d.clock=390;push(d,'start',null,false);
     d.clock=394;d.kids.y={st:'boarded',t:394};d.ev.push({type:'board',kid:'y',t:394,parent:true});
     d.clock=398;d.kids.s={st:'boarded',t:398};d.ev.push({type:'board',kid:'s',t:398,parent:true});
@@ -201,12 +231,14 @@ function vals(){
   const stLab=(id,st)=>{const k=K(id);return {expected:[X.drv.exp,'#4A536E','hourglass_top'],boarded:[X.drv.on,'#3346C8','directions_bus'],alighted:[k.off,'#15803D','check_circle'],absent:[k.ab,'#4A536E','do_not_disturb_on']}[st];};
   const dkids=DK.map(({id})=>{const k=K(id),st=dm.kids[id].st,[sl,sc,icon]=stLab(id,st);return {id,...k,sl,sc,icon,open:st==='expected'||st==='boarded',exp:st==='expected',onb:st==='boarded',bd:st==='boarded'?'2px solid #3346C8':'1.5px solid #D5DAE6',ringB:R('b_'+id),ringA:R('a_'+id)};});
   const alertOn=step==='alert';
+  const live=alertOn&&onBus(dm).length?who(onBus(dm)):null;
+  const gOf=id=>DK.find(k=>k.id===id).g;
   const pk=id=>{const k=K(id),s=dm.kids[id],tm=X.t(s.t);
-    if(alertOn&&s.st==='boarded')return {pl:X.par.pAlert,pbg:'#A3111B',pfg:'#fff',picon:'warning',head:X.par.notOff,hc:'#A3111B'};
+    if(alertOn&&s.st==='boarded')return {pl:X.par.pAlert,pbg:'#A3111B',pfg:'#fff',picon:'warning',head:AL[lang].notOff(gOf(id)),hc:'#A3111B'};
     return {expected:{pl:X.par.pWait,pbg:'#EEF1F8',pfg:'#5B6480',picon:'hourglass_top',head:X.par.wait,hc:'#111833'},boarded:{pl:X.par.pOn,pbg:'#E8EBFB',pfg:'#3346C8',picon:'directions_bus',head:X.par.onSince+' '+tm,hc:'#111833'},
       alighted:{pl:X.par.pSchool,pbg:'#E3F4E8',pfg:'#15803D',picon:'school',head:X.par.atSchool+' '+tm,hc:'#111833'},absent:{pl:X.par.pAbs,pbg:'#EEF1F8',pfg:'#5B6480',picon:'do_not_disturb_on',head:k.ab+' '+X.par.today,hc:'#5B6480'}}[s.st];};
   const EV={board:['directions_bus','#E8EBFB','#3346C8'],alight:['school','#E3F4E8','#15803D'],absent:['do_not_disturb_on','#EEF1F8','#5B6480'],alert:['warning','#A3111B','#fff'],safe:['verified','#E3F4E8','#15803D']};
-  const evText=e=>{const f=X.ev[e.type];return typeof f==='function'?f(K(e.kid)):f;};
+  const evText=e=>{if(e.kids){const w=who(e.kids),A=AL[lang];return {alert:A.crit(w.n,w.g),resD:A.resD(w.n),resS:A.resS(w.n,w.g),safe:A.safe(w.n)}[e.type];}const f=X.ev[e.type];return typeof f==='function'?f(K(e.kid)):f;};
   const feed=dm.ev.filter(e=>e.parent).slice(-4).reverse().map(e=>{const [icon,bg,fg]=EV[e.type];return {icon,bg,fg,text:evText(e),time:X.t(e.t)};});
   const slog=dm.ev.slice(-6).reverse().map(e=>{const al=e.type==='alert';const ok=['alight','safe','done','resD','resS'].includes(e.type);return {text:evText(e),time:X.t(e.t),dot:al?'#A3111B':ok?'#15803D':e.type==='absent'?'#B9C0D4':'#3346C8',fw:al?700:500,c:al?'#A3111B':'#111833'};});
   const sst={idle:['#EEF1F8','#5B6480'],active:['#E8EBFB','#3346C8'],alert:['#A3111B','#fff'],confirm:['#E8EBFB','#3346C8'],done:['#E3F4E8','#15803D']}[step];
@@ -214,8 +246,8 @@ function vals(){
   const foc=r=>{const on=state.role===r;return {you:on,order:on?2:1,sh:on?'0 0 0 3px #F5B82E, 0 30px 70px rgba(0,0,0,.45)':'0 24px 60px rgba(0,0,0,.35)'};};
   const fd=foc('d'),fp=foc('g'),fs=foc('s');
   if(state.role==='g'){fd.order=1;fs.order=3;} if(state.role==='s'){fd.order=1;fp.order=3;} if(state.role==='d'){fp.order=1;fs.order=3;}
-  const skids=DK.map(({id})=>{const k=K(id),st=dm.kids[id].st,al=alertOn&&st==='boarded';const [sl]=stLab(id,st);const c={expected:['#EEF1F8','#5B6480'],boarded:['#E8EBFB','#3346C8'],alighted:['#E3F4E8','#15803D'],absent:['#EEF1F8','#5B6480']}[st];return {...k,sl:al?X.par.notOff:sl,pbg:al?'#A3111B':c[0],pfg:al?'#fff':c[1]};});
-  return {X,dm,step,cnt,dkids,alertOn,pkids:DK.map(({id})=>({...K(id),...pk(id)})),feed,slog,sst,banner,fd,fp,fs,skids,phase,hk,R,
+  const skids=DK.map(({id})=>{const k=K(id),st=dm.kids[id].st,al=alertOn&&st==='boarded';const [sl]=stLab(id,st);const c={expected:['#EEF1F8','#5B6480'],boarded:['#E8EBFB','#3346C8'],alighted:['#E3F4E8','#15803D'],absent:['#EEF1F8','#5B6480']}[st];return {...k,sl:al?AL[lang].notOff(gOf(id)):sl,pbg:al?'#A3111B':c[0],pfg:al?'#fff':c[1]};});
+  return {X,dm,step,live,cnt,dkids,alertOn,pkids:DK.map(({id})=>({...K(id),...pk(id)})),feed,slog,sst,banner,fd,fp,fs,skids,phase,hk,R,
     clock:X.t(dm.clock).split(' ')[0],clockS:X.t(dm.clock)};
 }
 
@@ -249,7 +281,7 @@ function driverScreen(){
       <div style="padding:10px 12px 20px;border-top:1px solid #D5DAE6;flex:none"><button data-act="end" style="${btnBase}border:0;width:100%;min-height:52px;border-radius:14px;background:#0A0F24;color:#F1F3F8;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;animation:${R('end')}">${MS('flag',21)}${esc(X.drv.end)}</button></div>`;
   }
   if(step==='alert')h=`<div style="flex:1;background:#A3111B;color:#fff;padding:52px 16px 20px;display:flex;flex-direction:column;gap:12px">${bigIcon('notifications_active')}
-    <div style="font-size:22px;font-weight:700;line-height:1.3">${esc(X.drv.alertT)}</div><div style="font-size:14px;line-height:1.6;opacity:.95">${esc(X.drv.alertB)}</div>
+    <div style="font-size:22px;font-weight:700;line-height:1.3">${esc(AL[lang].drvT(V.live.g))}</div><div style="font-size:14px;line-height:1.6;opacity:.95">${esc(AL[lang].drvB(V.live.g))}</div>
     ${dkids.filter(k=>k.onb).map(k=>`<div style="background:#fff;color:#0A0F24;border-radius:14px;padding:9px;display:flex;gap:10px;align-items:center"><div style="width:42px;height:42px;border-radius:11px;background:repeating-linear-gradient(45deg,#EEF0F5 0 6px,#DADFEA 6px 12px);display:flex;align-items:center;justify-content:center;font-weight:700;color:#4A536E;flex:none">${esc(k.i)}</div><span style="flex:1;font-size:16px;font-weight:700">${esc(k.full)}</span><button data-act="alight:${k.id}" style="${btnBase}border:0;min-height:46px;padding:0 16px;border-radius:11px;background:#15803D;color:#fff;font-size:15px;font-weight:700;animation:${RING}">${esc(k.off)}</button></div>`).join('')}</div>`;
   if(step==='confirm')h=`<div style="flex:1;padding:56px 16px 22px;display:flex;flex-direction:column;gap:12px">
     <div style="width:62px;height:62px;border-radius:18px;background:#E8EBFB;color:#3346C8;display:flex;align-items:center;justify-content:center">${MS('airline_seat_recline_normal',34)}</div>
@@ -278,7 +310,7 @@ function parentScreen(){
     <div style="display:flex;flex-direction:column;gap:6px">${feed.map(n=>`<div style="display:flex;gap:8px;align-items:center;background:#fff;border-radius:12px;padding:7px 9px"><span style="width:28px;height:28px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;background:${n.bg};color:${n.fg}">${MS(n.icon,16,true)}</span><span style="flex:1;font-size:12.5px;font-weight:600;min-width:0">${esc(n.text)}</span><span style="font-size:11px;color:#5B6480;flex:none">${esc(n.time)}</span></div>`).join('')}</div>
   </div><div style="display:flex;border-top:1px solid #E1E5EF;background:#fff;padding:5px 4px 18px;flex:none">${tabsBar(X.par.tabs,false)}</div>`;
   else h=`<div style="flex:1;background:#A3111B;color:#fff;padding:52px 16px 20px;display:flex;flex-direction:column;gap:11px">${bigIcon('warning')}
-    <div style="font-size:13px;font-weight:600;opacity:.92">${esc(X.par.urgent)} · ${esc(V.clockS)}</div><div style="font-size:22px;font-weight:700;line-height:1.35">${esc(X.par.alertH)}</div><div style="font-size:14px;line-height:1.6">${esc(X.par.alertP)}</div><div style="flex:1"></div>
+    <div style="font-size:13px;font-weight:600;opacity:.92">${esc(X.par.urgent)} · ${esc(V.clockS)}</div><div style="font-size:22px;font-weight:700;line-height:1.35">${esc(AL[lang].head(V.live.n,V.live.g))}</div><div style="font-size:14px;line-height:1.6">${esc(AL[lang].body(V.live.n,V.live.g))}</div><div style="flex:1"></div>
     <div style="min-height:50px;border-radius:14px;background:#fff;color:#111833;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px">${MS('call',20,true)}${esc(X.par.call)}</div>
     <div style="min-height:50px;border-radius:14px;border:2px solid #fff;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px">${MS('emergency',20)}${esc(X.par.e999)}</div>
     <div style="font-size:12.5px;text-align:center;opacity:.92;line-height:1.5">${esc(X.par.watching)}</div></div>`;
@@ -292,7 +324,7 @@ function schoolScreen(){
   const {X,step,alertOn,cnt,sst,skids,slog}=V;
   return `<div dir="ltr" style="height:30px;background:#E9ECF4;display:flex;align-items:center;gap:5px;padding:0 12px;flex:none"><span style="width:9px;height:9px;border-radius:50%;background:#D5DAE6"></span><span style="width:9px;height:9px;border-radius:50%;background:#D5DAE6"></span><span style="width:9px;height:9px;border-radius:50%;background:#D5DAE6"></span><span style="flex:1;margin:0 26px;height:18px;border-radius:5px;background:#fff;font-size:10.5px;color:#5B6480;display:flex;align-items:center;justify-content:center">tammene.com</span></div>
   <div style="background:#111833;color:#fff;padding:10px 14px;display:flex;align-items:center;gap:8px;flex:none">${logo(24,'#243283')}<span style="flex:1;font-size:14px;font-weight:700">${esc(X.sch.title)}</span><span style="display:flex;align-items:center;gap:5px;font-size:11.5px;opacity:.85"><span style="width:7px;height:7px;border-radius:50%;background:#7EE2A0;animation:tmBlink 2s infinite"></span>${esc(X.sch.live)} · ${esc(V.clock)}</span></div>
-  ${alertOn?`<div role="alert" style="background:#A3111B;color:#fff;padding:10px 14px;display:flex;flex-direction:column;gap:8px;flex:none"><div style="display:flex;gap:6px;align-items:center;font-size:13px;font-weight:700">${MS('warning',18,true,'animation:tmBlink 1s infinite')}${esc(X.sch.alertT)}</div><button data-act="resolveS" style="${btnBase}border:0;min-height:40px;border-radius:10px;background:#fff;color:#A3111B;font-size:13.5px;font-weight:700;animation:${RING}">${esc(X.sch.resolve)}</button></div>`:''}
+  ${alertOn?`<div role="alert" style="background:#A3111B;color:#fff;padding:10px 14px;display:flex;flex-direction:column;gap:8px;flex:none"><div style="display:flex;gap:6px;align-items:center;font-size:13px;font-weight:700">${MS('warning',18,true,'animation:tmBlink 1s infinite')}${esc(AL[lang].crit(V.live.n,V.live.g))}</div><button data-act="resolveS" style="${btnBase}border:0;min-height:40px;border-radius:10px;background:#fff;color:#A3111B;font-size:13.5px;font-weight:700;animation:${RING}">${esc(AL[lang].resolve(V.live.g))}</button></div>`:''}
   <div style="flex:1;overflow:hidden;padding:12px;display:flex;flex-direction:column;gap:10px">
     <div style="background:#fff;border:1px solid #E1E5EF;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:9px">
       <div style="display:flex;align-items:flex-start;gap:8px"><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700">${esc(X.sch.route)}</div><div style="font-size:11.5px;color:#5B6480">${esc(X.sch.driver)}</div></div><span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;background:${sst[0]};color:${sst[1]}">${esc(X.sch.st[step])}</span></div>
@@ -322,7 +354,7 @@ function heroInner(){
     </div>
     <div style="display:flex;flex-direction:column;gap:12px;align-items:center">
       <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">${steps}</div>
-      <div aria-live="polite" style="display:flex;align-items:center;gap:8px;font-size:15.5px;font-weight:600;min-height:28px;color:${hintColor};text-align:center">${MS(hintIcon,21)}${esc(X.hints[hk])}</div>
+      <div aria-live="polite" style="display:flex;align-items:center;gap:8px;font-size:15.5px;font-weight:600;min-height:28px;color:${hintColor};text-align:center">${MS(hintIcon,21)}${esc(hk==='alert'&&V.live?AL[lang].hint(V.live.n):X.hints[hk])}</div>
     </div>
     <div style="display:flex;gap:26px;justify-content:center;align-items:flex-start;flex-wrap:wrap">
       <div style="display:flex;flex-direction:column;gap:10px;align-items:center;order:${fd.order}">${label('directions_bus',X.devD,fd.you)}
