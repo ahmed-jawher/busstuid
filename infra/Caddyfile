@@ -1,4 +1,6 @@
 # DOMAIN=app.example.com → automatic HTTPS. DOMAIN=:80 → plain HTTP (CI smoke test only).
+# Several names: separate them with a comma AND a space ("a.com, www.a.com"); a bare comma
+# stops Caddy from starting.
 {$DOMAIN} {
 	encode zstd gzip
 
@@ -24,6 +26,31 @@
 		Referrer-Policy "strict-origin-when-cross-origin"
 		Permissions-Policy "camera=(self), geolocation=(self), microphone=()"
 		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+		-Server
+	}
+}
+
+# Landing page (apps/landing): static files on their own name, e.g. LANDING_DOMAIN=about.tammene.com.
+# Unset → it listens on :8081 inside the container only (not published), so the CI smoke test
+# needs nothing extra.
+{$LANDING_DOMAIN::8081} {
+	encode zstd gzip
+	root * /srv-landing
+	@fresh path / /index.html
+	header @fresh Cache-Control "no-cache"
+	@static path /fonts/* /img/*
+	header @static Cache-Control "public, max-age=86400"
+	try_files {path} /index.html
+	file_server
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), geolocation=(), microphone=()"
+		# One self-contained page: its script and styles are inline, nothing loads from elsewhere.
+		Content-Security-Policy "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
 		-Server
 	}
 }

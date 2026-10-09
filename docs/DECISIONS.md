@@ -553,3 +553,17 @@ the documents and the code.
   the same bundle id on the Apple side when iOS is set up.
 - The stack directory on the server moves from `~/tammeni` to `~/tammene`; the deploy workflow
   does it once, because that directory holds `.env.production`, which exists nowhere else.
+
+## Landing page (owner's request, 2026-10-09)
+
+- **`about.tammene.com` serves `apps/landing/`**: one `index.html` with its CSS and JS inline
+  (from Claude Design "Tammeni Landing Interactive"), plus its fonts and the two team photos as
+  files next to it. Nothing loads from Google or a CDN: the icons are Material Symbols (rounded)
+  embedded as SVG paths from `@material-symbols/svg-400`, the fonts come from `@fontsource`.
+- **Every button leads into the app**: register → `https://tammene.com/welcome`, privacy →
+  `/privacy`, terms → `/terms`. The page has no forms and talks to no API.
+- **Served by the same Caddy as the app**, from the web image (`/srv-landing`), on
+  `LANDING_DOMAIN` in `.env.production`; unset, it listens on :8081 inside the container only.
+  Its CSP allows inline script and style (that is how a single-file page works) and nothing from
+  any other origin; it is a separate origin from the app, with no sign-in or cookies.
+- **Prettier skips `index.html`**: the embedded icon data is one long line by design.

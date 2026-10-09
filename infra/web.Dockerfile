@@ -14,3 +14,5 @@ RUN pnpm exec turbo run build --filter=@wusool/web...
 FROM caddy:2-alpine
 COPY infra/Caddyfile /etc/caddy/Caddyfile
 COPY --from=build /repo/apps/web/dist /srv
+# The landing page is plain files, served on LANDING_DOMAIN.
+COPY apps/landing /srv-landing

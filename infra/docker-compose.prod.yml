@@ -47,6 +47,8 @@ services:
       - api
     environment:
       DOMAIN: ${DOMAIN:?set DOMAIN in .env.production}
+      # Optional: the landing page's own name (apps/landing).
+      LANDING_DOMAIN: ${LANDING_DOMAIN:-:8081}
     ports:
       - '80:80'
       - '443:443'
