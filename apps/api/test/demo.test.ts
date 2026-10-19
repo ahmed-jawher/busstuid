@@ -1,4 +1,6 @@
 // The demo data must build cleanly and give a working account for every situation.
+import type { NotificationTemplate } from '@wusool/shared';
+import { renderFor } from '../src/notifications/notifications.service';
 import { DEMO_PASSWORD, runDemo, seedDemo, wipeEverything } from '../src/ops/demo';
 import { createTestApp, type TestApp } from './helpers/app';
 
@@ -127,6 +129,28 @@ describe('demo data', () => {
     await expect(
       t.db.admin.tripEvent.update({ where: { id: event.id }, data: { lat: '1.000000' } }),
     ).rejects.toThrow(/append-only/);
+  });
+
+  it('writes notifications a person can actually read', async () => {
+    // The demo once filled the inbox with "نزل undefined عند undefined": its payloads used key
+    // names the templates do not read. A reviewer opening the app saw a broken product, and so
+    // would a parent being shown it. Every seeded notification is rendered here, exactly as the
+    // inbox and the push sender render it, and nothing may come out empty.
+    const notifications = await t.db.admin.notification.findMany({
+      include: { user: { select: { preferredLocale: true } } },
+    });
+    expect(notifications.length).toBeGreaterThan(0);
+    for (const n of notifications) {
+      for (const locale of ['ar', 'en'] as const) {
+        const { title, body } = renderFor(
+          n.templateKey as NotificationTemplate,
+          n.payload as never,
+          locale,
+        );
+        expect(title.trim(), n.templateKey).not.toBe('');
+        expect(body, `${n.templateKey} (${locale})`).not.toMatch(/undefined|null|\[object/i);
+      }
+    }
   });
 
   it('rebuilds from a database that already has data, and only when asked', async () => {

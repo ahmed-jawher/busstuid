@@ -682,21 +682,33 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
     },
   });
 
-  // What the guardians see in their inbox.
+  // What the guardians see in their inbox. The keys are the ones the templates read
+  // (packages/shared/notification-templates.ts) and the ones the real sender writes
+  // (routine-notifications.service.ts) — anything else renders as "undefined" to a reader.
   await db.notification.createMany({
     data: [
       {
         userId: calmGuardian.id,
         templateKey: 'boarded',
         priority: 'normal',
-        payload: { studentName: 'سالم', time: '06:22' },
+        payload: {
+          student: { ar: 'سالم', en: 'Salem' },
+          vehicle: bus1.plateNumber,
+          time: '06:22',
+          url: `/child/${sibling1.id}`,
+        },
         createdAt: todayAt(6, 22),
       },
       {
         userId: calmGuardian.id,
         templateKey: 'alighted',
         priority: 'normal',
-        payload: { studentName: 'سالم', time: '07:05' },
+        payload: {
+          student: { ar: 'سالم', en: 'Salem' },
+          stop: 'المدرسة',
+          time: '07:05',
+          url: `/child/${sibling1.id}`,
+        },
         createdAt: todayAt(7, 5),
       },
       {
@@ -704,7 +716,12 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
         alertId: openAlert.id,
         templateKey: 'student_left_onboard',
         priority: 'critical',
-        payload: { studentName: 'ليان' },
+        payload: {
+          student: { ar: 'ليان', en: 'Layan' },
+          vehicle: bus1.plateNumber,
+          driverPhone: driverBus.phoneE164,
+          url: `/alert/${openAlert.id}`,
+        },
         createdAt: new Date(now.getTime() - 40 * MINUTE),
       },
     ],
