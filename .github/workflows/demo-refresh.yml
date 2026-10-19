@@ -1,0 +1,61 @@
+# Rebuilds the test data every morning, so the demonstration server is never showing yesterday.
+#
+# A trip that is "in progress" stops being in progress within the hour, and an app sent for review
+# is looked at on a day nobody can predict — so the data cannot be refreshed by hand on submission
+# day and left to rot (docs/PLAY.md §2).
+#
+# It DELETES EVERYTHING in the database each run. That is only ever right on a demonstration
+# server, so it refuses unless the repository variable DEMO_SERVER is exactly "true". Clear that
+# variable the moment a real school's data is on the server, and this job stops.
+name: Demo data refresh
+
+on:
+  schedule:
+    # 03:00 UTC = 06:00 in Bahrain, before any school day starts.
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    if: vars.DEMO_SERVER == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: SSH setup
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy_key ~/.ssh/known_hosts
+
+      - name: Rebuild the test data
+        env:
+          HOST: deploy@${{ vars.DEPLOY_HOST }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes "$HOST" \
+            "cd ~/tammene && docker compose -f infra/docker-compose.prod.yml -f infra/docker-compose.images.yml --env-file .env.production --env-file .deploy.env exec -T api node dist/ops/cli.js demo --reset"
+
+      - name: Check a test account can sign in
+        env:
+          URL: ${{ vars.DEPLOY_URL }}
+        run: |
+          # The accounts are only useful if they actually open the app: if sign-in fails, the job
+          # fails loudly rather than leaving a reviewer with credentials that do not work.
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$URL/v1/auth/login" \
+            -H 'content-type: application/json' \
+            -d '{"identifier":"parent1@t.test","password":"123456"}')
+          if [ "$code" != "200" ]; then
+            echo "A test account could not sign in (HTTP $code)." >&2
+            exit 1
+          fi
+          echo "Test data rebuilt and a test account signed in."

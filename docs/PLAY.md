@@ -49,26 +49,52 @@ mark the app draws: the 512 icon and the 1024×500 feature graphic Play asks for
 for Apple. Screenshots must come from the running app, signed in as a test account
 (`docs/DEMO.md`) — never a real child.
 
-## 2. App access (Play refuses a review it cannot sign in to)
+## 2. Sign in details (Play refuses a review it cannot sign in to)
 
-Play Console → _App content → App access → All or some functionality is restricted_. Give the
-reviewer these, from `docs/DEMO.md`:
+Play Console → _App content → Sign in details_ (it used to be called App access) → **Yes, part of
+my app is restricted**. Add **four** sets, one per role, so the box at the bottom — "these details
+provide full access to all the features in this app" — is true. All of them use the password
+`123456`, and none of them is ever asked for an email code.
 
-| What to show      | Email            | Password |
-| ----------------- | ---------------- | -------- |
-| A guardian        | `parent1@t.test` | `123456` |
-| A driver on a run | `driver2@t.test` | `123456` |
-| A school's admin  | `school@t.test`  | `123456` |
+| Name (in the form)          | Username         |
+| --------------------------- | ---------------- |
+| `Guardian (parent) account` | `parent1@t.test` |
+| `Bus driver account`        | `driver2@t.test` |
+| `School admin account`      | `school@t.test`  |
+| `Platform operator account` | `admin@t.test`   |
 
-Instructions to paste in the box:
+The instructions must be in English, and must not depend on the day the reviewer happens to open
+the app:
 
-> The app is used by guardians, bus drivers and schools. Sign in with any of the accounts above —
-> no code is sent, they are ready. The guardian account shows two children and today's trips. The
-> driver account has a trip in progress: press "end trip" to see the app refuse while a child is
-> still on board. The school account shows the fleet and the open alert.
+> **Guardian** — Already verified: no email code is needed. Shows three children, their trips for
+> today and the notification history. The interface is Arabic by default; for English open the
+> Account tab and choose Language.
+>
+> **Driver** — This driver has today's trips on the home screen. Open the trip that is running (or
+> press "Start trip" on a scheduled one), tap a child as boarded, then press "End trip": the app
+> refuses while a child is still recorded on board, names that child in red and sounds an alarm.
+> This is the app's core safety feature. If asked, please allow notifications — a driver cannot
+> start a trip on a device that cannot receive alerts.
+>
+> **School admin** — Buses, routes with stops, enrolled students, an enrolment request waiting for
+> approval, and open critical alerts that can be closed with a documented reason.
+>
+> **Platform operator** — Approves new schools and kindergartens before they appear in the
+> directory parents choose from. One kindergarten is waiting for approval.
 
-These accounts must exist on the server when the reviewer tries. Actions → "Demo data" rebuilds
-them.
+### The data has to be fresh on a day nobody can predict
+
+A trip that is "in progress" stops being in progress within the hour, and a review arrives when it
+arrives. Two things keep the accounts worth signing in to:
+
+- The **"Demo data refresh"** workflow rebuilds everything every morning, and fails loudly if a
+  test account cannot sign in afterwards. It only runs while the repository variable `DEMO_SERVER`
+  is `true` — **clear that variable the moment a real school's data is on the server.**
+- The demo routes run **seven days a week**, which a real school does not, so a reviewer who opens
+  the app on a Friday still has a trip to look at.
+
+Write the instructions so the reviewer can **start a trip themselves**; never "there is a trip in
+progress", which is only true for an hour.
 
 ## 3. Data safety
 
