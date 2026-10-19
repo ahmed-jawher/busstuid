@@ -16,16 +16,38 @@ The app id already matches the brand. Build against the **domain**, never the ra
 ## 1. Build the file Play accepts
 
 CI builds a **debug APK** on every pull request — that is for testing on a phone, not for Play.
-Play needs a **signed AAB**:
+Play needs a **signed AAB**.
+
+**Once:** create the upload key and keep it where it cannot be lost. Losing it means asking Google
+support to reset the key.
+
+```bash
+keytool -genkeypair -v -keystore tammene-upload.jks -alias tammene \
+        -keyalg RSA -keysize 2048 -validity 10000
+```
+
+Copy `apps/web/android/keystore.properties.example` to `keystore.properties` beside it and fill in
+the path and the two passwords. That file is git-ignored and never leaves your machine; without it
+the release build is simply unsigned, so CI carries on working.
+
+**Every release:**
 
 ```bash
 VITE_API_URL=https://tammene.com/v1 pnpm --filter @wusool/web native:sync
-npx cap open android      # from apps/web
-# Android Studio → Build → Generate Signed App Bundle → create an upload key
+cd apps/web/android && ./gradlew bundleRelease
+# → app/build/outputs/bundle/release/app-release.aab
 ```
 
-Keep the keystore file and its two passwords somewhere you cannot lose them: losing them means
-asking Google support to reset the key.
+Android Studio does the same through _Build → Generate Signed App Bundle_, and creates the key for
+you in a dialog if you would rather click than type. Either way it needs **JDK 21** (Android
+Studio's own Java 25 is too new for this Gradle).
+
+### The pictures
+
+`pnpm --filter @wusool/web store:graphics` writes them into `apps/web/store/`, drawn from the same
+mark the app draws: the 512 icon and the 1024×500 feature graphic Play asks for, and the 1024 icon
+for Apple. Screenshots must come from the running app, signed in as a test account
+(`docs/DEMO.md`) — never a real child.
 
 ## 2. App access (Play refuses a review it cannot sign in to)
 
