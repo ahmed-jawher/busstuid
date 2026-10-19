@@ -194,7 +194,10 @@ export async function seedDemo(db: PrismaClient): Promise<DemoAccount[] | null> 
   });
 
   // ── Routes ─────────────────────────────────────────────────────────────────
-  const schoolDays = [7, 1, 2, 3, 4];
+  // Every day of the week, which a real school is not — but a store reviewer, or anyone being
+  // shown the app, arrives on the day they arrive. A driver who opens the app on a Friday and
+  // finds an empty day cannot see what the app does (docs/PLAY.md).
+  const schoolDays = [1, 2, 3, 4, 5, 6, 7];
   const makeRoute = async (
     organizationId: string,
     name: string,

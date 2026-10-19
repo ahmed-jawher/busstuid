@@ -19,6 +19,17 @@ The accounts are also in [demo-accounts.xlsx](demo-accounts.xlsx) (and
 [demo-accounts.csv](demo-accounts.csv)) for handing to a tester; both are written from the code by
 `pnpm --filter @wusool/api demo:sheet`, so they cannot drift from what the server actually has.
 
+## Kept fresh by itself
+
+The "Demo data refresh" workflow rebuilds all of this every morning (03:00 UTC), because a trip
+that is "in progress" stops being in progress within the hour and a demonstration — or a store
+review — happens on a day nobody chose. It deletes everything each run, so it refuses unless the
+repository variable `DEMO_SERVER` is `true`: **clear that variable the moment a real school is on
+the server.**
+
+The demo routes also run seven days a week, which a real school does not, so there is always a
+trip to look at.
+
 ## Rules
 
 - **Never run it on a server that holds a real child's data**, and delete the test data before the
