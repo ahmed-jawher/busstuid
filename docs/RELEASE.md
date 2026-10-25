@@ -75,14 +75,56 @@ VITE_API_URL=https://app.example.com/v1 pnpm --filter @wusool/web native:sync
    ```
 2. **Identifier:** register the App ID `com.tammene.app` with the _Push Notifications_ and
    _Time Sensitive Notifications_ capabilities (already declared in `App/App.entitlements`).
-3. **Build:** on the Mac, `pnpm install`, the `native:sync` command above, then
+3. **Build:** either on a Mac (`pnpm install`, the `native:sync` command above, then
    `npx cap open ios` → select your team under _Signing & Capabilities_ → _Product → Archive_ →
-   upload to **TestFlight**.
+   upload to **TestFlight**), or without a Mac through GitHub Actions (§3a).
 4. **Optional — Critical Alerts:** sound even in silent mode needs a special entitlement Apple
    grants on request (developer.apple.com/contact/request/notifications-critical-alerts-entitlement).
    Until then, safety alerts are _time-sensitive_: they break through Focus modes but respect the
    silent switch. Explain the use (children possibly left on a vehicle) when applying.
 5. **App Store Connect:** privacy "nutrition label" with the same data as the Play form.
+
+### 3a. iOS build in GitHub Actions (no Mac needed)
+
+Workflow `.github/workflows/ios-release.yml`: _Actions → iOS release → Run workflow_. It builds
+the web app against `vars.DEPLOY_URL`, archives it signed for the App Store, keeps the `.ipa` as
+a run artifact and uploads it to App Store Connect. The build number is the run number, so every
+run is a new build; type a version (e.g. `1.0.1`) when the App Store version should change.
+
+One-time setup (all in the Apple Developer / App Store Connect web pages):
+
+1. **Distribution certificate:** Certificates → _+_ → _Apple Distribution_. The CSR can be made
+   without a Mac:
+   ```bash
+   openssl req -new -newkey rsa:2048 -nodes -keyout dist.key -out dist.csr -subj "/CN=Tammene"
+   # upload dist.csr, download distribution.cer, then:
+   openssl x509 -inform der -in distribution.cer -out dist.pem
+   openssl pkcs12 -export -legacy -inkey dist.key -in dist.pem -out dist.p12   # choose a password
+   ```
+2. **Provisioning profile:** Profiles → _+_ → _App Store Connect_ → App ID `com.tammene.app` →
+   the certificate above. Download the `.mobileprovision`. Create it **after** enabling Push and
+   Time Sensitive Notifications on the App ID, or the build is refused.
+3. **App Store Connect API key:** Users and Access → Integrations → App Store Connect API → _+_,
+   role _App Manager_. Note the **Key ID** and **Issuer ID**; download the `.p8` (only once).
+4. **App record:** App Store Connect → Apps → _+_ with bundle id `com.tammene.app` (the upload is
+   refused until it exists).
+5. **GitHub secrets** (Settings → Secrets and variables → Actions):
+
+   | Secret                            | Value                          |
+   | --------------------------------- | ------------------------------ |
+   | `IOS_DIST_CERT_P12_BASE64`        | `base64 -w0 dist.p12`          |
+   | `IOS_DIST_CERT_PASSWORD`          | the `.p12` password            |
+   | `IOS_PROVISIONING_PROFILE_BASE64` | `base64 -w0 *.mobileprovision` |
+   | `ASC_KEY_ID`                      | Key ID                         |
+   | `ASC_ISSUER_ID`                   | Issuer ID                      |
+   | `ASC_KEY_P8_BASE64`               | `base64 -w0 AuthKey_*.p8`      |
+
+   and the variable `DEPLOY_URL` (already set for deploys). The team id is read from the profile.
+
+The project in git keeps automatic signing for Xcode on a Mac; the workflow switches only its own
+copy to manual signing (`apps/web/scripts/ios-signing.mjs`) and sets `aps-environment` to
+`production`, so the server needs `APNS_ENV=production`. When the certificate or profile expires
+(yearly), make new ones and replace the secrets.
 
 ## 4. Check on real phones before any school uses it
 
